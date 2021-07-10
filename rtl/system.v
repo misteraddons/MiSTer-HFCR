@@ -93,14 +93,18 @@ wire [2:0] chpos_y = vcnt[2:0];
 wire [5:0] chram_x = hcnt[8:3];
 wire [5:0] chram_y = vcnt[8:3];
 wire [11:0] chram_addr = {chram_y, chram_x};
-wire [11:0] colram_addr = chram_addr;
 wire [11:0] chrom_addr = {1'b0, chmap_data_out[7:0], chpos_y};
 wire chpixel = chrom_data_out[chpos_x[2:0]];
 
-// RGB output
-assign VGA_R = chpixel ? {{2{colram_data_out[2:0]}},2'b0} : 8'b0;
-assign VGA_G = chpixel ? {{2{colram_data_out[5:3]}},2'b0} : 8'b0;
-assign VGA_B = chpixel ? {{3{colram_data_out[7:6]}},2'b0} : 8'b0;
+// RGB mixer
+wire [2:0] r_temp = chpixel ? fgcolram_data_out[2:0] : bgcolram_data_out[2:0];
+wire [2:0] g_temp = chpixel ? fgcolram_data_out[5:3] : bgcolram_data_out[5:3];
+wire [1:0] b_temp = chpixel ? fgcolram_data_out[7:6] : bgcolram_data_out[7:6];
+
+// Convert RGb to 24bpp
+assign VGA_R = {{2{r_temp}},2'b0};
+assign VGA_G = {{2{g_temp}},2'b0};
+assign VGA_B = {{3{b_temp}},2'b0};
 
 // CPU control signals
 wire [15:0] cpu_addr;
@@ -136,13 +140,14 @@ wire [7:0] pgrom_data_out;
 wire [7:0] chrom_data_out;
 wire [7:0] wkram_data_out;
 wire [7:0] chram_data_out;
-wire [7:0] colram_data_out;
+wire [7:0] fgcolram_data_out;
+wire [7:0] bgcolram_data_out;
 
 // RAM data to GFX
 wire [7:0] chmap_data_out;
 
 // Hardware inputs
-wire [7:0] in0_data_out = {VGA_HS, VGA_VS, 6'b101000};
+wire [7:0] in0_data_out = {VGA_HS, VGA_VS,VGA_HB, VGA_VB, 4'b1000};
 wire [7:0] joystick_data_out = joystick[cpu_addr[7:0] +: 8];
 wire [7:0] analog_data_out = analog[cpu_addr[6:0] +: 8];
 wire [7:0] paddle_data_out = paddle[cpu_addr[5:0] +: 8];
@@ -154,7 +159,8 @@ wire [7:0] ps2_mouse_data_out = ps2_mouse[cpu_addr[5:0] +: 8];
 wire pgrom_cs = cpu_addr[15:14] == 2'b00;
 //wire chrom_cs = cpu_addr[15:12] == 4'b0100;  // CPU never accesses the character ROM data directly
 wire chram_cs = cpu_addr[15:11] == 5'b10000;
-wire colram_cs = cpu_addr[15:11] == 5'b10001;
+wire fgcolram_cs = cpu_addr[15:11] == 5'b10001;
+wire bgcolram_cs = cpu_addr[15:11] == 5'b10010;
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
 wire in0_cs = cpu_addr == 16'h6000;
 wire joystick_cs = cpu_addr[15:8] == 8'b01110000;
@@ -168,7 +174,7 @@ wire ps2_mouse_cs = cpu_addr[15:8] == 8'b01110101;
 // 	if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 // 	if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 // 	if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
-// 	if(colram_cs) $display("%x colram i %x o %x w %b", cpu_addr, cpu_dout, colram_data_out, colram_wr);
+// 	if(fgcolram_cs) $display("%x fgcolram i %x o %x w %b", cpu_addr, cpu_dout, fgcolram_data_out, fgcolram_wr);
 // 	if(in0_cs) $display("%x in0 i %x o %x", cpu_addr, cpu_dout, in0_data_out);
 //  	if(joystick_cs) $display("joystick %b  %b", joystick_bit, joystick_data_out);
 //  	if(analog_cs) $display("analog %b  %b", analog_bit, analog_data_out);
@@ -181,7 +187,8 @@ wire ps2_mouse_cs = cpu_addr[15:8] == 8'b01110101;
 assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 wkram_cs ? wkram_data_out :
 				 chram_cs ? chram_data_out :
-				 colram_cs ? colram_data_out :
+				 fgcolram_cs ? fgcolram_data_out :
+				 bgcolram_cs ? bgcolram_data_out :
 				 in0_cs ? in0_data_out :
 				 joystick_cs ? joystick_data_out :
 				 analog_cs ? analog_data_out :
@@ -198,7 +205,8 @@ wire chrom_wr = dn_wr && dn_index == 8'b1;
 // Ram write enables
 wire wkram_wr = !cpu_wr_n && wkram_cs;
 wire chram_wr = !cpu_wr_n && chram_cs;
-wire colram_wr = !cpu_wr_n && colram_cs;
+wire fgcolram_wr = !cpu_wr_n && fgcolram_cs;
+wire bgcolram_wr = !cpu_wr_n && bgcolram_cs;
 
 
 // MEMORY
@@ -253,20 +261,36 @@ dpram #(11,8) chram
 	.q_b(chmap_data_out)
 );
 
-// Char color RAM - 0x8800 - 0x8FFF (0x0800 / 2048 bytes)
-dpram #(11,8) colram
+// Char foreground color RAM - 0x8800 - 0x8FFF (0x0800 / 2048 bytes)
+dpram #(11,8) fgcolram
 (
 	.clock_a(clk_sys),
 	.address_a(cpu_addr[10:0]),
-	.wren_a(colram_wr),
+	.wren_a(fgcolram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
 	.clock_b(clk_sys),
-	.address_b(colram_addr[10:0]),
+	.address_b(chram_addr[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
-	.q_b(colram_data_out)
+	.q_b(fgcolram_data_out)
+);
+
+// Char background color RAM - 0x9000 - 0x97FF (0x0800 / 2048 bytes)
+dpram #(11,8) bgcolram
+(
+	.clock_a(clk_sys),
+	.address_a(cpu_addr[10:0]),
+	.wren_a(bgcolram_wr),
+	.data_a(cpu_dout),
+	.q_a(),
+
+	.clock_b(clk_sys),
+	.address_b(chram_addr[10:0]),
+	.wren_b(1'b0),
+	.data_b(),
+	.q_b(bgcolram_data_out)
 );
 
 // Work RAM - 0xC000 - 0xFFFF (0x4000 / 16384 bytes)

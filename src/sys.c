@@ -36,7 +36,8 @@ unsigned char __at(0x7400) ps2_key[2];
 unsigned char __at(0x7500) ps2_mouse[6];
 // - Graphics RAM
 unsigned char __at(0x8000) chram[2048];
-unsigned char __at(0x8800) colram[2048];
+unsigned char __at(0x8800) fgcolram[2048];
+unsigned char __at(0x9000) bgcolram[2048];
 
 // Character map
 const unsigned char chram_cols = 64;

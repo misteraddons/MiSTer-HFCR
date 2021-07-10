@@ -19,12 +19,16 @@
 
 #include "../imgui/imgui_memory_editor.h"
 #include "../imgui/ImGuiFileDialog.h"
+#include <verilated_vcd_c.h> //VCD Trace
 
 // Debug GUI 
 // ---------
 const char* windowTitle = "Verilator Sim: Aznable";
-bool showDebugWindow = true;
-const char* debugWindowTitle = "Virtual Dev Board v1.0";
+const char* windowTitle_Control = "Simulation control";
+const char* windowTitle_DebugLog = "Debug log";
+const char* windowTitle_Video = "VGA output";
+const char* windowTitle_Trace = "Trace/VCD control";
+bool showDebugLog = true;
 DebugConsole console;
 MemoryEditor mem_edit_1;
 MemoryEditor mem_edit_2;
@@ -45,7 +49,7 @@ const int input_b = 5;
 const int input_x = 6;
 const int input_y = 7;
 const int input_l = 8;
-const int input_r= 9;
+const int input_r = 9;
 const int input_select = 10;
 const int input_start = 11;
 
@@ -54,6 +58,8 @@ const int input_start = 11;
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 240
 #define VGA_ROTATE 0  // 90 degrees anti-clockwise
+#define VGA_SCALE_X 2.0
+#define VGA_SCALE_Y 2.0
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
 
 // Simulation control
@@ -76,6 +82,33 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
+// VCD trace logging
+// -----------------
+VerilatedVcdC* tfp = new VerilatedVcdC; //Trace
+bool Trace = 0;
+char Trace_Deep[3] = "99";
+char Trace_File[30] = "sim.vcd";
+char Trace_Deep_tmp[3] = "99";
+char Trace_File_tmp[30] = "sim.vcd";
+int  iTrace_Deep_tmp = 99;
+char SaveModel_File_tmp[20] = "test", SaveModel_File[20] = "test";
+
+//Trace Save/Restore
+void save_model(const char* filenamep) {
+	VerilatedSave os;
+	os.open(filenamep);
+	os << main_time; // user code must save the timestamp, etc
+	os << *top;
+}
+void restore_model(const char* filenamep) {
+	VerilatedRestore os;
+	os.open(filenamep);
+	os >> main_time;
+	os >> *top;
+}
+
+
+// Reset simulation variables and clocks
 void resetSim() {
 	main_time = 0;
 	top->reset = 1;
@@ -104,6 +137,10 @@ int verilate() {
 				bus.BeforeEval();
 			}
 			top->eval();
+			if (Trace) {
+				if (!tfp->isOpen()) tfp->open(Trace_File);
+				tfp->dump(main_time); //Trace
+			}
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
@@ -136,6 +173,11 @@ int main(int argc, char** argv, char** env) {
 	top = new Vemu();
 	Verilated::commandArgs(argc, argv);
 
+	//Prepare for Dump Signals
+	Verilated::traceEverOn(true); //Trace
+	top->trace(tfp, 1);// atoi(Trace_Deep) );  // Trace 99 levels of hierarchy
+	if (Trace) tfp->open(Trace_File);//"simx.vcd"); //Trace
+
 #ifdef WIN32
 	// Attach debug console to the verilated code
 	Verilated::setDebug(console);
@@ -167,7 +209,7 @@ int main(int argc, char** argv, char** env) {
 	input.SetMapping(input_r, DIK_W); // R
 	input.SetMapping(input_select, DIK_1); // Select
 	input.SetMapping(input_start, DIK_2); // Start
-	
+
 #else
 	input.SetMapping(input_up, SDL_SCANCODE_UP);
 	input.SetMapping(input_right, SDL_SCANCODE_RIGHT);
@@ -216,38 +258,34 @@ int main(int argc, char** argv, char** env) {
 		// --------
 		ImGui::NewFrame();
 
-		console.Draw("Debug Log", &showDebugWindow);
-		ImGui::Begin(debugWindowTitle);
-		ImGui::SetWindowPos(debugWindowTitle, ImVec2(580, 10), ImGuiCond_Once);
-		ImGui::SetWindowSize(debugWindowTitle, ImVec2(1000, 1000), ImGuiCond_Once);
-
-		if (ImGui::Button("RESET")) { resetSim(); } ImGui::SameLine();
-		if (ImGui::Button("START")) { run_enable = 1; } ImGui::SameLine();
-		if (ImGui::Button("STOP")) { run_enable = 0; } ImGui::SameLine();
-		if (ImGui::Button("LOAD"))
-			ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".bin", ".");
+		// Simulation control window
+		ImGui::Begin(windowTitle_Control);
+		ImGui::SetWindowPos(windowTitle_Control, ImVec2(0, 0), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Control, ImVec2(500, 150), ImGuiCond_Once);
+		if (ImGui::Button("Reset simulation")) { resetSim(); } ImGui::SameLine();
+		if (ImGui::Button("Start running")) { run_enable = 1; } ImGui::SameLine();
+		if (ImGui::Button("Stop running")) { run_enable = 0; } ImGui::SameLine();
 		ImGui::Checkbox("RUN", &run_enable);
-		ImGui::SliderInt("Batch size", &batchSize, 1, 250000);
-
+		//ImGui::PopItemWidth();
+		ImGui::SliderInt("Run batch size", &batchSize, 1, 250000);
 		if (single_step == 1) { single_step = 0; }
 		if (ImGui::Button("Single Step")) { run_enable = 0; single_step = 1; }
 		ImGui::SameLine();
 		if (multi_step == 1) { multi_step = 0; }
 		if (ImGui::Button("Multi Step")) { run_enable = 0; multi_step = 1; }
-		ImGui::SameLine();
-
-		ImGui::SliderInt("Step amount", &multi_step_amount, 8, 1024);
-
-		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
-		ImGui::Checkbox("Flip V", &video.output_vflip);
-
-		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
-		ImGui::Text("minx: %d maxx: %d miny: %d maxy: %d", video.stats_xMin, video.stats_xMax, video.stats_yMin, video.stats_yMax);
-
-		// Draw VGA output
-		float m = 2.0;
-		ImGui::Image(video.texture_id, ImVec2(video.output_width * m, video.output_height * m));
+		//ImGui::SameLine();
+		ImGui::SliderInt("Multi step amount", &multi_step_amount, 8, 1024);
 		ImGui::End();
+
+		// Debug log window
+		console.Draw(windowTitle_DebugLog, &showDebugLog, ImVec2(500, 700));
+		ImGui::SetWindowPos(windowTitle_DebugLog, ImVec2(0, 160), ImGuiCond_Once);
+
+
+		// Trace/VCD window
+		ImGui::Begin(windowTitle_Trace);
+		ImGui::SetWindowPos(windowTitle_Trace, ImVec2(0, 870), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Trace, ImVec2(500, 150), ImGuiCond_Once);
 
 		/*ImGui::Begin("PGROM Editor");
 		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 16384, 0);
@@ -259,14 +297,23 @@ int main(int argc, char** argv, char** env) {
 		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
 		ImGui::End();
 		//ImGui::Begin("CHRAM Editor");
-		//mem_edit_3.DrawContents(top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
+		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		//ImGui::Begin("COLRAM Editor");
-		//mem_edit_3.DrawContents(top->emu__DOT__system__DOT__colram__DOT__mem, 2048, 0);
+		//ImGui::Begin("FGCOLRAM Editor");
+		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__fgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
+		ImGui::Begin("BGCOLRAM Editor");
+		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
+		ImGui::End();
+		if (ImGui::Button("Start VCD Export")) { Trace = 1; } ImGui::SameLine();
+		if (ImGui::Button("Stop VCD Export")) { Trace = 0; } ImGui::SameLine();
+		if (ImGui::Button("Flush VCD Export")) { tfp->flush(); } ImGui::SameLine();
+		ImGui::Checkbox("Export VCD", &Trace);
 
 		// File Dialog to load rom 
 		if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+			ImGui::PushItemWidth(120);
+		if (ImGui::InputInt("Deep Level", &iTrace_Deep_tmp, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			// action if OK
 			if (ImGuiFileDialog::Instance()->IsOk())
@@ -276,16 +323,45 @@ int main(int argc, char** argv, char** env) {
 				// action
 				bus.QueueDownload(filePathName, 0, true);
 			}
-
-			// close
-			ImGuiFileDialog::Instance()->Close();
+			top->trace(tfp, iTrace_Deep_tmp);
 		}
 
-		ImGui::Begin("CPU Registers");
-		ImGui::Spacing();
-		ImGui::Text("PC      0x%04X", top->emu__DOT__system__DOT__T80x__DOT__i_tv80_core__DOT__PC);
-		ImGui::Text("ACC     0x%04X", top->emu__DOT__system__DOT__T80x__DOT__i_tv80_core__DOT__ACC);
+		// close
+		ImGuiFileDialog::Instance()->Close();
+		if (ImGui::InputText("TraceFilename", Trace_File_tmp, IM_ARRAYSIZE(Trace_File), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			strcpy(Trace_File, Trace_File_tmp); //TODO onChange Close and open new trace file
+			tfp->close();
+			if (Trace) tfp->open(Trace_File);
+		};
+		ImGui::Separator();
+		if (ImGui::Button("Save Model")) { save_model(SaveModel_File); } ImGui::SameLine();
+		if (ImGui::Button("Load Model")) {
+			restore_model(SaveModel_File);
+		} ImGui::SameLine();
+		if (ImGui::InputText("SaveFilename", SaveModel_File_tmp, IM_ARRAYSIZE(SaveModel_File), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			strcpy(SaveModel_File, SaveModel_File_tmp); //TODO onChange Close and open new trace file
+		}
 		ImGui::End();
+
+		// Video window
+		ImGui::Begin(windowTitle_Video);
+		ImGui::SetWindowPos(windowTitle_Video, ImVec2(550, 0), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 16, (VGA_HEIGHT * VGA_SCALE_Y) + 90), ImGuiCond_Once);
+
+		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
+		ImGui::Checkbox("Flip V", &video.output_vflip);
+		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
+		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
+
+		// Draw VGA output
+		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));
+		ImGui::End();
+
+		//ImGui::Begin("RAM Editor");
+		//memoryEditor_hs.DrawContents(top->top__DOT__uut__DOT__hs_ram__DOT__mem, 64, 0);
+		//ImGui::End();
 
 		video.UpdateTexture();
 
@@ -327,7 +403,8 @@ int main(int argc, char** argv, char** env) {
 			for (char b = 8; b < 16; b++) {
 				top->spinner_0 &= ~(1UL << b);
 			}
-			if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }		}
+			if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
+		}
 		//top->spinner_1 -= 1;
 		//top->spinner_2 += 1;
 		//top->spinner_3 -= 1;
@@ -348,7 +425,6 @@ int main(int argc, char** argv, char** env) {
 			}
 		}
 	}
-
 
 	// Clean up before exit
 	// --------------------

@@ -1,12 +1,11 @@
 
 set -e
 if grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null ; then
-$VERILATOR_ROOT/bin/verilator \
--cc \
--exe \
---public \
+verilator \
+-cc -exe --public \
 --compiler msvc +define+SIMULATION=1 \
 -O3 --x-assign fast --x-initial fast --noassert \
+--trace --savable \
 --converge-limit 6000 \
 --top-module emu sim.v \
 ../rtl/dpram.v \

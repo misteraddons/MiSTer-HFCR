@@ -34,6 +34,16 @@ void clear_chars(char c)
 	}
 }
 
+// Set all character background colours to specified
+void clear_bgcolor(char color)
+{
+	for (unsigned int p = 0; p < chram_size; p++)
+	{
+		bgcolram[p] = color;
+	}
+}
+
+
 // Write string to character RAM
 void write_string(const char *string, char color, unsigned int x, unsigned int y)
 {
@@ -42,7 +52,7 @@ void write_string(const char *string, char color, unsigned int x, unsigned int y
 	for (char c = 0; c < l; c++)
 	{
 		chram[p] = string[c];
-		colram[p] = color;
+		fgcolram[p] = color;
 		p++;
 	}
 }
@@ -61,7 +71,7 @@ void write_stringfs(const char *format, char color, unsigned int x, unsigned int
 			return;
 		}
 		chram[p] = temp[c];
-		colram[p] = color;
+		fgcolram[p] = color;
 		p++;
 	}
 }
@@ -80,7 +90,7 @@ void write_stringf(const char *format, char color, unsigned int x, unsigned int 
 			return;
 		}
 		chram[p] = temp[c];
-		colram[p] = color;
+		fgcolram[p] = color;
 		p++;
 	}
 }
@@ -90,14 +100,37 @@ void write_char(unsigned char c, char color, unsigned int x, unsigned int y)
 {
 	unsigned int p = (y * chram_cols) + x;
 	chram[p] = c;
-	colram[p] = color;
+	fgcolram[p] = color;
+}
+
+// Write row of consecutive chars to character RAM and colour RAM
+void write_char_row(unsigned char c, char color, unsigned int x, unsigned int y, unsigned int count)
+{
+	unsigned int p = (y * chram_cols) + x;
+	for (char b = 0; b < count; b++)
+	{
+		chram[p] = c;
+		fgcolram[p] = color;
+		p++;
+	}
 }
 
 // Set colour of single char
-void set_colour(char color, unsigned int x, unsigned int y)
+void set_fgcolour(char color, unsigned int x, unsigned int y)
 {
 	unsigned int p = (y * chram_cols) + x;
-	colram[p] = color;
+	fgcolram[p] = color;
+}
+
+// Write row of consecutive chars to character RAM and colour RAM
+void write_bgcol_row(char color, unsigned int x, unsigned int y, unsigned int count)
+{
+	unsigned int p = (y * chram_cols) + x;
+	for (char b = 0; b < count; b++)
+	{
+		bgcolram[p] = color;
+		p++;
+	}
 }
 
 // Write grouped bits to character RAM
@@ -153,12 +186,16 @@ void panel(char tx, char ty, char bx, char by, char color)
 
 void fill(char tx, char ty, char bx, char by, char c, char color)
 {
-	for (char x = tx; x <= bx; x++)
+	for (char y = ty; y <= by; y++)
 	{
-		for (char y = ty; y <= by; y++)
-		{
-			write_char(c, color, x, y);
-		}
+		write_char_row(c, color, tx, y, bx-tx);
+	}
+}
+void fill_bgcol(char tx, char ty, char bx, char by, char color)
+{
+	for (char y = ty; y <= by; y++)
+	{
+		write_bgcol_row(color, tx, y, bx-tx);
 	}
 }
 
