@@ -61,6 +61,9 @@ module emu (
 	input [24:0] ps2_mouse,
 	input [15:0] ps2_mouse_ext, // 15:8 - reserved(additional buttons), 7:0 - wheel movements
 
+	// [31:0] - seconds since 1970-01-01 00:00:00, [32] - toggle with every change
+	input [32:0] timestamp,
+
 	output [7:0] VGA_R,
 	output [7:0] VGA_G,
 	output [7:0] VGA_B,
@@ -110,7 +113,8 @@ system system(
 	.paddle({paddle_5,paddle_4,paddle_3,paddle_2,paddle_1,paddle_0}),
 	.spinner({7'b0,spinner_5,7'b0,spinner_4,7'b0,spinner_3,7'b0,spinner_2,7'b0,spinner_1,7'b0,spinner_0}),
 	.ps2_key(ps2_key),
-	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse})
+	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
+	.timestamp(timestamp)
 );
 
 endmodule 

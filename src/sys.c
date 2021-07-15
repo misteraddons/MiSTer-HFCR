@@ -3,7 +3,7 @@
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
-	Date: 2021-07-03
+	Date: 2021-07-12
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -34,6 +34,7 @@ unsigned char __at(0x7200) paddle[6];
 unsigned char __at(0x7300) spinner[12];
 unsigned char __at(0x7400) ps2_key[2];
 unsigned char __at(0x7500) ps2_mouse[6];
+unsigned char __at(0x7600) timestamp[5];
 // - Graphics RAM
 unsigned char __at(0x8000) chram[2048];
 unsigned char __at(0x8800) fgcolram[2048];
@@ -44,5 +45,25 @@ const unsigned char chram_cols = 64;
 const unsigned char chram_rows = 32;
 unsigned int chram_size;
 
+// Hardware inputs
+bool hsync;
+bool hsync_last;
+bool vsync;
+bool vsync_last;
+bool hblank;
+bool hblank_last;
+bool vblank;
+bool vblank_last;
+
 // Macros
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
+#define SET_BIT(var,pos) ((var) |= (1 << (pos)))
+#define CLEAR_BIT(var,pos) ((var) &= ~(1 << (pos)))
+#define VBLANK_RISING (vblank && !vblank_last)
+#define VSYNC_RISING (vsync && !vsync_last)
+#define HBLANK_RISING (hblank && !hblank_last)
+#define HSYNC_RISING (hsync && !hsync_last)
+
+// Application state
+char state = 0;
+char nextstate = 0;

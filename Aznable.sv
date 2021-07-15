@@ -254,6 +254,7 @@ wire  [8:0] spinner_5;
 wire [10:0] ps2_key;
 wire [24:0] ps2_mouse;
 wire [15:0] ps2_mouse_ext;
+wire [32:0] timestamp;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
@@ -301,7 +302,9 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
 	.ps2_key(ps2_key),
 	.ps2_mouse(ps2_mouse),
-	.ps2_mouse_ext(ps2_mouse_ext)
+	.ps2_mouse_ext(ps2_mouse_ext),
+
+	.TIMESTAMP(timestamp)
 );
 
 
@@ -363,7 +366,8 @@ system system(
 	.paddle({paddle_5,paddle_4,paddle_3,paddle_2,paddle_1,paddle_0}),
 	.spinner({7'b0,spinner_5,7'b0,spinner_4,7'b0,spinner_3,7'b0,spinner_2,7'b0,spinner_1,7'b0,spinner_0}),
 	.ps2_key(ps2_key),
-	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse})
+	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
+	.timestamp(timestamp)
 );
 
 endmodule

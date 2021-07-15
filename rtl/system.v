@@ -48,6 +48,9 @@ module system (
 	// [0-23] mouse data, [24] - toggles with every event, [25-31] - padding,
 	// [32-39] - wheel movements, [40-47] - reserved(additional buttons)
 	input [47:0]	ps2_mouse,
+
+	// [31:0] - seconds since 1970-01-01 00:00:00, [32] - toggle with every change
+	input [32:0]	timestamp,
 	
 	output			VGA_HS,
 	output			VGA_VS,
@@ -154,6 +157,7 @@ wire [7:0] paddle_data_out = paddle[cpu_addr[5:0] +: 8];
 wire [7:0] spinner_data_out = spinner[cpu_addr[6:0] +: 8];
 wire [7:0] ps2_key_data_out = ps2_key[cpu_addr[3:0] +: 8];
 wire [7:0] ps2_mouse_data_out = ps2_mouse[cpu_addr[5:0] +: 8];
+wire [7:0] timestamp_data_out = timestamp[cpu_addr[5:0] +: 8];
 
 // CPU address decodes
 wire pgrom_cs = cpu_addr[15:14] == 2'b00;
@@ -169,8 +173,12 @@ wire paddle_cs = cpu_addr[15:8] == 8'b01110010;
 wire spinner_cs = cpu_addr[15:8] == 8'b01110011;
 wire ps2_key_cs = cpu_addr[15:8] == 8'b01110100;
 wire ps2_mouse_cs = cpu_addr[15:8] == 8'b01110101;
+wire timestamp_cs = cpu_addr[15:8] == 8'b01110110;
 
-// always @(posedge clk_sys) begin
+// always @(posedge timestamp[32]) begin
+// 	$display("%b", timestamp);
+// end
+//always @(posedge clk_sys) begin
 // 	if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 // 	if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 // 	if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -181,7 +189,7 @@ wire ps2_mouse_cs = cpu_addr[15:8] == 8'b01110101;
 // 	 if(paddle_cs) $display("paddle %b", paddle_data_out);
 // 	if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
 // 	$display("%x", cpu_addr);
-// end
+//end
 
 // CPU data mux
 assign cpu_din = pgrom_cs ? pgrom_data_out :
@@ -196,6 +204,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 spinner_cs ? spinner_data_out :
 				 ps2_key_cs ? ps2_key_data_out :
 				 ps2_mouse_cs ? ps2_mouse_data_out :
+				 timestamp_cs ? timestamp_data_out :
 				 8'b00000000;
 
 // Rom upload write enables
