@@ -13,9 +13,6 @@ cd ..
 od -An -t x1 -v src/os.bin > verilator/rom.hex
 od -An -t x1 -v src/os.bin > verilator/x64/Release/rom.hex
 od -An -t x1 -v src/os.bin > rtl/rom.hex
-od -An -t x1 -v MiSTer.pf > verilator/font.hex
-od -An -t x1 -v MiSTer.pf > verilator/x64/Release/font.hex
-od -An -t x1 -v MiSTer.pf > rtl/font.hex
-
-
-
+od -An -t x1 -v PETSCII.pf > verilator/font.hex
+od -An -t x1 -v PETSCII.pf > verilator/x64/Release/font.hex
+od -An -t x1 -v PETSCII.pf > rtl/font.hex

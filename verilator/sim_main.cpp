@@ -348,7 +348,7 @@ int main(int argc, char** argv, char** env) {
 		// Video window
 		ImGui::Begin(windowTitle_Video);
 		ImGui::SetWindowPos(windowTitle_Video, ImVec2(550, 0), ImGuiCond_Once);
-		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 16, (VGA_HEIGHT * VGA_SCALE_Y) + 90), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 32, (VGA_HEIGHT * VGA_SCALE_Y) + 90), ImGuiCond_Once);
 
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);

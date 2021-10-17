@@ -46,7 +46,7 @@ bool con_cursor;
 unsigned char con_cursortimer = 1;
 unsigned char con_cursorfreq = 30;
 unsigned char con_fgcol = 0b00000110;
-unsigned char con_bgcol = 0b10100100;
+unsigned char con_bgcol = 0;
 
 // Initialise console
 void init_console()
@@ -71,7 +71,7 @@ void console()
 	handle_ps2();
 
 	// As soon as vblank is detected start drawing screen updates
-	if (vblank && !vblank_last)
+	if (VBLANK_RISING)
 	{
 
 		// Check keyboard buffer for console write
@@ -142,23 +142,6 @@ void console()
 	}
 }
 
-char vbar_colors1[] = {
-	0b11111111,
-	0b00111111,
-	0b11111000,
-	0b00111000,
-	0b11000111,
-	0b00000111,
-	0b11000000};
-char vbar_colors2[] = {
-	0b10100100,
-	0b00100100,
-	0b10100000,
-	0b00100000,
-	0b10000100,
-	0b00000100,
-	0b10000000};
-
 // Main entry and state machine
 void main()
 {
@@ -166,13 +149,12 @@ void main()
 
 	init_console();
 
-	// char x = 2;
-	// for (char c = 0; c < sizeof(vbar_colors1); c++)
-	// {
-	// 	fill_bgcol(x, 1, x + 5, 15, vbar_colors1[c]);
-	// 	fill_bgcol(x, 16, x + 5, 30, vbar_colors2[c]);
-	// 	x += 5;
-	// }
+	panel(0, 0, 39, 2, 0b00000100);
+	panel(0, 3, 39, 29, 0b00000100);
+
+	draw_charactermap();
+
+	char button_last = 0;
 
 	while (1)
 	{
@@ -182,6 +164,17 @@ void main()
 		vblank = input0 & 0x10;
 
 		console();
+
+		if (HBLANK_RISING)
+		{
+			char button = CHECK_BIT(joystick[0], 0);
+			if (CHECK_BIT(joystick[0], 0) && !button_last)
+			{
+				charmapstart += 32;
+				draw_charactermap();
+			}
+			button_last = button;
+		}
 
 		// if (vblank && !vblank_last)
 		// {
