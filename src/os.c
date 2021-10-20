@@ -22,18 +22,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "sys.c"
-#include "ui.c"
-#include "ps2.c"
 
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+#include "sys.c"
+//#include "sys_custom.c"
+#include "ps2.c"
+#include "ui.c"
+//#include "ui_custom.c"
 
 // Console
 unsigned char con_x;	  // Console cursor X position
@@ -142,6 +136,8 @@ void console()
 	}
 }
 
+char charmapstart = 0;
+
 // Main entry and state machine
 void main()
 {
@@ -152,9 +148,9 @@ void main()
 	panel(0, 0, 39, 2, 0b00000100);
 	panel(0, 3, 39, 29, 0b00000100);
 
-	draw_charactermap();
+	// draw_charactermap();
 
-	char button_last = 0;
+	// char button_last = 0;
 
 	while (1)
 	{
@@ -165,23 +161,22 @@ void main()
 
 		console();
 
-		if (HBLANK_RISING)
-		{
-			char button = CHECK_BIT(joystick[0], 0);
-			if (CHECK_BIT(joystick[0], 0) && !button_last)
-			{
-				charmapstart += 32;
-				draw_charactermap();
-			}
-			button_last = button;
-		}
-
-		// if (vblank && !vblank_last)
+		// if (HBLANK_RISING)
 		// {
-		// 	// 	color++;
-		// 	// 	fill(0,0,39,29, 127, color);
-		// 	//			color = scolor++;
+		// 	char button = CHECK_BIT(joystick[0], 0);
+		// 	if (CHECK_BIT(joystick[0], 0) && !button_last)
+		// 	{
+		// 		charmapstart += 32;
+		// 		draw_charactermap();
+		// 	}
+		// 	button_last = button;
 		// }
+
+		if (VBLANK_RISING)
+		{
+			unsigned short ms = GET_TIMER;
+			write_stringf_ushort("%6d", 0xFF, 0, 0, ms);
+		}
 
 		hsync_last = hsync;
 		vsync_last = vsync;

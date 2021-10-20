@@ -84,28 +84,28 @@ SimClock clk_sys(1);
 
 // VCD trace logging
 // -----------------
-VerilatedVcdC* tfp = new VerilatedVcdC; //Trace
-bool Trace = 0;
-char Trace_Deep[3] = "99";
-char Trace_File[30] = "sim.vcd";
-char Trace_Deep_tmp[3] = "99";
-char Trace_File_tmp[30] = "sim.vcd";
-int  iTrace_Deep_tmp = 99;
-char SaveModel_File_tmp[20] = "test", SaveModel_File[20] = "test";
-
-//Trace Save/Restore
-void save_model(const char* filenamep) {
-	VerilatedSave os;
-	os.open(filenamep);
-	os << main_time; // user code must save the timestamp, etc
-	os << *top;
-}
-void restore_model(const char* filenamep) {
-	VerilatedRestore os;
-	os.open(filenamep);
-	os >> main_time;
-	os >> *top;
-}
+//VerilatedVcdC* tfp = new VerilatedVcdC; //Trace
+//bool Trace = 0;
+//char Trace_Deep[3] = "99";
+//char Trace_File[30] = "sim.vcd";
+//char Trace_Deep_tmp[3] = "99";
+//char Trace_File_tmp[30] = "sim.vcd";
+//int  iTrace_Deep_tmp = 99;
+//char SaveModel_File_tmp[20] = "test", SaveModel_File[20] = "test";
+//
+////Trace Save/Restore
+//void save_model(const char* filenamep) {
+//	VerilatedSave os;
+//	os.open(filenamep);
+//	os << main_time; // user code must save the timestamp, etc
+//	os << *top;
+//}
+//void restore_model(const char* filenamep) {
+//	VerilatedRestore os;
+//	os.open(filenamep);
+//	os >> main_time;
+//	os >> *top;
+//}
 
 
 // Reset simulation variables and clocks
@@ -137,10 +137,10 @@ int verilate() {
 				bus.BeforeEval();
 			}
 			top->eval();
-			if (Trace) {
-				if (!tfp->isOpen()) tfp->open(Trace_File);
-				tfp->dump(main_time); //Trace
-			}
+			//if (Trace) {
+			//	if (!tfp->isOpen()) tfp->open(Trace_File);
+			//	tfp->dump(main_time); //Trace
+			//}
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
@@ -174,9 +174,9 @@ int main(int argc, char** argv, char** env) {
 	Verilated::commandArgs(argc, argv);
 
 	//Prepare for Dump Signals
-	Verilated::traceEverOn(true); //Trace
-	top->trace(tfp, 1);// atoi(Trace_Deep) );  // Trace 99 levels of hierarchy
-	if (Trace) tfp->open(Trace_File);//"simx.vcd"); //Trace
+	//Verilated::traceEverOn(true); //Trace
+	//top->trace(tfp, 1);// atoi(Trace_Deep) );  // Trace 99 levels of hierarchy
+	//if (Trace) tfp->open(Trace_File);//"simx.vcd"); //Trace
 
 #ifdef WIN32
 	// Attach debug console to the verilated code
@@ -302,47 +302,48 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("FGCOLRAM Editor");
 		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__fgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		ImGui::Begin("BGCOLRAM Editor");
+		/*ImGui::Begin("BGCOLRAM Editor");
 		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		ImGui::End();
 		if (ImGui::Button("Start VCD Export")) { Trace = 1; } ImGui::SameLine();
 		if (ImGui::Button("Stop VCD Export")) { Trace = 0; } ImGui::SameLine();
 		if (ImGui::Button("Flush VCD Export")) { tfp->flush(); } ImGui::SameLine();
-		ImGui::Checkbox("Export VCD", &Trace);
+		ImGui::Checkbox("Export VCD", &Trace);*/
 
 		// File Dialog to load rom 
-		if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-			ImGui::PushItemWidth(120);
-		if (ImGui::InputInt("Deep Level", &iTrace_Deep_tmp, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-		{
-			// action if OK
-			if (ImGuiFileDialog::Instance()->IsOk())
-			{
-				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				// action
-				bus.QueueDownload(filePathName, 0, true);
-			}
-			top->trace(tfp, iTrace_Deep_tmp);
-		}
+		//if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+
+		//ImGui::PushItemWidth(120);
+		//if (ImGui::InputInt("Deep Level", &iTrace_Deep_tmp, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+		//{
+		//	// action if OK
+		//	if (ImGuiFileDialog::Instance()->IsOk())
+		//	{
+		//		std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+		//		std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+		//		// action
+		//		bus.QueueDownload(filePathName, 0, true);
+		//	}
+		//	top->trace(tfp, iTrace_Deep_tmp);
+		//}
 
 		// close
-		ImGuiFileDialog::Instance()->Close();
-		if (ImGui::InputText("TraceFilename", Trace_File_tmp, IM_ARRAYSIZE(Trace_File), ImGuiInputTextFlags_EnterReturnsTrue))
-		{
-			strcpy(Trace_File, Trace_File_tmp); //TODO onChange Close and open new trace file
-			tfp->close();
-			if (Trace) tfp->open(Trace_File);
-		};
-		ImGui::Separator();
-		if (ImGui::Button("Save Model")) { save_model(SaveModel_File); } ImGui::SameLine();
-		if (ImGui::Button("Load Model")) {
-			restore_model(SaveModel_File);
-		} ImGui::SameLine();
-		if (ImGui::InputText("SaveFilename", SaveModel_File_tmp, IM_ARRAYSIZE(SaveModel_File), ImGuiInputTextFlags_EnterReturnsTrue))
-		{
-			strcpy(SaveModel_File, SaveModel_File_tmp); //TODO onChange Close and open new trace file
-		}
+		//ImGuiFileDialog::Instance()->Close();
+		//if (ImGui::InputText("TraceFilename", Trace_File_tmp, IM_ARRAYSIZE(Trace_File), ImGuiInputTextFlags_EnterReturnsTrue))
+		//{
+		//	strcpy(Trace_File, Trace_File_tmp); //TODO onChange Close and open new trace file
+		//	tfp->close();
+		//	if (Trace) tfp->open(Trace_File);
+		//};
+		//ImGui::Separator();
+		//if (ImGui::Button("Save Model")) { save_model(SaveModel_File); } ImGui::SameLine();
+		//if (ImGui::Button("Load Model")) {
+		//	restore_model(SaveModel_File);
+		//} ImGui::SameLine();
+		//if (ImGui::InputText("SaveFilename", SaveModel_File_tmp, IM_ARRAYSIZE(SaveModel_File), ImGuiInputTextFlags_EnterReturnsTrue))
+		//{
+		//	strcpy(SaveModel_File, SaveModel_File_tmp); //TODO onChange Close and open new trace file
+		//}
 		ImGui::End();
 
 		// Video window
@@ -377,8 +378,8 @@ int main(int argc, char** argv, char** env) {
 		//top->joystick_4 = top->joystick_0;
 		//top->joystick_5 = top->joystick_0;
 
-		top->joystick_analog_0 += 1;
-		top->joystick_analog_0 -= 256;
+		/*top->joystick_analog_0 += 1;
+		top->joystick_analog_0 -= 256;*/
 		//top->joystick_analog_1 -= 1;
 		//top->joystick_analog_1 += 256;
 		//top->joystick_analog_2 += 1;

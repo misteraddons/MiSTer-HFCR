@@ -2,8 +2,8 @@
 	Aznable OS - System interface functions
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.0
-	Date: 2021-07-12
+	Version: 1.1
+	Date: 2021-10-20
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -65,6 +65,8 @@ bool vblank_last;
 #define VSYNC_RISING (vsync && !vsync_last)
 #define HBLANK_RISING (hblank && !hblank_last)
 #define HSYNC_RISING (hsync && !hsync_last)
+
+#define GET_TIMER ((unsigned short)timer[1] << 8) | (unsigned char)timer[0]
 
 // Application state
 char state = 0;
