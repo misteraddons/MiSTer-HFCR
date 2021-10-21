@@ -25,7 +25,7 @@ A simple bespoke (i.e. I made it up with no real plan) 8-bit system with a 40x30
    - paddle_5->0 from HPS (48 bytes, read-only)
    - spinner_5->0 from HPS (96 bytes, read-only)
    - ps2_key from HPS (11 bytes, read-only)
-   - ps2_mouse from HPS (48 bytes, combination of ps2_mouse and ps2_mouseext with some padding to align bytes) - currently unused
+   - ps2_mouse from HPS (48 bytes, combination of ps2_mouse and ps2_mouseext with some padding to align bytes)
    - timestamp from HPS (33 bytes, read-only)
  - Hardware millisecond resolution timer (16 bytes read/write)
 
@@ -34,16 +34,16 @@ Start|End|Length|Name
 ---|---|---|---
 0x0000|0x3FFF|0x4000|Program ROM
 0x4000|0x47FF|0x0800|Char ROM
-0x6000|0x6000|0x0001|System inputs (video signals)
-0x7000|0x70BF|0x00C0|Joystick inputs
-0x7100|0x715F|0x0060|Analog left inputs
-0x7200|0x725F|0x0060|Analog right inputs
-0x7300|0x732F|0x0030|Paddle inputs
-0x7400|0x745F|0x0060|Spinner inputs
-0x7500|0x750B|0x000C|PS2 keyboard input
-0x7600|0x762F|0x0030|PS2 mouse input
-0x7700|0x7720|0x0021|Timestamp
-0x7800|0x7810|0x0011|Timer
+0x7000|0x7000|0x0001|System inputs (video signals)
+0x7100|0x71BF|0x00C0|Joystick inputs
+0x7200|0x725F|0x0060|Analog left inputs
+0x7300|0x735F|0x0060|Analog right inputs
+0x7400|0x742F|0x0030|Paddle inputs
+0x7500|0x755F|0x0060|Spinner inputs
+0x7600|0x760B|0x000C|PS2 keyboard input
+0x7700|0x772F|0x0030|PS2 mouse input
+0x7800|0x7820|0x0021|Timestamp
+0x7900|0x7910|0x0011|Timer
 0x8000|0x87FF|0x0800|Char RAM
 0x8800|0x8FFF|0x0800|Colour RAM
 0xC000|0xFFFF|0x4000|Work RAM

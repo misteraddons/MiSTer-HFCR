@@ -161,16 +161,21 @@ void main()
 
 		console();
 
-		// if (HBLANK_RISING)
-		// {
-		// 	char button = CHECK_BIT(joystick[0], 0);
-		// 	if (CHECK_BIT(joystick[0], 0) && !button_last)
-		// 	{
-		// 		charmapstart += 32;
-		// 		draw_charactermap();
-		// 	}
-		// 	button_last = button;
-		// }
+		if (HBLANK_RISING)
+		{
+			// for (int b = 0; b < 8; b++)
+			// {
+			// 	char pressed = CHECK_BIT(joystick[0], b);
+			// 	write_stringf("%d", 0xFF, 5, 5 + b, pressed);
+			// }
+			// 	char button = CHECK_BIT(joystick[0], 0);
+			// 	if (CHECK_BIT(joystick[0], 0) && !button_last)
+			// 	{
+			// 		charmapstart += 32;
+			// 		draw_charactermap();
+			// 	}
+			// 	button_last = button;
+		}
 
 		if (VBLANK_RISING)
 		{

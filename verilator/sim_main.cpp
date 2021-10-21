@@ -391,29 +391,29 @@ int main(int argc, char** argv, char** env) {
 		//top->joystick_analog_5 -= 1;
 		//top->joystick_analog_5 += 256;
 
-		top->paddle_0 += 1;
+		//top->paddle_0 += 1;
 		//top->paddle_1 -= 1;
 		//top->paddle_2 += 1;
 		//top->paddle_3 -= 1;
 		//top->paddle_4 += 1;
 		//top->paddle_5 -= 1;
 
-		if (input.inputs[0] || input.inputs[1]) {
-			spinner_toggle = !spinner_toggle;
-			top->spinner_0 = (input.inputs[0]) ? 16 : -16;
-			for (char b = 8; b < 16; b++) {
-				top->spinner_0 &= ~(1UL << b);
-			}
-			if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
-		}
+		//if (input.inputs[0] || input.inputs[1]) {
+		//	spinner_toggle = !spinner_toggle;
+		//	top->spinner_0 = (input.inputs[0]) ? 16 : -16;
+		//	for (char b = 8; b < 16; b++) {
+		//		top->spinner_0 &= ~(1UL << b);
+		//	}
+		//	if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
+		//}
 		//top->spinner_1 -= 1;
 		//top->spinner_2 += 1;
 		//top->spinner_3 -= 1;
 		//top->spinner_4 += 1;
 		//top->spinner_5 -= 1;
 
-		top->ps2_mouse += 1;
-		top->ps2_mouse_ext -= 1;
+		//top->ps2_mouse += 1;
+		//top->ps2_mouse_ext -= 1;
 
 		// Run simulation
 		if (run_enable) {

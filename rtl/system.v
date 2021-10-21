@@ -161,16 +161,17 @@ wire chram_cs = cpu_addr[15:11] == 5'b10000;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10001;
 wire bgcolram_cs = cpu_addr[15:11] == 5'b10010;
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
-wire in0_cs = cpu_addr == 16'h6000;
-wire joystick_cs = cpu_addr[15:8] == 8'b01110000;
-wire analog_l_cs = cpu_addr[15:8] == 8'b01110001;
-wire analog_r_cs = cpu_addr[15:8] == 8'b01110010;
-wire paddle_cs = cpu_addr[15:8] == 8'b01110011;
-wire spinner_cs = cpu_addr[15:8] == 8'b01110100;
-wire ps2_key_cs = cpu_addr[15:8] == 8'b01110101;
-wire ps2_mouse_cs = cpu_addr[15:8] == 8'b01110110;
-wire timestamp_cs = cpu_addr[15:8] == 8'b01110111;
-wire timer_cs = cpu_addr[15:8] == 8'b01111000;
+wire [7:0] memory_map_addr = cpu_addr[15:8];
+wire in0_cs = memory_map_addr == 8'b01110000;
+wire joystick_cs = memory_map_addr == 8'b01110001;
+wire analog_l_cs = memory_map_addr == 8'b01110010;
+wire analog_r_cs = memory_map_addr == 8'b01110011;
+wire paddle_cs = memory_map_addr == 8'b01110100;
+wire spinner_cs = memory_map_addr == 8'b01110101;
+wire ps2_key_cs = memory_map_addr == 8'b01110110;
+wire ps2_mouse_cs = memory_map_addr == 8'b01110111;
+wire timestamp_cs = memory_map_addr == 8'b01111000;
+wire timer_cs = memory_map_addr == 8'b01111001;
 
 //always @(posedge timestamp[32]) begin
 // 	$display("%b", timestamp);
@@ -244,6 +245,11 @@ charmap #() casval
 	.b(charmap_b),
 	.a(charmap_a)
 );
+
+// Comet - sprite engine
+
+
+
 
 // RGB mixer
 assign VGA_R = {{2{charmap_r}},2'b0};
