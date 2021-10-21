@@ -102,25 +102,6 @@ timer #(16,15,24000) ms_timer
 	.counter(timer)
 );
 
-// Character map
-wire [3:0] chpos_x = 4'd7 - hcnt[2:0];
-wire [2:0] chpos_y = vcnt[2:0];
-wire [5:0] chram_x = hcnt[8:3];
-wire [5:0] chram_y = vcnt[8:3];
-wire [11:0] chram_addr = {chram_y, chram_x};
-wire [11:0] chrom_addr = {1'b0, chmap_data_out[7:0], chpos_y};
-wire chpixel = chrom_data_out[chpos_x[2:0]];
-
-// RGB mixer
-wire [2:0] r_temp = chpixel ? fgcolram_data_out[2:0] : bgcolram_data_out[2:0];
-wire [2:0] g_temp = chpixel ? fgcolram_data_out[5:3] : bgcolram_data_out[5:3];
-wire [1:0] b_temp = chpixel ? fgcolram_data_out[7:6] : bgcolram_data_out[7:6];
-
-// Convert RGb to 24bpp
-assign VGA_R = {{2{r_temp}},2'b0};
-assign VGA_G = {{2{g_temp}},2'b0};
-assign VGA_B = {{3{b_temp}},2'b0};
-
 // CPU control signals
 wire [15:0] cpu_addr;
 wire [7:0] cpu_din;
@@ -239,6 +220,36 @@ wire chram_wr = !cpu_wr_n && chram_cs;
 wire fgcolram_wr = !cpu_wr_n && fgcolram_cs;
 wire bgcolram_wr = !cpu_wr_n && bgcolram_cs;
 
+// Casval - character map
+wire [11:0] chram_addr;
+wire [11:0] chrom_addr;
+wire [2:0]	charmap_r;
+wire [2:0]	charmap_g;
+wire [1:0]	charmap_b;
+wire		charmap_a;
+charmap #() casval
+(
+	.clk(clk_sys),
+	.reset(reset),
+	.hcnt(hcnt),
+	.vcnt(vcnt),
+	.chrom_data_out(chrom_data_out),
+	.fgcolram_data_out(fgcolram_data_out),
+	.bgcolram_data_out(bgcolram_data_out),
+	.chmap_data_out(chmap_data_out),
+	.chram_addr(chram_addr),
+	.chrom_addr(chrom_addr),
+	.r(charmap_r),
+	.g(charmap_g),
+	.b(charmap_b),
+	.a(charmap_a)
+);
+
+// RGB mixer
+assign VGA_R = {{2{charmap_r}},2'b0};
+assign VGA_G = {{2{charmap_g}},2'b0};
+assign VGA_B = {{3{charmap_b}},2'b0};
+
 
 // MEMORY
 // ------
@@ -259,7 +270,7 @@ dpram #(14,8, "rom.hex") pgrom
 	.q_b()
 );
 
-// Char ROM - 0x4000 - 0x47FF (0x0400 / 2048 bytes)
+// Char ROM - 0x4000 - 0x47FF (0x0800 / 2048 bytes)
 dpram #(11,8, "font.hex") chrom
 (
 	.clock_a(clk_sys),
@@ -275,8 +286,7 @@ dpram #(11,8, "font.hex") chrom
 	.q_b()
 );
 
-
-// Char RAM - 0x8000 - 0x87FF (0x0800 / 2048 bytes)
+// Char index RAM - 0x8000 - 0x87FF (0x0800 / 2048 bytes)
 dpram #(11,8) chram
 (
 	.clock_a(clk_sys),
