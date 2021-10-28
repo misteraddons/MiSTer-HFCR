@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "sys.c"
 //#include "sys_custom.c"
@@ -50,7 +51,7 @@ void init_console()
 	clear_bgcolor(con_bgcol);
 
 	// Write title
-	write_string(" -- AZNABLE OS --", con_fgcol, 0, 1);
+	write_string(" AZNABLE | SPRITE-TEST", con_fgcol, 0, 1);
 
 	// Reset console cursor
 	con_x = con_l + 1;
@@ -138,6 +139,9 @@ void console()
 
 char charmapstart = 0;
 
+unsigned short x[16];
+unsigned short y[16];
+
 // Main entry and state machine
 void main()
 {
@@ -148,9 +152,19 @@ void main()
 	panel(0, 0, 39, 2, 0b00000100);
 	panel(0, 3, 39, 29, 0b00000100);
 
-	// draw_charactermap();
+	unsigned char sprite_max = 16;
+	unsigned char sprite_active = 2;
 
-	// char button_last = 0;
+	for (unsigned char c = 0; c < sprite_max; c++)
+	{
+		x[c] = (unsigned char)rand() + 16;
+		y[c] = (unsigned char)rand() + 16;
+	}
+
+	// x[15] = 320;
+	// y[15] = 240;
+
+	char move_last[4];
 
 	while (1)
 	{
@@ -163,24 +177,43 @@ void main()
 
 		if (HBLANK_RISING)
 		{
-			// for (int b = 0; b < 8; b++)
-			// {
-			// 	char pressed = CHECK_BIT(joystick[0], b);
-			// 	write_stringf("%d", 0xFF, 5, 5 + b, pressed);
-			// }
-			// 	char button = CHECK_BIT(joystick[0], 0);
-			// 	if (CHECK_BIT(joystick[0], 0) && !button_last)
-			// 	{
-			// 		charmapstart += 32;
-			// 		draw_charactermap();
-			// 	}
-			// 	button_last = button;
+			if (CHECK_BIT(joystick[0], 0) && !move_last[0] && sprite_active < sprite_max)
+			{
+				sprite_active++;
+			}
+			if (CHECK_BIT(joystick[0], 1) && !move_last[1] && sprite_active > 0)
+			{
+				sprite_active--;
+			}
+			for (char j = 0; j < 4; j++)
+			{
+				move_last[j] = CHECK_BIT(joystick[0], j);
+			}
 		}
 
 		if (VBLANK_RISING)
 		{
-			unsigned short ms = GET_TIMER;
-			write_stringf_ushort("%6d", 0xFF, 0, 0, ms);
+			unsigned short t1 = GET_TIMER;
+
+			unsigned char image = 0;
+			unsigned char s = 0;
+			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+			{
+
+				spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
+				spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
+				spriteram[s++] = image << 4 | x[sprite] >> 8;							  // Sprite Index (4 bits) + Position X (upper 4 bits)
+				spriteram[s++] = (unsigned char)x[sprite];								  // Position X (lower 8 bits)
+
+				image++;
+				if (image == 4)
+				{
+					image = 0;
+				}
+			}
+			unsigned short t2 = GET_TIMER;
+
+			write_stringf_ushort("%d", 0xFF, 5, 5, t2 - t1);
 		}
 
 		hsync_last = hsync;

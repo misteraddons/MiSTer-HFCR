@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 /*============================================================================
-	Aznable (custom 8-bit computer system) - Generic timer
+	Aznable (custom 8-bit computer system) - Casval (character map)
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
@@ -20,8 +20,7 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-module charmap #(
-)(
+module charmap (
 	input	clk,
 	input	reset,
 	input	[8:0] hcnt,

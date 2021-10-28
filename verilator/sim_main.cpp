@@ -58,9 +58,10 @@ const int input_start = 11;
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 240
 #define VGA_ROTATE 0  // 90 degrees anti-clockwise
-#define VGA_SCALE_X 2.0
-#define VGA_SCALE_Y 2.0
+#define VGA_SCALE_X vga_scale
+#define VGA_SCALE_Y vga_scale
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
+float vga_scale = 2.0;
 
 // Simulation control
 // ------------------
@@ -161,9 +162,10 @@ int verilate() {
 	return 0;
 }
 
-char ps2_scancode = 0;
-char ps2_toggle = 0;
-char ps2_timer = 0;
+unsigned char mouse_clock = 0;
+unsigned char mouse_buttons = 0;
+unsigned char mouse_x = 0;
+unsigned char mouse_y = 0;
 
 char spinner_toggle = 0;
 
@@ -281,34 +283,51 @@ int main(int argc, char** argv, char** env) {
 		console.Draw(windowTitle_DebugLog, &showDebugLog, ImVec2(500, 700));
 		ImGui::SetWindowPos(windowTitle_DebugLog, ImVec2(0, 160), ImGuiCond_Once);
 
-
-		// Trace/VCD window
-		ImGui::Begin(windowTitle_Trace);
-		ImGui::SetWindowPos(windowTitle_Trace, ImVec2(0, 870), ImGuiCond_Once);
-		ImGui::SetWindowSize(windowTitle_Trace, ImVec2(500, 150), ImGuiCond_Once);
-
-		/*ImGui::Begin("PGROM Editor");
+		// Memory debug
+				/*ImGui::Begin("PGROM Editor");
 		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 16384, 0);
 		ImGui::End();
 		ImGui::Begin("CHROM Editor");
 		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
 		ImGui::End();*/
-		ImGui::Begin("WKRAM Editor");
+		/*ImGui::Begin("WKRAM Editor");
 		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
 		ImGui::End();
-		//ImGui::Begin("CHRAM Editor");
+		*///ImGui::Begin("CHRAM Editor");
 		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		//ImGui::Begin("FGCOLRAM Editor");
 		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__fgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		/*ImGui::Begin("BGCOLRAM Editor");
-		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
+		//ImGui::Begin("BGCOLRAM Editor");
+		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
+		//ImGui::End();
+		ImGui::Begin("Sprite RAM");
+		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
 		ImGui::End();
-		if (ImGui::Button("Start VCD Export")) { Trace = 1; } ImGui::SameLine();
-		if (ImGui::Button("Stop VCD Export")) { Trace = 0; } ImGui::SameLine();
-		if (ImGui::Button("Flush VCD Export")) { tfp->flush(); } ImGui::SameLine();
-		ImGui::Checkbox("Export VCD", &Trace);*/
+		ImGui::Begin("Sprite Linebuffer RAM");
+		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
+		ImGui::End();
+		//ImGui::Begin("Palette ROM");
+		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
+		//ImGui::End();
+		ImGui::Begin("Sprite ROM");
+		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
+		ImGui::End();
+		//ImGui::Begin("Character ROM");
+		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
+		//ImGui::End();
+
+
+		// Trace/VCD window
+		//ImGui::Begin(windowTitle_Trace);
+		//ImGui::SetWindowPos(windowTitle_Trace, ImVec2(0, 870), ImGuiCond_Once);
+		//ImGui::SetWindowSize(windowTitle_Trace, ImVec2(500, 150), ImGuiCond_Once);
+
+		//if (ImGui::Button("Start VCD Export")) { Trace = 1; } ImGui::SameLine();
+		//if (ImGui::Button("Stop VCD Export")) { Trace = 0; } ImGui::SameLine();
+		//if (ImGui::Button("Flush VCD Export")) { tfp->flush(); } ImGui::SameLine();
+		//ImGui::Checkbox("Export VCD", &Trace);
 
 		// File Dialog to load rom 
 		//if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
@@ -344,13 +363,14 @@ int main(int argc, char** argv, char** env) {
 		//{
 		//	strcpy(SaveModel_File, SaveModel_File_tmp); //TODO onChange Close and open new trace file
 		//}
-		ImGui::End();
+		//ImGui::End();
 
 		// Video window
 		ImGui::Begin(windowTitle_Video);
 		ImGui::SetWindowPos(windowTitle_Video, ImVec2(550, 0), ImGuiCond_Once);
-		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 32, (VGA_HEIGHT * VGA_SCALE_Y) + 90), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 24, (VGA_HEIGHT * VGA_SCALE_Y) + 114), ImGuiCond_Once);
 
+		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8);
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
@@ -359,10 +379,6 @@ int main(int argc, char** argv, char** env) {
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));
 		ImGui::End();
-
-		//ImGui::Begin("RAM Editor");
-		//memoryEditor_hs.DrawContents(top->top__DOT__uut__DOT__hs_ram__DOT__mem, 64, 0);
-		//ImGui::End();
 
 		video.UpdateTexture();
 
@@ -412,8 +428,18 @@ int main(int argc, char** argv, char** env) {
 		//top->spinner_4 += 1;
 		//top->spinner_5 -= 1;
 
-		//top->ps2_mouse += 1;
-		//top->ps2_mouse_ext -= 1;
+		/*mouse_buttons += 1;
+		mouse_x += 1;
+		mouse_y -= 1;
+		unsigned long mouse_temp = mouse_buttons;	
+		mouse_temp += (mouse_x << 8);
+		mouse_temp += (mouse_y << 16);
+		if (mouse_clock) { mouse_temp |= (1UL << 24); }
+
+		mouse_clock = !mouse_clock;*/
+
+		//top->ps2_mouse = mouse_temp;
+		top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
 
 		// Run simulation
 		if (run_enable) {
