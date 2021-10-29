@@ -23,7 +23,7 @@ namespace rommaker
 
             Palette.Add(Color.FromArgb(0,0,0,0));
 
-            foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\").OrderByDescending(x=>x))
+            foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\"))
             {
                 Bitmap img = (Bitmap)Bitmap.FromFile(image);
                 for (int y = 0; y < img.Height; y++)
@@ -49,7 +49,7 @@ namespace rommaker
                                 throw new Exception("too many colours");
                             }
                             Palette.Add(c);
-                            Console.WriteLine($"Adding to palette: {pi}, {c}");
+                            Console.WriteLine($"Adding to palette: {image} - {pi}, {c}");
                         }
 
                         // Write palette index to sprite rom

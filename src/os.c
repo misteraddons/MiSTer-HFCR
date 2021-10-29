@@ -154,6 +154,7 @@ void main()
 
 	unsigned char sprite_max = 16;
 	unsigned char sprite_active = 2;
+	unsigned char image_count = 6;
 
 	for (unsigned char c = 0; c < sprite_max; c++)
 	{
@@ -173,7 +174,7 @@ void main()
 		hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
-		console();
+		//console();
 
 		if (HBLANK_RISING)
 		{
@@ -206,7 +207,7 @@ void main()
 				spriteram[s++] = (unsigned char)x[sprite];								  // Position X (lower 8 bits)
 
 				image++;
-				if (image == 4)
+				if (image == image_count)
 				{
 					image = 0;
 				}

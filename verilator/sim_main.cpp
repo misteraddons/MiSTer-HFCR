@@ -33,6 +33,7 @@ DebugConsole console;
 MemoryEditor mem_edit_1;
 MemoryEditor mem_edit_2;
 MemoryEditor mem_edit_3;
+MemoryEditor mem_edit_4;
 // HPS emulator
 // ------------
 SimBus bus(console);
@@ -303,16 +304,16 @@ int main(int argc, char** argv, char** env) {
 		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		ImGui::Begin("Sprite RAM");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
+		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
 		ImGui::End();
 		ImGui::Begin("Sprite Linebuffer RAM");
-		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
+		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
 		ImGui::End();
-		//ImGui::Begin("Palette ROM");
-		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
-		//ImGui::End();
+		ImGui::Begin("Palette ROM");
+		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
+		ImGui::End();
 		ImGui::Begin("Sprite ROM");
-		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
+		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
 		ImGui::End();
 		//ImGui::Begin("Character ROM");
 		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
@@ -373,6 +374,7 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8);
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
+
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 

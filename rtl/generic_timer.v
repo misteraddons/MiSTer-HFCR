@@ -20,7 +20,7 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-module timer #(
+module generic_timer #(
 	parameter COUNTER_WIDTH = 16,
 	parameter DIVIDER_WIDTH = 15,
 	parameter INTERVAL = 15'd24000

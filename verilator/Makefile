@@ -56,8 +56,9 @@ V_SRC = \
         sim.v \
         $(RTL)/system.v \
         $(RTL)/charmap.v \
-        $(RTL)/timer.v \
+        $(RTL)/generic_timer.v \
         $(RTL)/dpram.v  \
+        $(RTL)/dpram_w1r2.v  \
         $(RTL)/spram.v  \
 		$(RTL)/JTFRAME/jtframe_vtimer.v \
 		$(RTL)/JTFRAME/jtframe_cen24.v \
