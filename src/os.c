@@ -51,7 +51,7 @@ void init_console()
 	clear_bgcolor(con_bgcol);
 
 	// Write title
-	write_string(" AZNABLE | SPRITE-TEST", con_fgcol, 0, 1);
+	write_string("SPRITE-TEST", con_fgcol, 1, 1);
 
 	// Reset console cursor
 	con_x = con_l + 1;
@@ -153,7 +153,7 @@ void main()
 	panel(0, 3, 39, 29, 0b00000100);
 
 	unsigned char sprite_max = 16;
-	unsigned char sprite_active = 2;
+	unsigned char sprite_active = 15;
 	unsigned char image_count = 6;
 
 	for (unsigned char c = 0; c < sprite_max; c++)

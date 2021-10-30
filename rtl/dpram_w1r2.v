@@ -30,7 +30,7 @@ module dpram_w1r2 #(
 	input	wire	[data_width-1:0]		data_a,
 
 	input	wire							clock_b,
-	input	wire	[address_width-2:0]		address_b,
+	input	wire	[address_width-1:0]		address_b,
 	output	reg		[(data_width*2)-1:0]	q_b
 );
 
@@ -53,7 +53,7 @@ always @(posedge clock_a) begin
 end
 
 always @(posedge clock_b) begin
-	q_b <= {mem[{address_b, 1'b1}], mem[{address_b, 1'b0}]};
+	q_b <= {mem[address_b], mem[address_b + 1'b1]};
 end
 
 endmodule

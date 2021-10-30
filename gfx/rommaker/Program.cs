@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace rommaker
 {
@@ -25,7 +26,7 @@ namespace rommaker
 
             foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\"))
             {
-                Bitmap img = (Bitmap)Bitmap.FromFile(image);
+                Bitmap img = new(image);
                 for (int y = 0; y < img.Height; y++)
                 {
                     for (int x = 0; x < img.Width; x++)
@@ -44,12 +45,17 @@ namespace rommaker
                         if (pi == -1)
                         {
                             pi = Palette.Count;
-                            if (pi > 16)
+                            if (pi == 16)
                             {
-                                throw new Exception("too many colours");
+                                //   throw new Exception("too many colours");
+                                Console.WriteLine($"Palette full: {image} - {pi}, {c}");
+                                pi = 0;
                             }
-                            Palette.Add(c);
-                            Console.WriteLine($"Adding to palette: {image} - {pi}, {c}");
+                            else
+                            {
+                                Palette.Add(c);
+                                Console.WriteLine($"Adding to palette: {image} - {pi}, {c}");
+                            }
                         }
 
                         // Write palette index to sprite rom
@@ -72,15 +78,23 @@ namespace rommaker
             }
             using (FileStream paletteStream = File.OpenWrite(palettePath))
             {
-                using (BinaryWriter paletteWriter = new(paletteStream))
+                using (BinaryWriter paletteWriter = new(paletteStream, Encoding.BigEndianUnicode))
                 {
                     for (int p = 0; p < Palette.Count; p++)
                     {
-                        ushort color = Palette[p].A;
-                        color += (ushort)(Palette[p].R << 5);
-                        color += (ushort)(Palette[p].G << 10);
-                        color += (ushort)(Palette[p].G << 15);
-                        paletteWriter.Write(color);
+                        ushort a = (ushort)(Palette[p].A == 255 ? 1 : 0);
+
+                        ushort color = (ushort)((Palette[p].R /8) |
+                                               ((Palette[p].G /8) << 5) |
+                                               ((Palette[p].B /8) << 10) |
+                                                 a << 15);
+
+                        byte high = (byte)(color >> 8);
+                        byte low = (byte)color;
+
+                        Console.WriteLine($"{p} - {Palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
+                        paletteWriter.Write(high);
+                        paletteWriter.Write(low);
                     }
                 }
             }

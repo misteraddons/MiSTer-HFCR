@@ -268,14 +268,15 @@ reg [9:0] spritelbram_wr_addr;
 reg spritelbram_wr;
 reg spritelb_slot_rd;
 reg spritelb_slot_wr = 1'b1;
-reg [3:0] spritelbram_data_in;
-wire [3:0] spritelbram_data_out;
+reg [15:0] spritelbram_data_in;
+wire [15:0] spritelbram_data_out;
 reg [4:0] palrom_addr;
 
-parameter SE_IDLE = 0;
-parameter SE_WAIT = 1;
-parameter SE_RESET = 2;
-parameter SE_CLEAR_BUFFER = 3;
+parameter SE_INIT = 0;
+parameter SE_IDLE = 1;
+parameter SE_WAIT = 2;
+parameter SE_RESET = 3;
+parameter SE_CLEAR_BUFFER = 4;
 parameter SE_SETUP_READ_Y = 5;
 parameter SE_READ_Y_UPPER = 6;
 parameter SE_READ_Y_LOWER = 7;
@@ -286,6 +287,7 @@ parameter SE_SETUP_WRITE = 11;
 parameter SE_GET_PIXEL = 12;
 parameter SE_STAGE_PIXEL = 13;
 parameter SE_WRITE_PIXEL = 14;
+parameter SE_LINE_COMPLETE = 15;
 
 
 reg vsync_last;
@@ -310,6 +312,7 @@ reg [4:0] spr_pixel_count;
 reg [10:0] spr_rom_offset;
 
 reg [16:0] idle_timer;
+reg [16:0] spr_linetime_max;
 reg [16:0] spr_counter;
 reg [16:0] spr_counter2;
 
@@ -321,6 +324,12 @@ begin
 
 	hsync_last <= VGA_HS;
 	case (spr_state)
+		SE_INIT:
+		begin
+			spr_linetime_max <= 17'd1;
+			spr_state <= SE_IDLE;
+		end
+
 		SE_IDLE:
 		begin
 			// Wait for hsync to go high outside of reset
@@ -330,7 +339,7 @@ begin
 				spritelb_slot_wr <= spritelb_slot_wr + 1'b1;
 				spr_active_y <= ({6'b0,vcnt} + spr_size_y) + 16'd1;
 				spr_state <= SE_RESET;
-				//$display("LEAVING SE_IDLE: %d %d", idle_timer, spr_counter, spr_counter2);
+				//$display("LEAVING SE_IDLE: idle_timer = %d, spr_linetime_max=%d", idle_timer, spr_linetime_max);
 				idle_timer <= 17'b0;
 				spr_counter2 <= 17'b0;
 			end
@@ -358,7 +367,7 @@ begin
 			begin
 				spr_pixel_index <= spr_pixel_index + 1'b1;
 				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
-				spritelbram_data_in <= 4'b0;
+				spritelbram_data_in <= 16'b0;
 			end
 			else
 			begin
@@ -407,8 +416,8 @@ begin
 				// If no then move to next sprite or finish
 				if(spr_index == spr_index_max)
 				begin
-					//$display("MOVING TO IDLE FROM CHECK_Y: %d", spr_counter);
-					spr_state <= SE_IDLE;
+					//$display("MOVING TO SE_LINE_COMPLETE FROM CHECK_Y: %d", spr_counter);
+					spr_state <= SE_LINE_COMPLETE;
 				end
 				else
 				begin
@@ -443,7 +452,7 @@ begin
 		SE_SETUP_WRITE:
 		begin
 			//$display("STARTING SPRITE WRITE: %d", spr_counter);
-			$display("SE_SETUP_WRITE: AY: %d   Y: %d   X: %d   I: %d   O: %d", spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_offset);
+			//$display("SE_SETUP_WRITE: AY: %d   Y: %d   X: %d   I: %d   O: %d", spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_offset);
 			// Begin to write sprite line from ROM to linebuffer
 			// - Setup initial address
 			spritelbram_wr <= 1'b0;
@@ -451,7 +460,8 @@ begin
 		 	sprom_addr <= { spr_image_index[2:0], 8'b0} + {spr_rom_offset[6:0], 4'b0};
 		 	spr_pixel_index <= 5'b0;
 		 	spr_pixel_count <= spr_size_x[4:0];
-		 	spr_state <= SE_GET_PIXEL;
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_GET_PIXEL;
 		end
 		SE_GET_PIXEL:
 		begin
@@ -460,7 +470,7 @@ begin
 		 		// Move to next sprite or finish
 		 		if(spr_index == spr_index_max)
 		 		begin
-		 			spr_state <= SE_IDLE;
+		 			spr_state <= SE_LINE_COMPLETE;
 		 		end
 		 		else
 		 		begin
@@ -472,8 +482,8 @@ begin
 			begin
 				spritelbram_wr <= 1'b0;
 				// Get pixel colour from Palette read
-				$display("SE_GET_PIXEL: p: %d/%d i: %d, sprom_addr < %x, palrom_addr < %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, spriterom_data_out);
-				palrom_addr <= spriterom_data_out[4:0];	
+				//$display("SE_GET_PIXEL: p: %d/%d i: %d, sprom_addr < %x, palrom_addr < %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, {spriterom_data_out[3:0],1'b0});
+				palrom_addr <= spriterom_data_out[4:0];
 				sprom_addr <= sprom_addr + 1'b1;
 				spr_state <= SE_WAIT;
 				spr_state_next <= SE_STAGE_PIXEL;
@@ -483,36 +493,62 @@ begin
 
 		SE_STAGE_PIXEL:
 		begin
-			// Get pixel colour from palette rom and stage input to line buffer
-			$display("SE_STAGE_PIXEL: p: %d/%d i: %d, spritelbram_data_in < %x", spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
-			spritelbram_wr <= 1'b1;
-			spritelbram_data_in <= palrom_data_out[3:0];
-			spr_state <= SE_WRITE_PIXEL;
+			// Get pixel colour from palette rom
+			if(palrom_data_out[15])
+			begin
+				//$display("SE_STAGE_PIXEL: p: %d/%d i: %d, spritelbram_data_in < %x", spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
+				// If palette colour alpha is high, stage input to line buffer
+				spritelbram_wr <= 1'b1;
+				spritelbram_data_in <= palrom_data_out;
+				spr_state <= SE_WRITE_PIXEL;
+			end
+			else
+			begin
+				// Pixel is transparent so move to next
+				spr_state <= SE_GET_PIXEL;
+				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
+				spr_pixel_index <= spr_pixel_index + 1'b1;
+			end
 			//$display("pixel: %d/%d index: %d  sprom_addr: %x  spriterom_data_out: %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, spriterom_data_out);
 		end
 
 		SE_WRITE_PIXEL:
 		begin
 			// Get pixel colour from palette rom and stage input to line buffer
-			$display("SE_WRITE_PIXEL: p: %d/%d i: %d, spritelbram_wr_addr < %x, spritelbram_data_in=%x", spr_pixel_index, spr_pixel_count, spr_image_index, spritelbram_wr_addr, spritelbram_data_in);
+			//$display("SE_WRITE_PIXEL: p: %d/%d i: %d, spritelbram_wr_addr < %x, spritelbram_data_in=%b", spr_pixel_index, spr_pixel_count, spr_image_index, spritelbram_wr_addr, spritelbram_data_in);
 			spr_pixel_index <= spr_pixel_index + 1'b1;
 			spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
 			spritelbram_wr <= 1'b0;
 			spr_state <= SE_GET_PIXEL;
 			//$display("pixel: %d/%d index: %d  sprom_addr: %x  spriterom_data_out: %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, spriterom_data_out);
 		end
+
+		SE_LINE_COMPLETE:
+		begin
+			//$display("SE_LINE_COMPLETE: counter=%d", spr_counter2);
+			if(spr_counter2 > spr_linetime_max)
+			begin
+				spr_linetime_max <= spr_counter2;
+			end
+			spr_state <= SE_IDLE;
+		end
 	endcase
+
+	if(spritelbram_data_out[15])
+	begin
+		$display("%d %d - %x - %x", hcnt, vcnt, spritelbram_rd_addr, spritelbram_data_out);
+	end
 end
 
 assign spritelbram_rd_addr = ({spritelb_slot_rd, hcnt + spr_size_x[8:0]}) + 10'd2;
+wire [7:0] spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
+wire [7:0] spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
+wire [7:0] spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
 
 // RGB mixer
-assign VGA_R = {{2{charmap_r}},2'b0};
-//assign VGA_G = {{2{charmap_g}},2'b0};
-assign VGA_G = spritelbram_data_out > 0 ? {spritelbram_data_out[3:0],4'b0} : 8'h0;
-//assign VGA_B = {{3{charmap_b}},2'b0};
-assign VGA_B = spritelbram_data_out > 0 ? 8'hFF : 8'h0;
-
+assign VGA_R = spritelbram_data_out[15] ? spr_r : {{2{charmap_r}},2'b0};
+assign VGA_G = spritelbram_data_out[15] ? spr_g : {{2{charmap_g}},2'b0};
+assign VGA_B = spritelbram_data_out[15] ? spr_b : {{3{charmap_b}},2'b0};
 
 // MEMORY
 // ------
@@ -614,7 +650,7 @@ dpram #(7,8) spriteram
 );
 
 // Sprite linebuffer RAM - 0xB800 - 0xB900 (0x0100 / 256 bytes)
-dpram #(10,4) spritelbram
+dpram #(10,16) spritelbram
 (
 	.clock_a(clk_sys),
 	.address_a(spritelbram_wr_addr),
@@ -648,7 +684,7 @@ dpram_w1r2 #(5,8, "palette.hex") palrom
 	.data_a(dn_data),
 
 	.clock_b(clk_sys),
-	.address_b(palrom_addr[3:0]),
+	.address_b(palrom_addr),
 	.q_b(palrom_data_out)
 );
 
