@@ -56,6 +56,7 @@ V_SRC = \
         sim.v \
         $(RTL)/system.v \
         $(RTL)/charmap.v \
+        $(RTL)/sprite_engine.v \
         $(RTL)/generic_timer.v \
         $(RTL)/dpram.v  \
         $(RTL)/dpram_w1r2.v  \

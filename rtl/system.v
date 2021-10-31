@@ -205,10 +205,6 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 wire [7:0] pgrom_data_out;
 wire [7:0] chrom_data_out;
 
-// ROM data not available to CPU
-wire [15:0] palrom_data_out;
-wire [7:0] spriterom_data_out;
-
 // RAM data available to CPU
 wire [7:0] wkram_data_out;
 wire [7:0] chram_data_out;
@@ -257,292 +253,50 @@ charmap casval
 );
 
 // Comet - sprite engine
-reg [6:0] spriteram_addr;
-wire [7:0] spriteram_data_out;
-reg [10:0] sprom_addr;
-wire [9:0] spritelbram_rd_addr;
-reg [9:0] spritelbram_wr_addr;
-reg spritelbram_wr;
-reg spritelb_slot_rd;
-reg spritelb_slot_wr = 1'b1;
-reg [15:0] spritelbram_data_in;
-wire [15:0] spritelbram_data_out;
-reg [4:0] palrom_addr;
+wire [10:0]	sprom_addr;
+wire [7:0]	spriterom_data_out;
+wire [4:0]	palrom_addr;
+wire [15:0]	palrom_data_out;
+wire [6:0]	spriteram_addr;
+wire [7:0]	spriteram_data_out;
+wire [9:0]	spritelbram_rd_addr;
+wire [9:0]	spritelbram_wr_addr;
+wire 		spritelbram_wr;
+wire [15:0]	spritelbram_data_in;
+wire [15:0]	spritelbram_data_out;
+wire [7:0]	spr_r;
+wire [7:0]	spr_g;
+wire [7:0]	spr_b;
+wire 		spr_a;
+sprite_engine comet
+(
+	.clk(clk_sys),
+	.reset(reset),
+	.hsync(VGA_HS),
+	.hcnt(hcnt),
+	.vcnt(vcnt),
+	.spriterom_data_out(spriterom_data_out),
+	.spriteram_data_out(spriteram_data_out),
+	.palrom_data_out(palrom_data_out),
+	.spritelbram_data_out(spritelbram_data_out),
+	.spriteram_addr(spriteram_addr),
+	.sprom_addr(sprom_addr),
+	.palrom_addr(palrom_addr),
+	.spritelbram_rd_addr(spritelbram_rd_addr),
+	.spritelbram_wr_addr(spritelbram_wr_addr),
+	.spritelbram_wr(spritelbram_wr),
+	.spritelbram_data_in(spritelbram_data_in),
+	.spr_r(spr_r),
+	.spr_g(spr_g),
+	.spr_b(spr_b),
+	.spr_a(spr_a)
+);
 
-parameter SE_INIT = 0;
-parameter SE_IDLE = 1;
-parameter SE_WAIT = 2;
-parameter SE_RESET = 3;
-parameter SE_CLEAR_BUFFER = 4;
-parameter SE_SETUP_READ_Y = 5;
-parameter SE_READ_Y_UPPER = 6;
-parameter SE_READ_Y_LOWER = 7;
-parameter SE_CHECK_Y = 8;
-parameter SE_READ_X_UPPER = 9;
-parameter SE_READ_X_LOWER = 10;
-parameter SE_SETUP_WRITE = 11;
-parameter SE_GET_PIXEL = 12;
-parameter SE_STAGE_PIXEL = 13;
-parameter SE_WRITE_PIXEL = 14;
-parameter SE_LINE_COMPLETE = 15;
-
-
-reg vsync_last;
-reg hsync_last;
-reg [3:0] spr_state;
-reg [3:0] spr_state_next;
-reg [3:0] spr_index;
-localparam spr_index_max = 4'd15;
-localparam spr_size_x = 16'd15;
-localparam spr_size_y = 16'd15;
-localparam spr_ram_item_width = 4;
-localparam spr_line_max = 352;
-reg [15:0] spr_y;
-reg [15:0] spr_x;
-reg spr_enable;
-reg [3:0] spr_image_index;
-reg [15:0] spr_active_y;
-reg [4:0] spr_pixel_index;
-reg [4:0] spr_pixel_count;
-reg [10:0] spr_rom_offset;
-
-reg [16:0] idle_timer;
-reg [16:0] spr_linetime_max;
-reg [16:0] spr_counter;
-reg [16:0] spr_counter2;
-
-always @(posedge clk_sys)
-begin
-
-	spr_counter <= spr_counter + 1'b1;
-	spr_counter2 <= spr_counter2 + 1'b1;
-
-	hsync_last <= VGA_HS;
-	case (spr_state)
-		SE_INIT:
-		begin
-			spr_linetime_max <= 17'd1;
-			spr_state <= SE_IDLE;
-		end
-
-		SE_IDLE:
-		begin
-			// Wait for hsync to go high outside of reset
-			if(reset == 1'b0 && VGA_HS == 1'b1 && hsync_last == 1'b0)
-			begin
-				spritelb_slot_rd <= spritelb_slot_rd + 1'b1;
-				spritelb_slot_wr <= spritelb_slot_wr + 1'b1;
-				spr_active_y <= ({6'b0,vcnt} + spr_size_y) + 16'd1;
-				spr_state <= SE_RESET;
-				//$display("LEAVING SE_IDLE: idle_timer = %d, spr_linetime_max=%d", idle_timer, spr_linetime_max);
-				idle_timer <= 17'b0;
-				spr_counter2 <= 17'b0;
-			end
-			else
-			begin
-				idle_timer <= idle_timer + 1'b1;
-			end
-		end
-		SE_WAIT:
-		begin
-			spr_state <= spr_state_next;
-		end
-		SE_RESET:
-		begin
-			// Reset sprite index
-			spr_index <= 4'd0;
-			//$display("STARTING RESET: %d", spr_counter);
-			spr_state <= SE_CLEAR_BUFFER;
-			spritelbram_wr_addr <= {spritelb_slot_wr, 9'b0};
-			spritelbram_wr <= 1'b1;
-		end
-		SE_CLEAR_BUFFER:
-		begin
-			if(spritelbram_wr_addr[8:0] < spr_line_max[8:0])
-			begin
-				spr_pixel_index <= spr_pixel_index + 1'b1;
-				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
-				spritelbram_data_in <= 16'b0;
-			end
-			else
-			begin
-				spritelbram_wr <= 1'b0;
-				spr_state <= SE_SETUP_READ_Y;
-			end
-		end
-		SE_SETUP_READ_Y:
-		begin
-			// Setup address to read Y from sprite RAM
-			spriteram_addr <= spr_index * spr_ram_item_width;
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_READ_Y_UPPER;
-		end
-		SE_READ_Y_UPPER:
-		begin
-			// Read enable bit from sprite RAM
-			spr_enable <= spriteram_data_out[7];
-			// Read Y upper 4 bits from sprite RAM
-			spr_y[11:8] <= spriteram_data_out[3:0];
-			//$display("SE_READ_Y_UPPER: spr: %d  addr=%x  dout=%x", spr_index, spriteram_addr, spriteram_data_out);
-			spriteram_addr <= spriteram_addr + 1'b1;
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_READ_Y_LOWER;
-		end
-		SE_READ_Y_LOWER:
-		begin
-			// Read Y lower 8 bits from sprite RAM
-			spr_y[7:0] <= spriteram_data_out;
-			//$display("SE_READ_Y_LOWER:  spr: %d  addr=%x dout=%x", spr_index, spriteram_addr, spriteram_data_out);
-			spriteram_addr <= spriteram_addr + 1'b1;
-			spr_state <= SE_CHECK_Y;
-		end
-		SE_CHECK_Y:
-		begin
-			//$display("SE_CHECK_Y: spr_index=%d  y: %d", spr_index, spr_y);
-			// If this sprite is enabled and current line is within sprite Y area
-			if(spr_enable==1'b1 && spr_active_y >= spr_y && spr_active_y <= spr_y + spr_size_y)
-			begin
-				//$display("SE_CHECK_Y PASSED: spr_index=%d", spr_index);
-				spr_state <= SE_READ_X_UPPER;
-			end
-			else
-			begin
-				// If no then move to next sprite or finish
-				if(spr_index == spr_index_max)
-				begin
-					//$display("MOVING TO SE_LINE_COMPLETE FROM CHECK_Y: %d", spr_counter);
-					spr_state <= SE_LINE_COMPLETE;
-				end
-				else
-				begin
-					//$display("MOVING TO NEXT SPRITE FROM CHECK_Y: %d", spr_counter);
-					spr_index <= spr_index + 1'd1;
-					spr_state <= SE_SETUP_READ_Y;
-				end
-			end
-		end
-
-		SE_READ_X_UPPER:
-		begin
-			// Read image index 4 bits from sprite RAM
-			spr_image_index <= spriteram_data_out[7:4];
-			// Read Y upper 4 bits from sprite RAM
-			spr_x[11:8] <= spriteram_data_out[3:0];
-			//$display("SE_READ_X_UPPER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
-			spriteram_addr <= spriteram_addr + 1'b1;
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_READ_X_LOWER;
-		end
-		SE_READ_X_LOWER:
-		begin
-			// Read Y lower 8 bits from sprite RAM
-			spr_x[7:0] <= spriteram_data_out;
-			//$display("SE_READ_X_LOWER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
-			spr_state <= SE_SETUP_WRITE;
-			// Setup sprom_address
-			spr_rom_offset <= spr_active_y[10:0] - spr_y[10:0];
-		end
-
-		SE_SETUP_WRITE:
-		begin
-			//$display("SE_SETUP_WRITE: AY: %d   Y: %d   X: %d   I: %d   O: %d", spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_offset);
-			// Begin to write sprite line from ROM to linebuffer
-			// - Setup initial address
-			spritelbram_wr <= 1'b0;
-		 	spritelbram_wr_addr <= {spritelb_slot_wr, spr_x[8:0]};
-		 	sprom_addr <= { spr_image_index[2:0], 8'b0} + {spr_rom_offset[6:0], 4'b0};
-		 	spr_pixel_index <= 5'b0;
-		 	spr_pixel_count <= spr_size_x[4:0];
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_GET_PIXEL;
-		end
-		SE_GET_PIXEL:
-		begin
-			if(spr_pixel_index > spr_pixel_count)
-		 	begin
-		 		// Move to next sprite or finish
-		 		if(spr_index == spr_index_max)
-		 		begin
-		 			spr_state <= SE_LINE_COMPLETE;
-		 		end
-		 		else
-		 		begin
-		 			spr_index <= spr_index + 1'd1;
-		 			spr_state <= SE_SETUP_READ_Y;
-		 		end
-		 	end
-			else
-			begin
-				spritelbram_wr <= 1'b0;
-				// Get pixel colour from Palette read
-				//$display("SE_GET_PIXEL: y: %d, x: %d/%d i: %d, sprom_addr < %x, palrom_addr < %x", spr_y, spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
-				palrom_addr <= {spriterom_data_out[3:0],1'b0};
-				sprom_addr <= sprom_addr + 1'b1;
-				spr_state <= SE_WAIT;
-				spr_state_next <= SE_STAGE_PIXEL;
-				// spr_state <= SE_STAGE_PIXEL;
-			end
-		end
-
-		SE_STAGE_PIXEL:
-		begin
-			// Get pixel colour from palette rom
-			if(palrom_data_out[15])
-			begin
-				//$display("SE_STAGE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_data_in < %x", spr_y,spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
-				// If palette colour alpha is high, stage input to line buffer
-				spritelbram_wr <= 1'b1;
-				spritelbram_data_in <= palrom_data_out;
-				spr_state <= SE_WRITE_PIXEL;
-			end
-			else
-			begin		
-				//$display("SE_STAGE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_data_in < %x - FAIL ALPHA  CHECK", spr_y,spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
-				// Pixel is transparent so move to next
-				spr_state <= SE_GET_PIXEL;
-				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
-				spr_pixel_index <= spr_pixel_index + 1'b1;
-			end
-			//$display("pixel: %d/%d index: %d  sprom_addr: %x  spriterom_data_out: %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, spriterom_data_out);
-		end
-
-		SE_WRITE_PIXEL:
-		begin
-			// Get pixel colour from palette rom and stage input to line buffer
-			//$display("SE_WRITE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_wr_addr < %x, spritelbram_data_in=%b", spr_y, spr_pixel_index, spr_pixel_count, spr_image_index, spritelbram_wr_addr, spritelbram_data_in);
-			spr_pixel_index <= spr_pixel_index + 1'b1;
-			spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
-			spritelbram_wr <= 1'b0;
-			spr_state <= SE_GET_PIXEL;
-			//$display("pixel: %d/%d index: %d  sprom_addr: %x  spriterom_data_out: %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, spriterom_data_out);
-		end
-
-		SE_LINE_COMPLETE:
-		begin
-			//$display("SE_LINE_COMPLETE: counter=%d", spr_counter2);
-			if(spr_counter2 > spr_linetime_max)
-			begin
-				spr_linetime_max <= spr_counter2;
-			end
-			spr_state <= SE_IDLE;
-		end
-	endcase
-
-	// if(spritelbram_data_out>16'b0)
-	// begin
-	// 	$display("%d %d - %x - %b", hcnt, vcnt, spritelbram_rd_addr, spritelbram_data_out);
-	// end
-end
-
-assign spritelbram_rd_addr = ({spritelb_slot_rd, (hcnt + 1'b1) + spr_size_x[8:0]}) + 10'd2;
-wire [7:0] spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
-wire [7:0] spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
-wire [7:0] spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
 
 // RGB mixer
-assign VGA_R = spritelbram_data_out[15] ? spr_r : {{2{charmap_r}},2'b0};
-assign VGA_G = spritelbram_data_out[15] ? spr_g : {{2{charmap_g}},2'b0};
-assign VGA_B = spritelbram_data_out[15] ? spr_b : {{3{charmap_b}},2'b0};
+assign VGA_R = spr_a ? spr_r : {{2{charmap_r}},2'b0};
+assign VGA_G = spr_a ? spr_g : {{2{charmap_g}},2'b0};
+assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
 
 // MEMORY
 // ------
@@ -579,7 +333,7 @@ dpram #(11,8, "font.hex") chrom
 	.q_b()
 );
 
-// Char index RAM - 0x9800 - 0xA000 (0x0800 / 2048 bytes)
+// Char index RAM - 0x9800 - 0x9FFF (0x0800 / 2048 bytes)
 dpram #(11,8) chram
 (
 	.clock_a(clk_sys),
@@ -595,7 +349,7 @@ dpram #(11,8) chram
 	.q_b(chmap_data_out)
 );
 
-// Char foreground color RAM - 0xA000 - 0xA800 (0x0800 / 2048 bytes)
+// Char foreground color RAM - 0xA000 - 0xA7FF (0x0800 / 2048 bytes)
 dpram #(11,8) fgcolram
 (
 	.clock_a(clk_sys),
@@ -611,7 +365,7 @@ dpram #(11,8) fgcolram
 	.q_b(fgcolram_data_out)
 );
 
-// Char background color RAM - 0xA800 - 0xB000 (0x0800 / 2048 bytes)
+// Char background color RAM - 0xA800 - 0xAFFF (0x0800 / 2048 bytes)
 dpram #(11,8) bgcolram
 (
 	.clock_a(clk_sys),
@@ -627,7 +381,7 @@ dpram #(11,8) bgcolram
 	.q_b(bgcolram_data_out)
 );
 
-// Sprite RAM - 0xB000 - 0xB080 (0x0080 / 128 bytes)
+// Sprite RAM - 0xB000 - 0xB07F (0x0080 / 128 bytes)
 dpram #(7,8) spriteram
 (
 	.clock_a(clk_sys),
@@ -643,7 +397,7 @@ dpram #(7,8) spriteram
 	.q_b(spriteram_data_out)
 );
 
-// Sprite linebuffer RAM - 0xB800 - 0xB900 (0x0100 / 256 bytes)
+// Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)
 dpram #(10,16) spritelbram
 (
 	.clock_a(clk_sys),
@@ -669,7 +423,7 @@ spram #(14,8) wkram
 	.q(wkram_data_out)
 );
 
-// Palette ROM - 0x10000 - 0x10020 (0x0020 / 32 bytes)
+// Palette ROM - 0x10000 - 0x1001F (0x0020 / 32 bytes)
 dpram_w1r2 #(5,8, "palette.hex") palrom
 (
 	.clock_a(clk_sys),
