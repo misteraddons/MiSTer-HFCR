@@ -181,9 +181,6 @@ always @(posedge clk_sys) begin
  	// $display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
 	//if(timer_cs) $display("timer %b", timer_data_out);
 end
-// always @(posedge ps2_mouse[24]) begin
-// 	$display("%b", ps2_mouse);
-// end
 
 // CPU data mux
 assign cpu_din = pgrom_cs ? pgrom_data_out :
@@ -296,7 +293,6 @@ reg [3:0] spr_state;
 reg [3:0] spr_state_next;
 reg [3:0] spr_index;
 localparam spr_index_max = 4'd15;
-localparam spr_bytes_per_image = 128;
 localparam spr_size_x = 16'd15;
 localparam spr_size_y = 16'd15;
 localparam spr_ram_item_width = 4;
@@ -305,7 +301,6 @@ reg [15:0] spr_y;
 reg [15:0] spr_x;
 reg spr_enable;
 reg [3:0] spr_image_index;
-reg [6:0] spr_address_base;
 reg [15:0] spr_active_y;
 reg [4:0] spr_pixel_index;
 reg [4:0] spr_pixel_count;
@@ -378,8 +373,7 @@ begin
 		SE_SETUP_READ_Y:
 		begin
 			// Setup address to read Y from sprite RAM
-			spr_address_base = spr_index * spr_ram_item_width;
-			spriteram_addr <= spr_address_base;
+			spriteram_addr <= spr_index * spr_ram_item_width;
 			spr_state <= SE_WAIT;
 			spr_state_next <= SE_READ_Y_UPPER;
 		end

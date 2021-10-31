@@ -209,7 +209,7 @@ localparam CONF_STR = {
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"-;",
 	"F0,BIN,Load BIOS;",
-	"F1,PF,Load Font;",
+	"F3,PF,Load Spite ROM;",
 	"-;",
 	"J1,A,B,X,Y,L,R,Select,Start,C,Z;",
 	"V,v",`BUILD_DATE

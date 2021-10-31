@@ -285,13 +285,6 @@ void fill(char tx, char ty, char bx, char by, char c, char color)
 		write_char_row(c, color, tx, y, (bx - tx) + 1);
 	}
 }
-void fill_bgcolor(char tx, char ty, char bx, char by, char bgcolor)
-{
-	for (char y = ty; y <= by; y++)
-	{
-		write_bgcol_row(bgcolor, tx, y, (bx - tx) + 1);
-	}
-}
 void fill_bgcol(char tx, char ty, char bx, char by, char color)
 {
 	for (char y = ty; y <= by; y++)

@@ -139,12 +139,18 @@ void console()
 }
 
 unsigned short x[16];
+unsigned short x_h[16];
 unsigned short y[16];
+signed char xs[16];
+unsigned short x_h_min;
+unsigned short x_h_max;
+
 unsigned char i[16];
 
 unsigned char sprite_max = 16;
 unsigned char sprite_active = 16;
 unsigned char image_count = 5;
+
 
 void setup_sprites()
 {
@@ -167,25 +173,23 @@ void main()
 
 	panel(0, 0, 39, 2, 0b00000100);
 	panel(0, 3, 39, 29, 0b00000100);
+	fill_bgcol(0,0,40,30, 0b01000000);
 
 	// setup sprites
-	char image = 0;
+
+	x_h_min = (unsigned short)(2*8);
+	x_h_max = (unsigned short)(336*8);
 	for (unsigned char c = 0; c < sprite_max; c++)
 	{
-		x[c] = (unsigned char)rand() + 16;
+		x_h[c] = ((unsigned char)rand() + 16) * 8;
 		y[c] = (unsigned char)rand() + 16;
-		i[c] = image++;
-		if (image == 3)
-		{
-			image = 0;
-		}
-		// i[c]=0;
+		xs[c] = (signed char)rand() / 16;
+		i[c] = 0;
 	}
 	setup_sprites();
 
-	char move_last[4];
-	float move_time = 0;
-	char frame_tick = 0;
+	// char move_last[4];
+	// float move_time = 0;
 	unsigned short t1;
 	unsigned short t2;
 
@@ -198,21 +202,21 @@ void main()
 
 		// console();
 
-		if (HBLANK_RISING)
-		{
-			if (CHECK_BIT(joystick[0], 0) && !move_last[0] && sprite_active < sprite_max)
-			{
-				sprite_active++;
-			}
-			if (CHECK_BIT(joystick[0], 1) && !move_last[1] && sprite_active > 0)
-			{
-				sprite_active--;
-			}
-			for (char j = 0; j < 4; j++)
-			{
-				move_last[j] = CHECK_BIT(joystick[0], j);
-			}
-		}
+		// if (HBLANK_RISING)
+		// {
+		// 	if (CHECK_BIT(joystick[0], 0) && !move_last[0] && sprite_active < sprite_max)
+		// 	{
+		// 		sprite_active++;
+		// 	}
+		// 	if (CHECK_BIT(joystick[0], 1) && !move_last[1] && sprite_active > 0)
+		// 	{
+		// 		sprite_active--;
+		// 	}
+		// 	for (char j = 0; j < 4; j++)
+		// 	{
+		// 		move_last[j] = CHECK_BIT(joystick[0], j);
+		// 	}
+		// }
 
 		if (VBLANK_RISING)
 		{
@@ -232,15 +236,14 @@ void main()
 
 		if (VBLANK_FALLING)
 		{
-			frame_tick++;
-			if (frame_tick == 8)
-			{
-				frame_tick = 0;
-			}
-
 			t1 = GET_TIMER;
 			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 			{
+				x_h[sprite] += xs[sprite];
+				if(x_h[sprite] < x_h_min ){ x_h[sprite] = x_h_max; }
+				if(x_h[sprite] > x_h_max ){ x_h[sprite] = x_h_min; }
+				x[sprite] = x_h[sprite] / 8;
+
 				if (y[sprite] == 256)
 				{
 					y[sprite] = 0;
@@ -249,24 +252,10 @@ void main()
 				{
 					y[sprite]++;
 				}
-
-				if (frame_tick == 0)
-				{
-					if (i[sprite] == 3)
-					{
-						i[sprite] = 1;
-					}
-					else
-					{
-						i[sprite]++;
-					}
-				}
 			}
 			t2 = GET_TIMER;
 			write_stringf_ushort("%4d", 0xFF, 5, 7, t2 - t1);
 		}
-
-		move_time += 0.01f;
 
 		hsync_last = hsync;
 		vsync_last = vsync;
