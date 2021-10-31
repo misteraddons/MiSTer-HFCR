@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "sys.c"
 //#include "sys_custom.c"
@@ -137,35 +138,56 @@ void console()
 	}
 }
 
-char charmapstart = 0;
-
 unsigned short x[16];
 unsigned short y[16];
+unsigned char i[16];
+
+unsigned char sprite_max = 16;
+unsigned char sprite_active = 16;
+unsigned char image_count = 5;
+
+void setup_sprites()
+{
+	unsigned char s = 0;
+	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+	{
+		spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
+		spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
+		spriteram[s++] = i[sprite] << 4 | x[sprite] >> 8;						  // Sprite Index (4 bits) + Position X (upper 4 bits)
+		spriteram[s++] = (unsigned char)x[sprite];								  // Position X (lower 8 bits)
+	}
+}
 
 // Main entry and state machine
 void main()
 {
 	chram_size = chram_cols * chram_rows;
 
-	init_console();
+	// init_console();
 
 	panel(0, 0, 39, 2, 0b00000100);
 	panel(0, 3, 39, 29, 0b00000100);
 
-	unsigned char sprite_max = 16;
-	unsigned char sprite_active = 15;
-	unsigned char image_count = 6;
-
+	// setup sprites
+	char image = 0;
 	for (unsigned char c = 0; c < sprite_max; c++)
 	{
 		x[c] = (unsigned char)rand() + 16;
 		y[c] = (unsigned char)rand() + 16;
+		i[c] = image++;
+		if (image == 3)
+		{
+			image = 0;
+		}
+		// i[c]=0;
 	}
-
-	// x[15] = 320;
-	// y[15] = 240;
+	setup_sprites();
 
 	char move_last[4];
+	float move_time = 0;
+	char frame_tick = 0;
+	unsigned short t1;
+	unsigned short t2;
 
 	while (1)
 	{
@@ -174,7 +196,7 @@ void main()
 		hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
-		//console();
+		// console();
 
 		if (HBLANK_RISING)
 		{
@@ -194,28 +216,57 @@ void main()
 
 		if (VBLANK_RISING)
 		{
-			unsigned short t1 = GET_TIMER;
-
-			unsigned char image = 0;
+			t1 = GET_TIMER;
 			unsigned char s = 0;
+			// for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+			// {
+			// 	spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
+			// 	spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
+			// 	s += 2;
+			// }
+			setup_sprites();
+			t2 = GET_TIMER;
+
+			write_stringf_ushort("%4d", 0xFF, 5, 5, t2 - t1);
+		}
+
+		if (VBLANK_FALLING)
+		{
+			frame_tick++;
+			if (frame_tick == 8)
+			{
+				frame_tick = 0;
+			}
+
+			t1 = GET_TIMER;
 			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 			{
-
-				spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
-				spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
-				spriteram[s++] = image << 4 | x[sprite] >> 8;							  // Sprite Index (4 bits) + Position X (upper 4 bits)
-				spriteram[s++] = (unsigned char)x[sprite];								  // Position X (lower 8 bits)
-
-				image++;
-				if (image == image_count)
+				if (y[sprite] == 256)
 				{
-					image = 0;
+					y[sprite] = 0;
+				}
+				else
+				{
+					y[sprite]++;
+				}
+
+				if (frame_tick == 0)
+				{
+					if (i[sprite] == 3)
+					{
+						i[sprite] = 1;
+					}
+					else
+					{
+						i[sprite]++;
+					}
 				}
 			}
-			unsigned short t2 = GET_TIMER;
-
-			write_stringf_ushort("%d", 0xFF, 5, 5, t2 - t1);
+			t2 = GET_TIMER;
+			write_stringf_ushort("%4d", 0xFF, 5, 7, t2 - t1);
 		}
+
+		move_time += 0.01f;
 
 		hsync_last = hsync;
 		vsync_last = vsync;

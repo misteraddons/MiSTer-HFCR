@@ -451,7 +451,6 @@ begin
 
 		SE_SETUP_WRITE:
 		begin
-			//$display("STARTING SPRITE WRITE: %d", spr_counter);
 			//$display("SE_SETUP_WRITE: AY: %d   Y: %d   X: %d   I: %d   O: %d", spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_offset);
 			// Begin to write sprite line from ROM to linebuffer
 			// - Setup initial address
@@ -482,8 +481,8 @@ begin
 			begin
 				spritelbram_wr <= 1'b0;
 				// Get pixel colour from Palette read
-				//$display("SE_GET_PIXEL: p: %d/%d i: %d, sprom_addr < %x, palrom_addr < %x", spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, {spriterom_data_out[3:0],1'b0});
-				palrom_addr <= spriterom_data_out[4:0];
+				//$display("SE_GET_PIXEL: y: %d, x: %d/%d i: %d, sprom_addr < %x, palrom_addr < %x", spr_y, spr_pixel_index, spr_pixel_count, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
+				palrom_addr <= {spriterom_data_out[3:0],1'b0};
 				sprom_addr <= sprom_addr + 1'b1;
 				spr_state <= SE_WAIT;
 				spr_state_next <= SE_STAGE_PIXEL;
@@ -496,14 +495,15 @@ begin
 			// Get pixel colour from palette rom
 			if(palrom_data_out[15])
 			begin
-				//$display("SE_STAGE_PIXEL: p: %d/%d i: %d, spritelbram_data_in < %x", spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
+				//$display("SE_STAGE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_data_in < %x", spr_y,spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
 				// If palette colour alpha is high, stage input to line buffer
 				spritelbram_wr <= 1'b1;
 				spritelbram_data_in <= palrom_data_out;
 				spr_state <= SE_WRITE_PIXEL;
 			end
 			else
-			begin
+			begin		
+				//$display("SE_STAGE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_data_in < %x - FAIL ALPHA  CHECK", spr_y,spr_pixel_index, spr_pixel_count, spr_image_index, palrom_data_out);
 				// Pixel is transparent so move to next
 				spr_state <= SE_GET_PIXEL;
 				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
@@ -515,7 +515,7 @@ begin
 		SE_WRITE_PIXEL:
 		begin
 			// Get pixel colour from palette rom and stage input to line buffer
-			//$display("SE_WRITE_PIXEL: p: %d/%d i: %d, spritelbram_wr_addr < %x, spritelbram_data_in=%b", spr_pixel_index, spr_pixel_count, spr_image_index, spritelbram_wr_addr, spritelbram_data_in);
+			//$display("SE_WRITE_PIXEL: y: %d, x: %d/%d i: %d, spritelbram_wr_addr < %x, spritelbram_data_in=%b", spr_y, spr_pixel_index, spr_pixel_count, spr_image_index, spritelbram_wr_addr, spritelbram_data_in);
 			spr_pixel_index <= spr_pixel_index + 1'b1;
 			spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
 			spritelbram_wr <= 1'b0;
@@ -534,13 +534,13 @@ begin
 		end
 	endcase
 
-	if(spritelbram_data_out[15])
-	begin
-		$display("%d %d - %x - %x", hcnt, vcnt, spritelbram_rd_addr, spritelbram_data_out);
-	end
+	// if(spritelbram_data_out>16'b0)
+	// begin
+	// 	$display("%d %d - %x - %b", hcnt, vcnt, spritelbram_rd_addr, spritelbram_data_out);
+	// end
 end
 
-assign spritelbram_rd_addr = ({spritelb_slot_rd, hcnt + spr_size_x[8:0]}) + 10'd2;
+assign spritelbram_rd_addr = ({spritelb_slot_rd, (hcnt + 1'b1) + spr_size_x[8:0]}) + 10'd2;
 wire [7:0] spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
 wire [7:0] spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
 wire [7:0] spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};

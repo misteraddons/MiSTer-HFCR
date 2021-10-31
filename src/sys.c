@@ -67,6 +67,10 @@ bool vblank_last;
 #define VSYNC_RISING (vsync && !vsync_last)
 #define HBLANK_RISING (hblank && !hblank_last)
 #define HSYNC_RISING (hsync && !hsync_last)
+#define VBLANK_FALLING (!vblank && vblank_last)
+#define VSYNC_FALLING (!vsync && vsync_last)
+#define HBLANK_FALLING (!hblank && hblank_last)
+#define HSYNC_FALLING (!hsync && hsync_last)
 
 #define GET_TIMER ((unsigned short)timer[1] << 8) | (unsigned char)timer[0]
 
