@@ -315,10 +315,6 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Begin("Sprite ROM");
 		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
 		ImGui::End();
-		//ImGui::Begin("Character ROM");
-		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
-		//ImGui::End();
-
 
 		// Trace/VCD window
 		//ImGui::Begin(windowTitle_Trace);

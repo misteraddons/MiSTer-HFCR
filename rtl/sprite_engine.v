@@ -76,7 +76,7 @@ reg [3:0] spr_index;
 localparam spr_index_max = 4'd15;
 localparam spr_size_x = 16'd15;
 localparam spr_size_y = 16'd15;
-localparam spr_ram_item_width = 4;
+localparam bit [6:0] spr_ram_item_width = 4;
 localparam spr_line_max = 352;
 reg [15:0] spr_y;
 reg [15:0] spr_x;
