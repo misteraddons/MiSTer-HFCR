@@ -6,17 +6,22 @@
 
 ## Hardware
 
-A simple bespoke (i.e. I made it up with no real plan) 8-bit system with a 40x30 character display, each character foreground and background colour can be set independently to one of 256 colours.  No sound capabilities whatsoever.  All relevant MiSTer inputs are mapped into memory regions for the CPU to access directly.  There is also a dedicated millisecond timer (runs 0-32677, resettable by writing to any bit of the address).
+A simple-ish bespoke (i.e. I made it up with no real plan) 8-bit system with a 40x30 character display (each character foreground and background colour can be set independently to one of 256 colours), and a hardware sprite system (32 sprites, 16 colour palette from 32768).  No sound capabilities whatsoever.  All relevant MiSTer inputs are mapped into memory regions for the CPU to access directly.  There is also a dedicated microsecond timer (runs 0-32677, resettable by writing to any bit of the address).
 
 ### Components
  - Z80 CPU (tv80 by Guy Hutchison, based on VHDL T80 core by Daniel Wallner)
  - jtframe_vtimer for VGA timing (from JTFRAME (https://github.com/jotego/jtframe) by Jotego)
  - jtframe_cen24 for clock enables (from JTFRAME (https://github.com/jotego/jtframe) by Jotego)
- - 16Kb program ROM (port 1 cpu, port 2 download)
+ - 32Kb program ROM (port 1 cpu, port 2 download)
  - 16Kb work RAM (port 1 cpu)
  - 2Kb character ROM (port 1 cpu, port 2 download)
- - 2Kb character RAM (port 1 cpu, port 2 graphics)
- - 2Kb colour RAM (port 1 cpu, port 2 graphics)
+ - 2Kb character RAM (port 1 cpu, port 2 charmap)
+ - 2Kb foreground colour RAM (port 1 cpu, port 2 graphics)
+ - 2Kb background colour RAM (port 1 cpu, port 2 graphics)
+ - 128b sprite register RAM (port 1 cpu, port 2 graphics)
+ - 2Kb sprite linebuffer RAM (port 1 write, port 2 read)
+ - 32b palette ROM (port 1 8-bit download, port 2 16-bit read)
+ - 2Kb sprite ROM (port graphics, port 2 download) 
  - 9 Memory-mapped IO regions.  _Yes I know about MREQ but SFRs turned out to be annoying in sdcc so :)_
    - Hardware state (H/V Sync, H/V Blank etc) (8 bytes, read-only)
    - joystick_5->0 from HPS (192 bytes, read-only)
@@ -27,7 +32,7 @@ A simple bespoke (i.e. I made it up with no real plan) 8-bit system with a 40x30
    - ps2_key from HPS (11 bytes, read-only)
    - ps2_mouse from HPS (48 bytes, combination of ps2_mouse and ps2_mouseext with some padding to align bytes)
    - timestamp from HPS (33 bytes, read-only)
- - Hardware millisecond resolution timer (16 bytes read/write)
+ - Hardware microsecond timer (16 bytes read/write)
 
 ### Memory Map
 Start|End|Length|Name
