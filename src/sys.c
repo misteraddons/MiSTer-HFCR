@@ -61,8 +61,8 @@ bool vblank_last;
 
 // Macros
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
-#define SET_BIT(var,pos) ((var) |= (1 << (pos)))
-#define CLEAR_BIT(var,pos) ((var) &= ~(1 << (pos)))
+#define SET_BIT(var, pos) ((var) |= (1 << (pos)))
+#define CLEAR_BIT(var, pos) ((var) &= ~(1 << (pos)))
 #define VBLANK_RISING (vblank && !vblank_last)
 #define VSYNC_RISING (vsync && !vsync_last)
 #define HBLANK_RISING (hblank && !hblank_last)
@@ -77,3 +77,14 @@ bool vblank_last;
 // Application state
 char state = 0;
 char nextstate = 0;
+
+// Helper functions
+unsigned char rand_uchar(unsigned char lower, unsigned char upper)
+{
+	return (rand() % (upper - lower + 1)) + lower;
+}
+
+signed char rand_schar(signed char lower, signed char upper)
+{
+	return (rand() % (upper - lower + 1)) + lower;
+}

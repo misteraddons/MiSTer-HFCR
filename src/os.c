@@ -30,172 +30,21 @@
 #include "ps2.c"
 #include "ui.c"
 //#include "ui_custom.c"
-
-// Console
-unsigned char con_x;	  // Console cursor X position
-unsigned char con_y;	  // Console cursor X position
-unsigned char con_l = 1;  // Console left edge X
-unsigned char con_t = 1;  // Console top edge Y
-unsigned char con_r = 38; // Console right edge X
-unsigned char con_b = 28; // Console bottom edge Y
-bool con_cursor;
-unsigned char con_cursortimer = 1;
-unsigned char con_cursorfreq = 30;
-unsigned char con_fgcol = 0b00000110;
-unsigned char con_bgcol = 0;
-
-// Initialise console
-void init_console()
-{
-	// Clear screen
-	clear_chars(0);
-	clear_bgcolor(con_bgcol);
-
-	// Write title
-	write_string("SPRITE-TEST", con_fgcol, 1, 1);
-
-	// Reset console cursor
-	con_x = con_l + 1;
-	con_y = con_t + 3;
-}
-
-// Console state
-void console()
-{
-
-	// Handle PS/2 inputs whenever possible to improve latency
-	handle_ps2();
-
-	// As soon as vblank is detected start drawing screen updates
-	if (VBLANK_RISING)
-	{
-
-		// Check keyboard buffer for console write
-		if (kbd_buffer_len > 0)
-		{
-			// Clear existing cursor if visible
-			if (con_cursor)
-			{
-				write_char(' ', con_fgcol, con_x, con_y);
-			}
-			// Write characters in buffer
-			for (char k = 0; k < kbd_buffer_len; k++)
-			{
-				if (kbd_buffer[k] == '\n')
-				{
-					// New line
-					con_x = con_l;
-					con_y++;
-					if (con_y > con_b)
-					{
-						// Wrap to top
-						con_y = con_t;
-					}
-				}
-				else if (kbd_buffer[k] == '\b')
-				{
-					// Backspace - only if not at beginning of line
-					if (con_x > con_l)
-					{
-						con_x--;
-						// Clear existing character
-						write_char(' ', con_fgcol, con_x, con_y);
-					}
-				}
-				else
-				{
-					// Write character
-					write_char(kbd_buffer[k], con_fgcol, con_x, con_y);
-					// Move cursor right
-					con_x++;
-					if (con_x > con_r)
-					{
-						// New line
-						con_x = con_l;
-						con_y++;
-						if (con_y > con_b)
-						{
-							// Wrap to top
-							con_y = con_t;
-						}
-					}
-				}
-			}
-			// Clear buffer and enable cursor
-			kbd_buffer_len = 0;
-			con_cursor = 0;
-			con_cursortimer = 1;
-		}
-
-		// Cursor blink timer
-		con_cursortimer--;
-		if (con_cursortimer <= 0)
-		{
-			con_cursor = !con_cursor;
-			con_cursortimer = con_cursorfreq;
-			write_char(con_cursor ? '|' : ' ', con_fgcol, con_x, con_y);
-		}
-	}
-}
-
-#define const_sprite_max 32
-unsigned char sprite_max = const_sprite_max;
-unsigned short x[const_sprite_max];
-unsigned short x_h[const_sprite_max];
-unsigned short y[const_sprite_max];
-signed char xs[const_sprite_max];
-bool active[const_sprite_max];
-unsigned char i[const_sprite_max];
-
-unsigned short x_h_min;
-unsigned short x_h_max;
-
-unsigned char image_count = 5;
-
-void setup_sprites()
-{
-	unsigned char s = 0;
-	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-	{
-		spriteram[s++] = (active[sprite] ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
-		spriteram[s++] = (unsigned char)y[sprite];						 // Position Y (lower 8 bits)
-		spriteram[s++] = i[sprite] << 4 | x[sprite] >> 8;				 // Sprite Index (4 bits) + Position X (upper 4 bits)
-		spriteram[s++] = (unsigned char)x[sprite];						 // Position X (lower 8 bits)
-	}
-}
-
-const signed char player_max_speed = 20;
-const unsigned char player_accel = 3;
-const unsigned char x_divisor = 16;
+#include "sprite.c"
+//#include "app_console.c"
+#include "app_meteorstorm.c"
 
 // Main entry and state machine
 void main()
 {
+	// Setup charmap
 	chram_size = chram_cols * chram_rows;
-
-	// init_console();
-
-	// panel(0, 0, 39, 2, 0b00000100);
-	// panel(0, 3, 39, 29, 0b00000100);
 	clear_bgcolor(0);
 	clear_chars(0);
 
-	// setup sprites
-	x_h_min = (unsigned short)(2 * x_divisor);
-	x_h_max = (unsigned short)(336 * x_divisor);
-	for (unsigned char c = 0; c < sprite_max; c++)
-	{
-		x_h[c] = ((unsigned char)rand() + 16) * x_divisor;
-		y[c] = (unsigned char)rand() + 16;
-		xs[c] = (signed char)rand() / 16;
-		i[c] = 0;
-		active[c] = true;
-	}
-
-	//
-	i[0] = 1;
-	x_h[0] = 160 * x_divisor;
-	y[0] = 216;
+	setup_area();
+	setup_meteors();
+	setup_player();
 
 	unsigned short t1;
 	unsigned short t2;
@@ -209,62 +58,35 @@ void main()
 
 		// console();
 
+
 		if (VBLANK_RISING)
 		{
+			unsigned char debug_y = 25;
 			t1 = GET_TIMER;
 			unsigned char s = 0;
-			setup_sprites();
+			update_sprites();
 			t2 = GET_TIMER;
-			write_stringf_ushort("s-upd: %4d us", 0xFF, 0, 28, t2 - t1);
+			write_stringf_ushort("spr: %4d us", 0xFF, 0, debug_y++, t2 - t1);
 		}
 
 		if (VBLANK_FALLING)
 		{
-			if (xs[0] > 0)
-			{
-				xs[0]--;
-			}
-			if (xs[0] < 0)
-			{
-				xs[0]++;
-			}
-			if (CHECK_BIT(joystick[0], 1) && xs[0] > -player_max_speed)
-			{
-				xs[0] -= player_accel;
-			}
-			if (CHECK_BIT(joystick[0], 0) && xs[0] < player_max_speed)
-			{
-				xs[0] += player_accel;
-			}
-			i[0] = xs[0]<-2 ? 2 : xs[0]>2 ? 3 : 1;
+			unsigned char debug_y = 26;
+			t1 = GET_TIMER;
+			handle_player();
+			t2 = GET_TIMER;
+			write_stringf_ushort("ply: %4d us", 0xFF, 0, debug_y, t2 - t1);
+			write_stringf_ushort("ply: %4d us", 0xFF, 20, debug_y++, player_x);
 
 			t1 = GET_TIMER;
-			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-			{
-				x_h[sprite] += xs[sprite];
-				if (x_h[sprite] < x_h_min)
-				{
-					x_h[sprite] = x_h_max;
-				}
-				if (x_h[sprite] > x_h_max)
-				{
-					x_h[sprite] = x_h_min;
-				}
-				if (sprite > 0)
-				{
-					if (y[sprite] == 256)
-					{
-						y[sprite] = 0;
-					}
-					else
-					{
-						y[sprite]++;
-					}
-				}
-				x[sprite] = x_h[sprite] / x_divisor;
-			}
+			handle_trails();
 			t2 = GET_TIMER;
-			write_stringf_ushort("s-set: %4d us", 0xFF, 0, 29, t2 - t1);
+			write_stringf_ushort("trl: %4d us", 0xFF, 0, debug_y++, t2 - t1);
+
+			t1 = GET_TIMER;
+			handle_meteors();
+			t2 = GET_TIMER;
+			write_stringf_ushort("met: %4d us", 0xFF, 0, debug_y++, t2 - t1);
 		}
 
 		hsync_last = hsync;
