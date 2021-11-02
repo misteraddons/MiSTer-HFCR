@@ -387,31 +387,10 @@ int main(int argc, char** argv, char** env) {
 			if (input.inputs[i]) { top->joystick_0 |= (1 << i); }
 		}
 		top->joystick_1 = top->joystick_0;
-		//top->joystick_2 = top->joystick_0;
-		//top->joystick_3 = top->joystick_0;
-		//top->joystick_4 = top->joystick_0;
-		//top->joystick_5 = top->joystick_0;
 
 		/*top->joystick_analog_0 += 1;
 		top->joystick_analog_0 -= 256;*/
-		//top->joystick_analog_1 -= 1;
-		//top->joystick_analog_1 += 256;
-		//top->joystick_analog_2 += 1;
-		//top->joystick_analog_2 -= 256;
-		//top->joystick_analog_3 -= 1;
-		//top->joystick_analog_3 += 256;
-		//top->joystick_analog_4 += 1;
-		//top->joystick_analog_4 -= 256;
-		//top->joystick_analog_5 -= 1;
-		//top->joystick_analog_5 += 256;
-
 		//top->paddle_0 += 1;
-		//top->paddle_1 -= 1;
-		//top->paddle_2 += 1;
-		//top->paddle_3 -= 1;
-		//top->paddle_4 += 1;
-		//top->paddle_5 -= 1;
-
 		//if (input.inputs[0] || input.inputs[1]) {
 		//	spinner_toggle = !spinner_toggle;
 		//	top->spinner_0 = (input.inputs[0]) ? 16 : -16;
@@ -420,12 +399,6 @@ int main(int argc, char** argv, char** env) {
 		//	}
 		//	if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
 		//}
-		//top->spinner_1 -= 1;
-		//top->spinner_2 += 1;
-		//top->spinner_3 -= 1;
-		//top->spinner_4 += 1;
-		//top->spinner_5 -= 1;
-
 		/*mouse_buttons += 1;
 		mouse_x += 1;
 		mouse_y -= 1;
@@ -433,11 +406,9 @@ int main(int argc, char** argv, char** env) {
 		mouse_temp += (mouse_x << 8);
 		mouse_temp += (mouse_y << 16);
 		if (mouse_clock) { mouse_temp |= (1UL << 24); }
-
 		mouse_clock = !mouse_clock;*/
-
 		//top->ps2_mouse = mouse_temp;
-		top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
+		//top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
 
 		// Run simulation
 		if (run_enable) {
