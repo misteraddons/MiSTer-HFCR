@@ -75,13 +75,13 @@ namespace rommaker
                                     if (pi == 16)
                                     {
                                         //   throw new Exception("too many colours");
-                                        Console.WriteLine($"Palette full: {image} - {pi}, {c}");
+                                        Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
                                         pi = 0;
                                     }
                                     else
                                     {
                                         Palette.Add(c);
-                                        Console.WriteLine($"Adding to palette: {image} - {pi}, {c}");
+                                        Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
                                     }
                                 }
 
