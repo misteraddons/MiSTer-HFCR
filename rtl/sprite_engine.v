@@ -72,11 +72,11 @@ localparam SE_LINE_COMPLETE = 15;
 reg hsync_last;
 reg [3:0] spr_state;
 reg [3:0] spr_state_next;
-reg [3:0] spr_index;
-localparam spr_index_max = 4'd15;
+reg [4:0] spr_index;
+localparam spr_index_max = 5'd31;
 localparam spr_size_x = 16'd15;
 localparam spr_size_y = 16'd15;
-localparam bit [6:0] spr_ram_item_width = 4;
+localparam [6:0] spr_ram_item_width = 4;
 localparam spr_line_max = 352;
 reg [15:0] spr_y;
 reg [15:0] spr_x;
@@ -131,7 +131,7 @@ begin
 		SE_RESET:
 		begin
 			// Reset sprite index
-			spr_index <= 4'd0;
+			spr_index <= 5'd0;
 			//$display("STARTING RESET: %d", spr_counter);
 			spr_state <= SE_CLEAR_BUFFER;
 			spritelbram_wr_addr <= {spritelb_slot_wr, 9'b0};

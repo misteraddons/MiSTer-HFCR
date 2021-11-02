@@ -138,31 +138,35 @@ void console()
 	}
 }
 
-unsigned short x[16];
-unsigned short x_h[16];
-unsigned short y[16];
-signed char xs[16];
+#define const_sprite_max 32
+unsigned char sprite_max = const_sprite_max;
+unsigned short x[const_sprite_max];
+unsigned short x_h[const_sprite_max];
+unsigned short y[const_sprite_max];
+signed char xs[const_sprite_max];
+bool active[const_sprite_max];
+unsigned char i[const_sprite_max];
+
 unsigned short x_h_min;
 unsigned short x_h_max;
 
-unsigned char i[16];
-
-unsigned char sprite_max = 16;
-unsigned char sprite_active = 16;
 unsigned char image_count = 5;
-
 
 void setup_sprites()
 {
 	unsigned char s = 0;
 	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 	{
-		spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
-		spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
-		spriteram[s++] = i[sprite] << 4 | x[sprite] >> 8;						  // Sprite Index (4 bits) + Position X (upper 4 bits)
-		spriteram[s++] = (unsigned char)x[sprite];								  // Position X (lower 8 bits)
+		spriteram[s++] = (active[sprite] ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
+		spriteram[s++] = (unsigned char)y[sprite];						 // Position Y (lower 8 bits)
+		spriteram[s++] = i[sprite] << 4 | x[sprite] >> 8;				 // Sprite Index (4 bits) + Position X (upper 4 bits)
+		spriteram[s++] = (unsigned char)x[sprite];						 // Position X (lower 8 bits)
 	}
 }
+
+const signed char player_max_speed = 20;
+const unsigned char player_accel = 3;
+const unsigned char x_divisor = 16;
 
 // Main entry and state machine
 void main()
@@ -171,25 +175,28 @@ void main()
 
 	// init_console();
 
-	panel(0, 0, 39, 2, 0b00000100);
-	panel(0, 3, 39, 29, 0b00000100);
-	fill_bgcol(0,0,40,30, 0b01000000);
+	// panel(0, 0, 39, 2, 0b00000100);
+	// panel(0, 3, 39, 29, 0b00000100);
+	clear_bgcolor(0);
+	clear_chars(0);
 
 	// setup sprites
-
-	x_h_min = (unsigned short)(2*8);
-	x_h_max = (unsigned short)(336*8);
+	x_h_min = (unsigned short)(2 * x_divisor);
+	x_h_max = (unsigned short)(336 * x_divisor);
 	for (unsigned char c = 0; c < sprite_max; c++)
 	{
-		x_h[c] = ((unsigned char)rand() + 16) * 8;
+		x_h[c] = ((unsigned char)rand() + 16) * x_divisor;
 		y[c] = (unsigned char)rand() + 16;
 		xs[c] = (signed char)rand() / 16;
 		i[c] = 0;
+		active[c] = true;
 	}
-	setup_sprites();
 
-	// char move_last[4];
-	// float move_time = 0;
+	//
+	i[0] = 1;
+	x_h[0] = 160 * x_divisor;
+	y[0] = 216;
+
 	unsigned short t1;
 	unsigned short t2;
 
@@ -202,59 +209,62 @@ void main()
 
 		// console();
 
-		// if (HBLANK_RISING)
-		// {
-		// 	if (CHECK_BIT(joystick[0], 0) && !move_last[0] && sprite_active < sprite_max)
-		// 	{
-		// 		sprite_active++;
-		// 	}
-		// 	if (CHECK_BIT(joystick[0], 1) && !move_last[1] && sprite_active > 0)
-		// 	{
-		// 		sprite_active--;
-		// 	}
-		// 	for (char j = 0; j < 4; j++)
-		// 	{
-		// 		move_last[j] = CHECK_BIT(joystick[0], j);
-		// 	}
-		// }
-
 		if (VBLANK_RISING)
 		{
 			t1 = GET_TIMER;
 			unsigned char s = 0;
-			// for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-			// {
-			// 	spriteram[s++] = (sprite <= sprite_active ? 1 : 0) << 7 | y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
-			// 	spriteram[s++] = (unsigned char)y[sprite];								  // Position Y (lower 8 bits)
-			// 	s += 2;
-			// }
 			setup_sprites();
 			t2 = GET_TIMER;
-
-			write_stringf_ushort("%4d", 0xFF, 5, 5, t2 - t1);
+			write_stringf_ushort("s-upd: %4d us", 0xFF, 0, 28, t2 - t1);
 		}
 
 		if (VBLANK_FALLING)
 		{
+			if (xs[0] > 0)
+			{
+				xs[0]--;
+			}
+			if (xs[0] < 0)
+			{
+				xs[0]++;
+			}
+			if (CHECK_BIT(joystick[0], 1) && xs[0] > -player_max_speed)
+			{
+				xs[0] -= player_accel;
+			}
+			if (CHECK_BIT(joystick[0], 0) && xs[0] < player_max_speed)
+			{
+				xs[0] += player_accel;
+			}
+			i[0] = xs[0]<-2 ? 2 : xs[0]>2 ? 3 : 1;
+
 			t1 = GET_TIMER;
 			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 			{
 				x_h[sprite] += xs[sprite];
-				if(x_h[sprite] < x_h_min ){ x_h[sprite] = x_h_max; }
-				if(x_h[sprite] > x_h_max ){ x_h[sprite] = x_h_min; }
-				x[sprite] = x_h[sprite] / 8;
-
-				if (y[sprite] == 256)
+				if (x_h[sprite] < x_h_min)
 				{
-					y[sprite] = 0;
+					x_h[sprite] = x_h_max;
 				}
-				else
+				if (x_h[sprite] > x_h_max)
 				{
-					y[sprite]++;
+					x_h[sprite] = x_h_min;
 				}
+				if (sprite > 0)
+				{
+					if (y[sprite] == 256)
+					{
+						y[sprite] = 0;
+					}
+					else
+					{
+						y[sprite]++;
+					}
+				}
+				x[sprite] = x_h[sprite] / x_divisor;
 			}
 			t2 = GET_TIMER;
-			write_stringf_ushort("%4d", 0xFF, 5, 7, t2 - t1);
+			write_stringf_ushort("s-set: %4d us", 0xFF, 0, 29, t2 - t1);
 		}
 
 		hsync_last = hsync;
