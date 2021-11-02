@@ -2,12 +2,12 @@
 #include "sprite.c"
 
 // Player
-const unsigned char player_sprite = 0;
+const unsigned char player_sprite = 12;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
-const unsigned char player_trail_frequency = 10;
+const unsigned char player_trail_frequency = 5;
 const unsigned char player_trail_speed = 5;
-const unsigned char player_trail_lifespan = 60;
+const unsigned char player_trail_lifespan = 48;
 unsigned short player_x;
 unsigned short player_y;
 signed char player_xs = 0;
@@ -18,9 +18,9 @@ unsigned int player_score = 0;
 unsigned char player_trail_timer = 1;
 
 // Trails
-#define const_trail_max 16
+#define const_trail_max 12
 unsigned char trail_max = const_trail_max;
-unsigned char trail_sprite_first = 8;
+unsigned char trail_sprite_first = 0;
 unsigned short trail_x[const_trail_max];
 unsigned short trail_y[const_trail_max];
 signed char trail_xs[const_trail_max];
@@ -183,6 +183,7 @@ void handle_trails()
 			spr_x[sprite] = trail_x[t] / x_divisor;
 			spr_y[sprite] = trail_y[t] / y_divisor;
 			trail_timer[t]--;
+			spr_index[sprite] = 6 - (trail_timer[t] / 16);
 			if (trail_timer[t] == 0)
 			{
 				spr_on[sprite] = false;
