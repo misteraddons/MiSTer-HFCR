@@ -80,8 +80,8 @@ module emu (
 	output VGA_HB,
 	output VGA_VB,
 	
-	input				ioctl_download,
-	input				ioctl_wr,
+	input			ioctl_download,
+	input			ioctl_wr,
 	input [24:0]	ioctl_addr,
 	input [7:0]		ioctl_dout,
 	input [7:0]		ioctl_index,
@@ -94,8 +94,8 @@ wire ce_pix;
 jtframe_cen24 divider
 (
 	.clk(clk_sys),
-	//.cen12(ce_pix), // <-- dodgy video speed for faster simulation, will cause bearable char map corruption
-	.cen4(ce_pix) // <-- correct video speed
+	.cen12(ce_pix), // <-- dodgy video speed for faster simulation, will cause graphical corruption
+	//.cen4(ce_pix) // <-- correct video speed
 );
 /* verilator lint_on PINMISSING */
 

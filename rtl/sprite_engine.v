@@ -33,7 +33,7 @@ module sprite_engine (
 	input		[15:0]	spritelbram_data_out,
 
 	output reg 	[6:0]	spriteram_addr,
-	output reg	[10:0]	sprom_addr,
+	output reg	[11:0]	sprom_addr,
 	output reg 	[4:0]	palrom_addr,
 	output 		[9:0]	spritelbram_rd_addr,
 	output reg	[9:0]	spritelbram_wr_addr,
@@ -231,7 +231,7 @@ begin
 			// - Setup initial address
 			spritelbram_wr <= 1'b0;
 		 	spritelbram_wr_addr <= {spritelb_slot_wr, spr_x[8:0]};
-		 	sprom_addr <= { spr_image_index[2:0], 8'b0} + {spr_rom_offset[6:0], 4'b0};
+		 	sprom_addr <= { spr_image_index[3:0], 8'b0} + {spr_rom_offset[6:0], 4'b0};
 		 	spr_pixel_index <= 5'b0;
 		 	spr_pixel_count <= spr_size_x[4:0];
 			spr_state <= SE_WAIT;

@@ -44,6 +44,7 @@ void main()
 
 	setup_area();
 	setup_meteors();
+	setup_trails();
 	setup_player();
 
 	unsigned short t1;
@@ -51,13 +52,12 @@ void main()
 
 	while (1)
 	{
-		//hsync = input0 & 0x80;
-		//vsync = input0 & 0x40;
-		//hblank = input0 & 0x20;
+		// hsync = input0 & 0x80;
+		// vsync = input0 & 0x40;
+		// hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
 		// console();
-
 
 		if (VBLANK_RISING)
 		{
@@ -72,11 +72,14 @@ void main()
 		if (VBLANK_FALLING)
 		{
 			unsigned char debug_y = 26;
-			
+
 			t1 = GET_TIMER;
 			handle_player();
 			t2 = GET_TIMER;
 			write_stringf_ushort("ply: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+
+			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
+			// write_stringf_ushort("%5d", 0xFF, 35, 1, player_score_timer);
 
 			t1 = GET_TIMER;
 			handle_trails();
@@ -89,9 +92,9 @@ void main()
 			write_stringf_ushort("met: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 		}
 
-		//hsync_last = hsync;
-		//vsync_last = vsync;
-		//hblank_last = hblank;
+		// hsync_last = hsync;
+		// vsync_last = vsync;
+		// hblank_last = hblank;
 		vblank_last = vblank;
 	}
 }

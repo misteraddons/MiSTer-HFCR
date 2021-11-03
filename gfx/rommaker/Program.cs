@@ -27,6 +27,9 @@ namespace rommaker
             Palette.Add(Color.FromArgb(0, 0, 0, 0));
 
             FileStream spriteStream = File.OpenWrite(spriteRomPath);
+
+            uint pos = 0;
+
             foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\","*.png", SearchOption.TopDirectoryOnly))
             {
                 Bitmap img = new(image);
@@ -42,7 +45,6 @@ namespace rommaker
                     slicesX = int.Parse(parts[0]);
                     slicesY = int.Parse(parts[1]);
                 }
-
                 int sizeX = img.Width / slicesX;
                 int sizeY = img.Height / slicesY;
 
@@ -50,6 +52,7 @@ namespace rommaker
                 {
                     for (int xs = 0; xs < slicesX; xs++)
                     {
+                        Console.WriteLine($"Starting image: {image} - {xs},{ys} --> {pos}");
                         int ymin = ys * sizeY;
                         int ymax = ymin + sizeY ;
                         int xmin = xs * sizeX;
@@ -58,6 +61,7 @@ namespace rommaker
                         {
                             for (int x = xmin; x < xmax; x++)
                             {
+
                                 Color c = img.GetPixel(x, y);
                                 // Find colour in palette
                                 int pi = -1;
@@ -87,6 +91,7 @@ namespace rommaker
 
                                 // Write palette index to sprite rom
                                 spriteStream.WriteByte(Convert.ToByte(pi));
+                                pos += 1;
 
                             }
                         }

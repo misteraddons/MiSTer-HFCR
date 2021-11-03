@@ -5,17 +5,25 @@
 const unsigned char player_sprite = 12;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
-const unsigned char player_trail_frequency = 5;
-const unsigned char player_trail_speed = 5;
-const unsigned char player_trail_lifespan = 48;
+const unsigned char player_trail_frequency = 12;
+const unsigned char player_trail_speed = 3;
+const unsigned char player_trail_lifespan = 5;
 unsigned short player_x;
 unsigned short player_y;
 signed char player_xs = 0;
 signed char player_ys = 0;
 unsigned short player_y_min;
 unsigned short player_y_max;
+unsigned char player_speed_min = 8;
+unsigned char player_speed_max = 32;
+unsigned char player_speed;
 unsigned int player_score = 0;
+unsigned char player_score_timer = 0;
 unsigned char player_trail_timer = 1;
+
+#define player_sprite_index_default 1
+#define player_sprite_index_left 3
+#define player_sprite_index_right 4
 
 // Trails
 #define const_trail_max 12
@@ -26,6 +34,9 @@ unsigned short trail_y[const_trail_max];
 signed char trail_xs[const_trail_max];
 signed char trail_ys[const_trail_max];
 unsigned char trail_timer[const_trail_max];
+unsigned short trail_y_max;
+#define trail_sprite_index_first 5
+#define trail_sprite_index_last 8
 
 // Meteors
 #define const_meteor_max 16
@@ -34,7 +45,9 @@ unsigned char meteor_sprite_first = 16;
 unsigned short meteor_x[const_meteor_max];
 unsigned short meteor_y[const_meteor_max];
 signed char meteor_xs[const_meteor_max];
+signed char meteor_ys[const_meteor_max];
 unsigned char meteor_timer[const_meteor_max];
+unsigned short meteor_y_max;
 
 // Area and units
 const unsigned char x_divisor = 16;
@@ -54,11 +67,12 @@ void setup_player()
 {
 	// Player bounds
 	player_y_min = 20 * x_divisor;
-	player_y_max = 200 * y_divisor;
+	player_y_max = 216 * y_divisor;
 
 	// Player initial position
 	player_x = 160 * x_divisor;
 	player_y = 216 * y_divisor;
+	player_speed = player_speed_min;
 
 	// Initialise player sprite
 	spr_index[player_sprite] = 1;
@@ -68,15 +82,21 @@ void setup_player()
 
 	// Trails
 	player_trail_timer = player_trail_frequency;
+
+	// Score
+	player_score = 0;
+	player_score_timer = 0;
 }
 
 void setup_meteors()
 {
+	meteor_y_max = 256 * y_divisor;
 	for (unsigned char m = 0; m < meteor_max; m++)
 	{
 		meteor_x[m] = ((unsigned char)rand() + 16) * x_divisor;
 		meteor_y[m] = 0;
-		meteor_xs[m] = (signed char)rand() / 16;
+		meteor_xs[m] = rand_schar(-8, 8);
+		meteor_ys[m] = rand_uchar(4, 32);
 		meteor_timer[m] = (unsigned char)rand();
 
 		unsigned char sprite = meteor_sprite_first + m;
@@ -85,20 +105,26 @@ void setup_meteors()
 	}
 }
 
+void setup_trails()
+{
+	trail_y_max = 248 * y_divisor;
+}
+
 void add_player_trail()
 {
 	for (int t = 0; t < trail_max; t++)
 	{
 		if (trail_timer[t] == 0)
 		{
-			trail_x[t] = player_x;
-			trail_y[t] = player_y + (8 * y_divisor);
-			trail_xs[t] = rand_schar(-3, 3);
+			trail_x[t] = player_x + rand_schar(-1, 1);
+			trail_y[t] = (player_y + (8 * y_divisor) - player_trail_speed);
+			unsigned char spread = 3 + (player_speed / 8);
+			trail_xs[t] = rand_schar(-spread, spread);
 			trail_ys[t] = player_trail_speed;
 			trail_timer[t] = player_trail_lifespan;
 			unsigned char sprite = trail_sprite_first + t;
 			spr_on[sprite] = true;
-			spr_index[sprite] = rand_uchar(4, 7);
+			spr_index[sprite] = trail_sprite_index_first;
 			return;
 		}
 	}
@@ -138,8 +164,25 @@ void handle_player()
 	{
 		player_ys -= player_accel;
 	}
-	spr_index[player_sprite] = player_xs < -2 ? 2 : player_xs > 2 ? 3
-																  : 1;
+
+	if (CHECK_BIT(joystick[0], 4))
+	{
+		if (player_speed < player_speed_max)
+		{
+			player_speed++;
+		}
+	}
+	else
+	{
+		if (player_speed > player_speed_min)
+		{
+			player_speed--;
+		}
+	}
+
+	spr_index[player_sprite] = player_xs < -2 ? player_sprite_index_left : player_xs > 2 ? player_sprite_index_right
+																						 : player_sprite_index_default;
+
 	player_x += player_xs;
 	player_y += player_ys;
 	if (player_y < player_y_min)
@@ -150,7 +193,7 @@ void handle_player()
 			player_ys = 0;
 		}
 	}
-	if (player_y > player_y_max)
+	else if (player_y > player_y_max)
 	{
 		player_y = player_y_max;
 		if (player_ys > 0)
@@ -163,11 +206,22 @@ void handle_player()
 
 	// Trail
 	player_trail_timer--;
-
 	if (player_trail_timer <= 0)
 	{
-		player_trail_timer = player_trail_frequency;
+		player_trail_timer = player_trail_frequency - ((player_speed * 10) / 50);
+		if (player_trail_timer <= 0)
+		{
+			player_trail_timer = 1;
+		}
 		add_player_trail();
+	}
+
+	// Score
+	player_score_timer += player_speed;
+	if (player_score_timer >= 100)
+	{
+		player_score_timer -= 100;
+		player_score++;
 	}
 }
 
@@ -179,15 +233,32 @@ void handle_trails()
 		{
 			unsigned char sprite = trail_sprite_first + t;
 			trail_x[t] += trail_xs[t];
-			trail_y[t] += trail_ys[t];
+			trail_y[t] += trail_ys[t] + player_speed;
+			if ((trail_y[t] > trail_y_max) > 0)
+			{
+				spr_on[sprite] = false;
+				trail_timer[t] = 0;
+				continue;
+			}
 			spr_x[sprite] = trail_x[t] / x_divisor;
 			spr_y[sprite] = trail_y[t] / y_divisor;
 			trail_timer[t]--;
-			spr_index[sprite] = 6 - (trail_timer[t] / 16);
 			if (trail_timer[t] == 0)
 			{
-				spr_on[sprite] = false;
+				spr_index[sprite]++;
+				if (spr_index[sprite] > trail_sprite_index_last)
+				{
+					spr_on[sprite] = false;
+				}
+				else
+				{
+					trail_timer[t] = player_trail_lifespan;
+				}
 			}
+			// write_stringf("%2d", 0xFF, 10, t + 1, spr_index[sprite]);
+			// write_stringf("%2d", 0xFF, 14, t + 1, trail_timer[t]);
+			//		}else{
+			//			write_string("         ", 0xFF, 14, t + 1);
 		}
 	}
 }
@@ -214,11 +285,11 @@ void handle_meteors()
 			{
 				meteor_x[m] = x_h_max;
 			}
-			if (meteor_x[m] > x_h_max)
+			else if (meteor_x[m] > x_h_max)
 			{
 				meteor_x[m] = x_h_min;
 			}
-			if (meteor_y[m] == 256)
+			if (meteor_y[m] >= meteor_y_max)
 			{
 				meteor_y[m] = 0;
 				meteor_timer[m] = (unsigned char)rand();
@@ -226,11 +297,11 @@ void handle_meteors()
 			}
 			else
 			{
-				meteor_y[m]++;
+				meteor_y[m] += meteor_ys[m] + player_speed;
 			}
 
 			spr_x[sprite] = meteor_x[m] / x_divisor;
-			spr_y[sprite] = meteor_y[m];
+			spr_y[sprite] = meteor_y[m] / y_divisor;
 		}
 	}
 }

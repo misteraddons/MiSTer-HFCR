@@ -253,7 +253,7 @@ charmap casval
 );
 
 // Comet - sprite engine
-wire [10:0]	sprom_addr;
+wire [11:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
 wire [4:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
@@ -437,16 +437,16 @@ dpram_w1r2 #(5,8, "palette.hex") palrom
 );
 
 // Sprite ROM - 0x11000 - 0x11800 (0x0800 / 2048 bytes)
-dpram #(11,8, "sprite.hex") spriterom
+dpram #(12,8, "sprite.hex") spriterom
 (
 	.clock_a(clk_sys),
-	.address_a(sprom_addr[10:0]),
+	.address_a(sprom_addr[11:0]),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(spriterom_data_out),
 
 	.clock_b(clk_sys),
-	.address_b(dn_addr[10:0]),
+	.address_b(dn_addr[11:0]),
 	.wren_b(spriterom_wr),
 	.data_b(dn_data),
 	.q_b()
