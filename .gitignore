@@ -56,5 +56,4 @@ verilator/imgui.ini
 **/.vs/*
 **/bin/*
 **/obj/*
-*.mp4
-*.m4v
+docs/vids/*

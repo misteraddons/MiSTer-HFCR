@@ -21,8 +21,8 @@
 ===========================================================================*/
 
 module system (
-	input			clk_sys,
-	input 			ce_pix,
+	input			clk_24,
+	input 			ce_6,
 	input			reset,
 	input [16:0]	dn_addr,
 	input			dn_wr,
@@ -78,11 +78,11 @@ wire [8:0] vcnt;
 // Display timing module from JTFRAME
 jtframe_vtimer #(
 	.HB_START(VGA_WIDTH - 1'b1),
-	.VB_START(VGA_HEIGHT- 1'b1)
+	.VB_START(VGA_HEIGHT - 1'b1)
 ) vtimer 
 (
-	.clk(clk_sys),
-	.pxl_cen(ce_pix),
+	.clk(clk_24),
+	.pxl_cen(ce_6),
 	.V(vcnt),
 	.H(hcnt),
 	.Hinit(),
@@ -97,7 +97,7 @@ jtframe_vtimer #(
 wire  [15:0]	timer;
 generic_timer #(16,15,24) ms_timer
 (
-	.clk(clk_sys),
+	.clk(clk_24),
 	.reset(reset || (timer_cs == 1'b1 && cpu_wr_n == 1'b0)),
 	.counter(timer)
 );
@@ -113,7 +113,7 @@ wire cpu_mreq_n;
 // include Z80 CPU
 tv80s T80x  (
 	.reset_n   ( !reset ),
-	.clk       ( clk_sys ),
+	.clk       ( clk_24 ),
 	.wait_n    ( 1'b1 ),
 	.int_n     ( 1'b1 ),
 	.nmi_n     ( 1'b1 ),
@@ -167,7 +167,7 @@ wire spriteram_cs = cpu_addr[15:11] == 5'b10110;
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
 
-always @(posedge clk_sys) begin
+always @(posedge clk_24) begin
 	// if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 	// if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 	// if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -236,7 +236,7 @@ wire [1:0]	charmap_b;
 wire		charmap_a;
 charmap casval
 (
-	.clk(clk_sys),
+	.clk(clk_24),
 	.reset(reset),
 	.hcnt(hcnt),
 	.vcnt(vcnt),
@@ -270,7 +270,7 @@ wire [7:0]	spr_b;
 wire 		spr_a;
 sprite_engine comet
 (
-	.clk(clk_sys),
+	.clk(clk_24),
 	.reset(reset),
 	.hsync(VGA_HS),
 	.hcnt(hcnt),
@@ -292,11 +292,31 @@ sprite_engine comet
 	.spr_a(spr_a)
 );
 
+// Starfield (courtesy of Will Green - Project F)
+wire 		sf_on;
+wire [7:0]	sf_star;
+
+starfield #(
+	.H(396),
+	.V(256),
+	.INC(-1)
+) stars
+(
+	.clk(ce_6),
+	.rst(reset),
+	.en(1'b1),
+	.sf_on(sf_on),
+	.sf_star(sf_star)
+);
+
 
 // RGB mixer
-assign VGA_R = spr_a ? spr_r : {{2{charmap_r}},2'b0};
-assign VGA_G = spr_a ? spr_g : {{2{charmap_g}},2'b0};
-assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
+// assign VGA_R = spr_a ? spr_r : {{2{charmap_r}},2'b0};
+// assign VGA_G = spr_a ? spr_g : {{2{charmap_g}},2'b0};
+// assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
+assign VGA_R = spr_a ? spr_r : sf_on ? sf_star : 8'b0;
+assign VGA_G = spr_a ? spr_g : sf_on ? sf_star : 8'b0;
+assign VGA_B = spr_a ? spr_b : sf_on ? sf_star : 8'b0;
 
 // MEMORY
 // ------
@@ -304,13 +324,13 @@ assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
 // Program ROM - 0x0000 - 0x7FFF (0x6000 / 32768 bytes)
 dpram #(15,8, "rom.hex") pgrom
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(cpu_addr[14:0]),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(pgrom_data_out),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(dn_addr[14:0]),
 	.wren_b(pgrom_wr),
 	.data_b(dn_data),
@@ -320,13 +340,13 @@ dpram #(15,8, "rom.hex") pgrom
 // Char ROM - 0x9000 - 0x97FF (0x0800 / 2048 bytes)
 dpram #(11,8, "font.hex") chrom
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(chrom_addr[10:0]),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(chrom_data_out),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(dn_addr[10:0]),
 	.wren_b(chrom_wr),
 	.data_b(dn_data),
@@ -336,13 +356,13 @@ dpram #(11,8, "font.hex") chrom
 // Char index RAM - 0x9800 - 0x9FFF (0x0800 / 2048 bytes)
 dpram #(11,8) chram
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(cpu_addr[10:0]),
 	.wren_a(chram_wr),
 	.data_a(cpu_dout),
 	.q_a(chram_data_out),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(chram_addr[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
@@ -352,13 +372,13 @@ dpram #(11,8) chram
 // Char foreground color RAM - 0xA000 - 0xA7FF (0x0800 / 2048 bytes)
 dpram #(11,8) fgcolram
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(cpu_addr[10:0]),
 	.wren_a(fgcolram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(chram_addr[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
@@ -368,13 +388,13 @@ dpram #(11,8) fgcolram
 // Char background color RAM - 0xA800 - 0xAFFF (0x0800 / 2048 bytes)
 dpram #(11,8) bgcolram
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(cpu_addr[10:0]),
 	.wren_a(bgcolram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(chram_addr[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
@@ -384,13 +404,13 @@ dpram #(11,8) bgcolram
 // Sprite RAM - 0xB000 - 0xB07F (0x0080 / 128 bytes)
 dpram #(7,8) spriteram
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(cpu_addr[6:0]),
 	.wren_a(spriteram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(spriteram_addr[6:0]),
 	.wren_b(1'b0),
 	.data_b(),
@@ -400,13 +420,13 @@ dpram #(7,8) spriteram
 // Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)
 dpram #(10,16) spritelbram
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(spritelbram_wr_addr),
 	.wren_a(spritelbram_wr),
 	.data_a(spritelbram_data_in),
 	.q_a(),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(spritelbram_rd_addr),
 	.wren_b(1'b0),
 	.data_b(),
@@ -416,7 +436,7 @@ dpram #(10,16) spritelbram
 // Work RAM - 0xC000 - 0xFFFF (0x4000 / 16384 bytes)
 spram #(14,8) wkram
 (
-	.clock(clk_sys),
+	.clock(clk_24),
 	.address(cpu_addr[13:0]),
 	.wren(wkram_wr),
 	.data(cpu_dout),
@@ -426,12 +446,12 @@ spram #(14,8) wkram
 // Palette ROM - 0x10000 - 0x1001F (0x0020 / 32 bytes)
 dpram_w1r2 #(5,8, "palette.hex") palrom
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(dn_addr[4:0]),
 	.wren_a(palrom_wr),
 	.data_a(dn_data),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(palrom_addr),
 	.q_b(palrom_data_out)
 );
@@ -439,13 +459,13 @@ dpram_w1r2 #(5,8, "palette.hex") palrom
 // Sprite ROM - 0x11000 - 0x11800 (0x0800 / 2048 bytes)
 dpram #(12,8, "sprite.hex") spriterom
 (
-	.clock_a(clk_sys),
+	.clock_a(clk_24),
 	.address_a(sprom_addr[11:0]),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(spriterom_data_out),
 
-	.clock_b(clk_sys),
+	.clock_b(clk_24),
 	.address_b(dn_addr[11:0]),
 	.wren_b(spriterom_wr),
 	.data_b(dn_data),

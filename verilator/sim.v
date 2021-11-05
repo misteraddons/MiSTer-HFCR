@@ -89,19 +89,19 @@ module emu (
 );
 
 // Clock divider from JTFRAME
-wire ce_pix;
+wire ce_6;
 /* verilator lint_off PINMISSING */
 jtframe_cen24 divider
 (
 	.clk(clk_sys),
-	.cen12(ce_pix), // <-- dodgy video speed for faster simulation, will cause graphical corruption
-	//.cen4(ce_pix) // <-- correct video speed
+	//.cen12(ce_6), // <-- dodgy video speed for faster simulation, will cause graphical corruption
+	.cen6(ce_6), // <-- correct video speed
 );
 /* verilator lint_on PINMISSING */
 
 system system(
-	.clk_sys(clk_sys),
-	.ce_pix(ce_pix),
+	.clk_24(clk_sys),
+	.ce_6(ce_6),
 	.reset(reset | ioctl_download),
 	.VGA_HS(VGA_HS),
 	.VGA_VS(VGA_VS),

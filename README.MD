@@ -33,6 +33,7 @@ A simple-ish bespoke (i.e. I made it up with no real plan) 8-bit system with a 4
    - ps2_mouse from HPS (48 bytes, combination of ps2_mouse and ps2_mouseext with some padding to align bytes)
    - timestamp from HPS (33 bytes, read-only)
  - Hardware microsecond timer (16 bytes read/write)
+ - LFSR-based starfield generator (from Project F 0 - Ad Astra (https://projectf.io/posts/fpga-ad-astra/) by Will Green)
 
 ### Memory Map
 Start|End|Length|Name

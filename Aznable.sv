@@ -359,8 +359,8 @@ wire reset = (RESET | status[0] | buttons[1] | rom_download);
 assign LED_USER = rom_download;
 
 system system(
-	.clk_sys(clk_sys),
-	.ce_pix(ce_pix),
+	.clk_24(clk_sys),
+	.ce_6(ce_pix),
 	.reset(reset),
 	.VGA_HS(hs),
 	.VGA_VS(vs),
