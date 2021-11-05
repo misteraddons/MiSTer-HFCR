@@ -21,9 +21,9 @@ unsigned int player_score = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_trail_timer = 1;
 
-#define player_sprite_index_default 1
-#define player_sprite_index_left 3
-#define player_sprite_index_right 4
+#define player_sprite_index_default meteor_sprite_index_count
+#define player_sprite_index_left player_sprite_index_default + 2
+#define player_sprite_index_right player_sprite_index_default + 3
 
 // Trails
 #define const_trail_max 12
@@ -35,8 +35,8 @@ signed char trail_xs[const_trail_max];
 signed char trail_ys[const_trail_max];
 unsigned char trail_timer[const_trail_max];
 unsigned short trail_y_max;
-#define trail_sprite_index_first 5
-#define trail_sprite_index_last 8
+#define trail_sprite_index_first player_sprite_index_default + 4
+#define trail_sprite_index_last trail_sprite_index_first + 4
 
 // Meteors
 #define const_meteor_max 16
@@ -48,6 +48,8 @@ signed char meteor_xs[const_meteor_max];
 signed char meteor_ys[const_meteor_max];
 unsigned char meteor_timer[const_meteor_max];
 unsigned short meteor_y_max;
+#define meteor_sprite_index_first 0
+#define meteor_sprite_index_count 4
 
 // Area and units
 const unsigned char x_divisor = 16;
@@ -100,7 +102,7 @@ void setup_meteors()
 		meteor_timer[m] = (unsigned char)rand();
 
 		unsigned char sprite = meteor_sprite_first + m;
-		spr_index[sprite] = 0;
+		spr_index[sprite] = meteor_sprite_index_first + rand_uchar(0, meteor_sprite_index_count - 1);
 		spr_on[sprite] = false;
 	}
 }
