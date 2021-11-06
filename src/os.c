@@ -67,6 +67,8 @@ void main()
 			update_sprites();
 			t2 = GET_TIMER;
 			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+
+			starfield[0] = 1 + (player_speed / 8);
 		}
 
 		if (VBLANK_FALLING)

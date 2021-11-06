@@ -5,7 +5,7 @@
 const unsigned char player_sprite = 12;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
-const unsigned char player_trail_frequency = 12;
+const unsigned char player_trail_frequency = 14;
 const unsigned char player_trail_speed = 3;
 const unsigned char player_trail_lifespan = 5;
 unsigned short player_x;

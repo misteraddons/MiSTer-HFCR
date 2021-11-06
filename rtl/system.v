@@ -158,12 +158,14 @@ wire ps2_key_cs = memory_map_addr == 8'b10000110;
 wire ps2_mouse_cs = memory_map_addr == 8'b10000111;
 wire timestamp_cs = memory_map_addr == 8'b10001000;
 wire timer_cs = memory_map_addr == 8'b10001001;
+wire starfield_cs = memory_map_addr == 8'b10001010;
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
 wire bgcolram_cs = cpu_addr[15:11] == 5'b10101;
 // - Comet (sprite engine)
 wire spriteram_cs = cpu_addr[15:11] == 5'b10110;
+// -  (starfield)
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
 
@@ -292,31 +294,40 @@ sprite_engine comet
 	.spr_a(spr_a)
 );
 
-// Starfield (courtesy of Will Green - Project F)
+// Moroboshi (starfield)
 wire 		sf_on;
 wire [7:0]	sf_star;
-
+reg [3:0]	sf_speed;
+always @(posedge clk_24)
+begin
+	if(starfield_cs == 1'b1 && cpu_wr_n == 1'b0)
+	begin
+		sf_speed <= cpu_dout[3:0];
+	end
+end
 starfield #(
 	.H(396),
-	.V(256),
-	.INC(-1)
+	.V(256)
 ) stars
 (
-	.clk(ce_6),
+	.clk(clk_24),
 	.rst(reset),
-	.en(1'b1),
+	.en(ce_6),
+	.speed(sf_speed),
 	.sf_on(sf_on),
 	.sf_star(sf_star)
 );
-
+wire [7:0] sf_r = sf_on ? sf_star : 8'b0;
+wire [7:0] sf_g = sf_on ? sf_star : 8'b0;
+wire [7:0] sf_b = sf_on ? sf_star : 8'b0;
 
 // RGB mixer
 // assign VGA_R = spr_a ? spr_r : {{2{charmap_r}},2'b0};
 // assign VGA_G = spr_a ? spr_g : {{2{charmap_g}},2'b0};
 // assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
-assign VGA_R = spr_a ? spr_r : sf_on ? sf_star : 8'b0;
-assign VGA_G = spr_a ? spr_g : sf_on ? sf_star : 8'b0;
-assign VGA_B = spr_a ? spr_b : sf_on ? sf_star : 8'b0;
+assign VGA_R = spr_a ? spr_r : sf_r;
+assign VGA_G = spr_a ? spr_g : sf_g;
+assign VGA_B = spr_a ? spr_b : sf_b;
 
 // MEMORY
 // ------
