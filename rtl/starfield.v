@@ -32,27 +32,37 @@ module starfield #(
     parameter SEED=21'h1FFFFF,
     parameter MASK=21'hFFF
     ) (
-    input  wire clk,           // clock
-    input  wire en,            // enable
-    input  wire rst,           // reset
-    input  wire [3:0] speed,   // speed
-    output wire sf_on,         // star on
+    input  wire clk,
+    input  wire en,
+    input  wire rst,
+    input  wire [7:0] data_in,
+    input  wire write,
+    output wire sf_on,         // star on (alpha)
     output wire [7:0] sf_star  // star brightness
     );
 
     reg  [20:0] RST_CNT;  // counter starts at zero, so sub 1
+    reg   [3:0] speed;
     wire [20:0] sf_reg;
     reg  [20:0] sf_cnt;
     wire  [9:0] sf_inc;
 
-    always @(posedge clk) begin
-        if (en) begin
+    always @(posedge clk) 
+    begin
+        // CPU write
+        if(write)
+        begin
+            speed <= data_in[3:0];
+        end
+
+        if (en)
+        begin
             sf_cnt <= sf_cnt + 1;
             /* verilator lint_off WIDTH */
             if (sf_cnt == RST_CNT) 
             begin
                 sf_cnt <= 0;
-                RST_CNT = (H * V) + (speed * H) - 1;
+                RST_CNT <= (H * V) + (speed * H) - 1;
             end
             /* verilator lint_on WIDTH */
         end

@@ -158,7 +158,9 @@ wire ps2_key_cs = memory_map_addr == 8'b10000110;
 wire ps2_mouse_cs = memory_map_addr == 8'b10000111;
 wire timestamp_cs = memory_map_addr == 8'b10001000;
 wire timer_cs = memory_map_addr == 8'b10001001;
-wire starfield_cs = memory_map_addr == 8'b10001010;
+wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
+wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
+wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
@@ -182,6 +184,9 @@ always @(posedge clk_24) begin
 	// if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
  	// $display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
 	//if(timer_cs) $display("timer %b", timer_data_out);
+	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
+	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
+	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 end
 
 // CPU data mux
@@ -295,39 +300,66 @@ sprite_engine comet
 );
 
 // Moroboshi (starfield)
-wire 		sf_on;
-wire [7:0]	sf_star;
-reg [3:0]	sf_speed;
-always @(posedge clk_24)
-begin
-	if(starfield_cs == 1'b1 && cpu_wr_n == 1'b0)
-	begin
-		sf_speed <= cpu_dout[3:0];
-	end
-end
+
+wire 		sf_on1;
+wire [7:0]	sf_star1;
 starfield #(
 	.H(396),
-	.V(256)
-) stars
+	.V(256),
+	.SEED(21'h1FFFFF),
+	.MASK(21'd8000)
+) stars1
 (
 	.clk(clk_24),
 	.rst(reset),
 	.en(ce_6),
-	.speed(sf_speed),
-	.sf_on(sf_on),
-	.sf_star(sf_star)
+	.data_in(cpu_dout),
+	.write(starfield1_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.sf_on(sf_on1),
+	.sf_star(sf_star1)
 );
-wire [7:0] sf_r = sf_on ? sf_star : 8'b0;
-wire [7:0] sf_g = sf_on ? sf_star : 8'b0;
-wire [7:0] sf_b = sf_on ? sf_star : 8'b0;
+wire 		sf_on2;
+wire [7:0]	sf_star2;
+starfield #(
+	.H(396),
+	.V(256),
+	.SEED(21'h10FFFF),
+	.MASK(21'd3900)
+) stars2
+(
+	.clk(clk_24),
+	.rst(reset),
+	.en(ce_6),
+	.data_in(cpu_dout),
+	.write(starfield2_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.sf_on(sf_on2),
+	.sf_star(sf_star2)
+);
+wire 		sf_on3;
+wire [7:0]	sf_star3;
+starfield #(
+	.H(396),
+	.V(256),
+	.SEED(21'h100FFF),
+	.MASK(21'd3800)
+) stars3
+(
+	.clk(clk_24),
+	.rst(reset),
+	.en(ce_6),
+	.data_in(cpu_dout),
+	.write(starfield3_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.sf_on(sf_on3),
+	.sf_star(sf_star3)
+);
+
+wire sf_on = sf_on1 || sf_on2 || sf_on3;
+wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? sf_star2[7:0] : sf_on3 ? sf_star3[7:0] : 8'b0;
 
 // RGB mixer
-// assign VGA_R = spr_a ? spr_r : {{2{charmap_r}},2'b0};
-// assign VGA_G = spr_a ? spr_g : {{2{charmap_g}},2'b0};
-// assign VGA_B = spr_a ? spr_b : {{3{charmap_b}},2'b0};
-assign VGA_R = spr_a ? spr_r : sf_r;
-assign VGA_G = spr_a ? spr_g : sf_g;
-assign VGA_B = spr_a ? spr_b : sf_b;
+assign VGA_R = spr_a ? spr_r : sf_on ? sf_star_colour : {{2{charmap_r}},2'b0}; 
+assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : {{2{charmap_g}},2'b0};
+assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : {{3{charmap_b}},2'b0};
 
 // MEMORY
 // ------
