@@ -306,12 +306,15 @@ wire [7:0]	sf_star1;
 starfield #(
 	.H(396),
 	.V(256),
+	.LEN(21),
 	.SEED(21'h1FFFFF),
-	.MASK(21'd8000)
+	.MASK(21'b001010100010101001000),
+	.TAPS(21'b101010100000000000000)
 ) stars1
 (
 	.clk(clk_24),
 	.rst(reset),
+	.vblank(VGA_VB),
 	.en(ce_6),
 	.data_in(cpu_dout),
 	.write(starfield1_cs == 1'b1 && cpu_wr_n == 1'b0),
@@ -323,12 +326,15 @@ wire [7:0]	sf_star2;
 starfield #(
 	.H(396),
 	.V(256),
-	.SEED(21'h10FFFF),
-	.MASK(21'd3900)
+	.LEN(21),
+	.SEED(21'h1FFFF0),
+	.MASK(21'b111110000011111000000),
+	.TAPS(21'b101010000000000000000)
 ) stars2
 (
 	.clk(clk_24),
 	.rst(reset),
+	.vblank(VGA_VB),	
 	.en(ce_6),
 	.data_in(cpu_dout),
 	.write(starfield2_cs == 1'b1 && cpu_wr_n == 1'b0),
@@ -340,12 +346,15 @@ wire [7:0]	sf_star3;
 starfield #(
 	.H(396),
 	.V(256),
-	.SEED(21'h100FFF),
-	.MASK(21'd3800)
+	.LEN(21),
+	.SEED(21'h1FFF00),
+	.MASK(21'b111110000011111000000),
+	.TAPS(21'b101000000000000000000)
 ) stars3
 (
 	.clk(clk_24),
 	.rst(reset),
+	.vblank(VGA_VB),	
 	.en(ce_6),
 	.data_in(cpu_dout),
 	.write(starfield3_cs == 1'b1 && cpu_wr_n == 1'b0),
@@ -354,7 +363,7 @@ starfield #(
 );
 
 wire sf_on = sf_on1 || sf_on2 || sf_on3;
-wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? sf_star2[7:0] : sf_on3 ? sf_star3[7:0] : 8'b0;
+wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
 // RGB mixer
 assign VGA_R = spr_a ? spr_r : sf_on ? sf_star_colour : {{2{charmap_r}},2'b0}; 

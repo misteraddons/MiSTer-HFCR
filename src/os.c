@@ -54,8 +54,8 @@ void main()
 	unsigned char sf_speed[3];
 
 	sf_speed[0] = 1;
-	sf_speed[1] = 4;
-	sf_speed[2] = 8;
+	sf_speed[1] = 2;
+	sf_speed[2] = 4;
 
 	while (1)
 	{
@@ -75,27 +75,12 @@ void main()
 			t2 = GET_TIMER;
 			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 
+// Update starfield
 			t1 = GET_TIMER;
 			for (unsigned char sf = 0; sf < 3; sf++)
 			{
 				unsigned char sfi = sf * 2;
-				if (sf_speed[sf] >= 8)
-				{
-					starfield[sfi] = (sf_speed[sf] >> 3);
-				}
-				else
-				{
-					if (sf_timer[sf] == 0)
-					{
-						starfield[sfi] = 0;
-					}
-					sf_timer[sf] += sf_speed[sf];
-					if (sf_timer[sf] >= 8)
-					{
-						starfield[sfi] = 1;
-						sf_timer[sf] = 0;
-					}
-				}
+				starfield[sfi] = player_speed / sf_speed[sf];
 			}
 			t2 = GET_TIMER;
 			write_stringf_ushort("sf: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
@@ -111,7 +96,7 @@ void main()
 			write_stringf_ushort("ply: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 
 			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
-			
+
 			t1 = GET_TIMER;
 			handle_trails();
 			t2 = GET_TIMER;

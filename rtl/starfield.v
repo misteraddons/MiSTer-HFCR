@@ -29,40 +29,81 @@
 module starfield #(
     parameter H=800,
     parameter V=525,
-    parameter SEED=21'h1FFFFF,
-    parameter MASK=21'hFFF
+    parameter LEN=25,
+    parameter TAPS=25'b1010000000000000000000000,
+    parameter SEED=25'b1111111111111110000000000,
+    parameter MASK=25'b1111111111111111111111111
     ) (
     input  wire clk,
     input  wire en,
     input  wire rst,
+    input  wire vblank,
     input  wire [7:0] data_in,
     input  wire write,
     output wire sf_on,         // star on (alpha)
     output wire [7:0] sf_star  // star brightness
     );
 
-    reg  [20:0] RST_CNT;  // counter starts at zero, so sub 1
-    reg   [3:0] speed;
-    wire [20:0] sf_reg;
-    reg  [20:0] sf_cnt;
-    wire  [9:0] sf_inc;
+    reg  [LEN-1:0] RST_CNT;  // counter starts at zero, so sub 1
+    reg  [LEN-1:0] seed;
+    reg   [7:0]    speed;
+    reg   [4:0]    increment;    
+    reg   [7:0]    timer;
+    wire [LEN-1:0] sf_reg;
+    reg  [LEN-1:0] sf_cnt;
+    reg            vblank_last;
 
     always @(posedge clk) 
     begin
+
+        // reset seed
+        if(rst)
+        begin
+            seed <= SEED;
+        end
+
         // CPU write
         if(write)
         begin
-            speed <= data_in[3:0];
+            speed <= data_in[7:0];
         end
 
         if (en)
         begin
+
             sf_cnt <= sf_cnt + 1;
             /* verilator lint_off WIDTH */
             if (sf_cnt == RST_CNT) 
             begin
+                vblank_last <= vblank;
+                if(vblank == 1'b1 && vblank_last == 1'b0)
+                begin
+                    $display("%d", seed);
+                    seed <= seed + {{LEN-1{1'b0}},1'b1};
+                end
+                
+                if(speed >= 8'd8)
+                begin
+                    increment = speed[7:3];
+                end
+                else
+                begin
+                    timer <= timer + speed;
+                    if (timer == 0)
+                    begin
+                        increment = 0;
+                    end
+                    else
+                    begin
+                        if (timer >= 8'd8)
+                        begin
+                            increment = 1;
+                            timer <= 0;
+                        end
+                    end
+                end
                 sf_cnt <= 0;
-                RST_CNT <= (H * V) + (speed * H) - 1;
+                RST_CNT <= (H * V) + (increment * H) - 1;
             end
             /* verilator lint_on WIDTH */
         end
@@ -73,13 +114,13 @@ module starfield #(
     assign sf_star = sf_reg[7:0];
 
     lfsr #(
-        .LEN(21),
-        .TAPS(21'b101000000000000000000),
-        .SEED(SEED)
+        .LEN(LEN),
+        .TAPS(TAPS)
         ) lsfr_sf (
         .clk(clk),
-        .rst(sf_cnt == 21'b0),
+        .rst(sf_cnt == {LEN{1'b0}} ),
         .en(en),
+        .seed(seed),
         .sreg(sf_reg)
     );
 endmodule
