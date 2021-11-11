@@ -234,7 +234,7 @@ wire chram_wr = !cpu_wr_n && chram_cs;
 wire fgcolram_wr = !cpu_wr_n && fgcolram_cs;
 wire bgcolram_wr = !cpu_wr_n && bgcolram_cs;
 wire spriteram_wr = !cpu_wr_n && spriteram_cs;
-reg spritecollisionram_wr;
+wire spritecollisionram_wr;
 
 // Casval - character map
 wire [11:0] chram_addr;

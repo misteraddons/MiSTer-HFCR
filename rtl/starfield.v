@@ -69,7 +69,7 @@ module starfield #(
 
         if (en)
         begin
-            sf_cnt <= sf_cnt + 1;
+            sf_cnt <= sf_cnt + 1'b1;
             /* verilator lint_off WIDTH */
             if (sf_cnt == RST_CNT) 
             begin
@@ -98,7 +98,7 @@ module starfield #(
                     end
                 end
                 sf_cnt <= 0;
-                RST_CNT <= (H * V) + (increment * H) - 1;
+                RST_CNT <= (H * V) + (increment * H) - 1'b1;
             end
             /* verilator lint_on WIDTH */
         end
