@@ -50,12 +50,11 @@ void main()
 	unsigned short t1;
 	unsigned short t2;
 
-	unsigned char sf_timer[3];
-	unsigned char sf_speed[3];
+	unsigned char player_speed_last = 0;
 
-	sf_speed[0] = 1;
-	sf_speed[1] = 2;
-	sf_speed[2] = 4;
+	unsigned char sf_speed1 = 4;
+	// unsigned char sf_speed2 = 4;
+	// unsigned char sf_speed3 = 8;
 
 	while (1)
 	{
@@ -70,20 +69,24 @@ void main()
 		{
 			unsigned char debug_y = 16;
 			t1 = GET_TIMER;
-			unsigned char s = 0;
 			update_sprites();
 			t2 = GET_TIMER;
 			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 
-// Update starfield
+			// Update starfield
 			t1 = GET_TIMER;
-			for (unsigned char sf = 0; sf < 3; sf++)
+			if (player_speed != player_speed_last)
 			{
-				unsigned char sfi = sf * 2;
-				starfield[sfi] = player_speed / sf_speed[sf];
+				player_speed_last = player_speed;
+				unsigned char s = player_speed / sf_speed1;
+				starfield[0] = s;
+				s = s / 2;
+				starfield[2] = s;
+				s = s / 2;
+				starfield[4] = s;
 			}
 			t2 = GET_TIMER;
-			write_stringf_ushort("sf: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 		}
 
 		if (VBLANK_FALLING)
@@ -95,8 +98,6 @@ void main()
 			t2 = GET_TIMER;
 			write_stringf_ushort("ply: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
 
-			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
-
 			t1 = GET_TIMER;
 			handle_trails();
 			t2 = GET_TIMER;
@@ -106,6 +107,9 @@ void main()
 			handle_meteors();
 			t2 = GET_TIMER;
 			write_stringf_ushort("met: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+
+			// Draw player score last
+			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
 		}
 
 		// hsync_last = hsync;

@@ -95,7 +95,7 @@ void setup_meteors()
 	meteor_y_max = 256 * y_divisor;
 	for (unsigned char m = 0; m < meteor_max; m++)
 	{
-		meteor_x[m] = ((unsigned char)rand() + 16) * x_divisor;
+		meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
 		meteor_y[m] = 0;
 		meteor_xs[m] = rand_schar(-8, 8);
 		meteor_ys[m] = rand_uchar(4, 32);
@@ -234,7 +234,6 @@ void handle_trails()
 		if (trail_timer[t] > 0)
 		{
 			unsigned char sprite = trail_sprite_first + t;
-			trail_x[t] += trail_xs[t];
 			trail_y[t] += trail_ys[t] + player_speed;
 			if ((trail_y[t] > trail_y_max) > 0)
 			{
@@ -242,8 +241,6 @@ void handle_trails()
 				trail_timer[t] = 0;
 				continue;
 			}
-			spr_x[sprite] = trail_x[t] / x_divisor;
-			spr_y[sprite] = trail_y[t] / y_divisor;
 			trail_timer[t]--;
 			if (trail_timer[t] == 0)
 			{
@@ -257,10 +254,9 @@ void handle_trails()
 					trail_timer[t] = player_trail_lifespan;
 				}
 			}
-			// write_stringf("%2d", 0xFF, 10, t + 1, spr_index[sprite]);
-			// write_stringf("%2d", 0xFF, 14, t + 1, trail_timer[t]);
-			//		}else{
-			//			write_string("         ", 0xFF, 14, t + 1);
+			trail_x[t] += trail_xs[t];
+			spr_x[sprite] = trail_x[t] / x_divisor;
+			spr_y[sprite] = trail_y[t] / y_divisor;
 		}
 	}
 }
@@ -276,7 +272,7 @@ void handle_meteors()
 			if (meteor_timer[m] == 0)
 			{
 				spr_on[sprite] = 1;
-				meteor_x[m] = ((unsigned char)rand() + 16) * x_divisor;
+				meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
 				meteor_y[m] = 0;
 			}
 		}
@@ -300,10 +296,9 @@ void handle_meteors()
 			else
 			{
 				meteor_y[m] += meteor_ys[m] + player_speed;
+				spr_x[sprite] = meteor_x[m] / x_divisor;
+				spr_y[sprite] = meteor_y[m] / y_divisor;
 			}
-
-			spr_x[sprite] = meteor_x[m] / x_divisor;
-			spr_y[sprite] = meteor_y[m] / y_divisor;
 		}
 	}
 }

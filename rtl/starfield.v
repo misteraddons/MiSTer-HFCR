@@ -51,12 +51,11 @@ module starfield #(
     reg   [7:0]    timer;
     wire [LEN-1:0] sf_reg;
     reg  [LEN-1:0] sf_cnt;
-    reg            vblank_last;
 
     always @(posedge clk) 
     begin
 
-        // reset seed
+        // Reset seed
         if(rst)
         begin
             seed <= SEED;
@@ -70,33 +69,29 @@ module starfield #(
 
         if (en)
         begin
-
             sf_cnt <= sf_cnt + 1;
             /* verilator lint_off WIDTH */
             if (sf_cnt == RST_CNT) 
             begin
-                vblank_last <= vblank;
-                if(vblank == 1'b1 && vblank_last == 1'b0)
-                begin
-                    $display("%d", seed);
-                    seed <= seed + {{LEN-1{1'b0}},1'b1};
-                end
-                
                 if(speed >= 8'd8)
                 begin
+                    // If speed is 8 or above, use the speed directly as an increment multiplier
                     increment = speed[7:3];
                 end
                 else
                 begin
+                    // If speed is less than 8, increment a timer by that speed
                     timer <= timer + speed;
                     if (timer == 0)
                     begin
+                        // If timer is zero then increment is low
                         increment = 0;
                     end
                     else
                     begin
                         if (timer >= 8'd8)
                         begin
+                            // If timer is 8 or over then set increment high (lasts for 1 cycle)
                             increment = 1;
                             timer <= 0;
                         end

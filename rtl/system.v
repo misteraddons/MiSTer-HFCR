@@ -167,6 +167,7 @@ wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
 wire bgcolram_cs = cpu_addr[15:11] == 5'b10101;
 // - Comet (sprite engine)
 wire spriteram_cs = cpu_addr[15:11] == 5'b10110;
+wire spritecollisionram_cs = memory_map_addr == 8'b10110100;
 // -  (starfield)
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
@@ -195,7 +196,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 chram_cs ? chram_data_out :
 				 fgcolram_cs ? fgcolram_data_out :
 				 bgcolram_cs ? bgcolram_data_out :
-				 spriteram_cs ? spriteram_data_out :
+				 spritecollisionram_cs ? spritecollisionram_data_out :
 				 in0_cs ? in0_data_out :
 				 joystick_cs ? joystick_data_out :
 				 analog_l_cs ? analog_l_data_out :
@@ -233,6 +234,7 @@ wire chram_wr = !cpu_wr_n && chram_cs;
 wire fgcolram_wr = !cpu_wr_n && fgcolram_cs;
 wire bgcolram_wr = !cpu_wr_n && bgcolram_cs;
 wire spriteram_wr = !cpu_wr_n && spriteram_cs;
+reg spritecollisionram_wr;
 
 // Casval - character map
 wire [11:0] chram_addr;
@@ -266,6 +268,9 @@ wire [4:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
 wire [6:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
+wire [6:0]	spritecollisionram_addr;
+wire [7:0]	spritecollisionram_data_out;
+wire [7:0]	spritecollisionram_data_in;
 wire [9:0]	spritelbram_rd_addr;
 wire [9:0]	spritelbram_wr_addr;
 wire 		spritelbram_wr;
@@ -286,12 +291,15 @@ sprite_engine comet
 	.spriteram_data_out(spriteram_data_out),
 	.palrom_data_out(palrom_data_out),
 	.spritelbram_data_out(spritelbram_data_out),
+	.spritecollisionram_data_in(spritecollisionram_data_in),
 	.spriteram_addr(spriteram_addr),
+	.spritecollisionram_addr(spritecollisionram_addr),
 	.sprom_addr(sprom_addr),
 	.palrom_addr(palrom_addr),
 	.spritelbram_rd_addr(spritelbram_rd_addr),
 	.spritelbram_wr_addr(spritelbram_wr_addr),
 	.spritelbram_wr(spritelbram_wr),
+	.spritecollisionram_wr(spritecollisionram_wr),
 	.spritelbram_data_in(spritelbram_data_in),
 	.spr_r(spr_r),
 	.spr_g(spr_g),
@@ -306,10 +314,10 @@ wire [7:0]	sf_star1;
 starfield #(
 	.H(396),
 	.V(256),
-	.LEN(21),
-	.SEED(21'h1FFFFF),
-	.MASK(21'b001010100010101001000),
-	.TAPS(21'b101010100000000000000)
+	.LEN(22),
+	.SEED(22'h1FFFFF),
+	.MASK(22'b0000111100001111000011),
+	.TAPS(22'b1100000000000000000000)
 ) stars1
 (
 	.clk(clk_24),
@@ -328,7 +336,7 @@ starfield #(
 	.V(256),
 	.LEN(21),
 	.SEED(21'h1FFFF0),
-	.MASK(21'b111110000011111000000),
+	.MASK(21'b000011110000111100001),
 	.TAPS(21'b101010000000000000000)
 ) stars2
 (
@@ -348,7 +356,7 @@ starfield #(
 	.V(256),
 	.LEN(21),
 	.SEED(21'h1FFF00),
-	.MASK(21'b111110000011111000000),
+	.MASK(21'b000011110000111100001),
 	.TAPS(21'b101000000000000000000)
 ) stars3
 (
@@ -467,6 +475,22 @@ dpram #(7,8) spriteram
 	.wren_b(1'b0),
 	.data_b(),
 	.q_b(spriteram_data_out)
+);
+
+// Sprite Collision RAM - 0xB400 - 0xB47F (0x0080 / 128 bytes)
+dpram #(7,8) spritecollisionram
+(
+	.clock_a(clk_24),
+	.address_a(cpu_addr[6:0]),
+	.wren_a(1'b0),
+	.data_a(),
+	.q_a(spritecollisionram_data_out),
+
+	.clock_b(clk_24),
+	.address_b(spritecollisionram_addr),
+	.wren_b(spritecollisionram_wr),
+	.data_b(spritecollisionram_data_in),
+	.q_b()
 );
 
 // Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)
