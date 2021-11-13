@@ -34,6 +34,8 @@
 //#include "app_console.c"
 #include "app_meteorstorm.c"
 
+//#define DEBUG_PRINT
+
 // Main entry and state machine
 void main()
 {
@@ -47,8 +49,10 @@ void main()
 	setup_trails();
 	setup_player();
 
-	unsigned short t1;
-	unsigned short t2;
+#ifdef DEBUG_PRINT
+	unsigned short debug_t1;
+	unsigned short debug_t2;
+#endif
 
 	unsigned char player_speed_last = 0;
 
@@ -68,13 +72,18 @@ void main()
 		if (VBLANK_RISING)
 		{
 			unsigned char debug_y = 16;
-			t1 = GET_TIMER;
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
 			update_sprites();
-			t2 = GET_TIMER;
-			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
-
-			// Update starfield
-			t1 = GET_TIMER;
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
+// Update starfield
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
 			if (player_speed != player_speed_last)
 			{
 				player_speed_last = player_speed;
@@ -85,28 +94,42 @@ void main()
 				s = s / 2;
 				starfield[4] = s;
 			}
-			t2 = GET_TIMER;
-			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 		}
 
 		if (VBLANK_FALLING)
 		{
 			unsigned char debug_y = 26;
 
-			t1 = GET_TIMER;
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
 			handle_player();
-			t2 = GET_TIMER;
-			write_stringf_ushort("ply: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("ply: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 
-			t1 = GET_TIMER;
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
 			handle_trails();
-			t2 = GET_TIMER;
-			write_stringf_ushort("trl: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("trl: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 
-			t1 = GET_TIMER;
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
 			handle_meteors();
-			t2 = GET_TIMER;
-			write_stringf_ushort("met: %4d us", 0b01011011, 0, debug_y++, t2 - t1);
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("met: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 
 			// Draw player score last
 			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
