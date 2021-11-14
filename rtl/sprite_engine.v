@@ -24,6 +24,8 @@ module sprite_engine (
 	input				clk,
 	input				reset,
 	input				hsync,
+	input				vsync,
+	input				vblank,
 	input		[8:0]	hcnt,
 	input		[8:0]	vcnt,
 	
@@ -103,7 +105,7 @@ reg [SPR_TIMER_WIDTH-1:0] spr_linetime_max;
 reg [SPR_TIMER_WIDTH-1:0] spr_timer_line;
 `endif
 
-
+// Sprite engine state machine
 always @(posedge clk)
 begin
 
@@ -392,10 +394,14 @@ begin
 	endcase
 end
 
+// Sprite engine outputs
 assign spritelbram_rd_addr = ({spritelb_slot_rd, (hcnt + 1'b1) + spr_size_x[8:0]}) + 10'd2;
 assign spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
 assign spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
 assign spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
 assign spr_a = spritelbram_data_out[15];
+
+
+
 
 endmodule

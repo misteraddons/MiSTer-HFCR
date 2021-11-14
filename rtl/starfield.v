@@ -27,8 +27,8 @@
 `timescale 1ns / 1ps
 
 module starfield #(
-    parameter H=800,
-    parameter V=525,
+    parameter [LEN-1:0] H=800,
+    parameter [LEN-1:0] V=525,
     parameter LEN=25,
     parameter TAPS=25'b1010000000000000000000000,
     parameter SEED=25'b1111111111111110000000000,

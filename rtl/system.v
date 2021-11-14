@@ -111,7 +111,10 @@ wire cpu_wr_n;
 wire cpu_mreq_n;
 
 // include Z80 CPU
-tv80s T80x  (
+tv80s #(
+	.Mode(1), // Fast Z80
+	.IOWait(0) // Fast Z80
+) T80x  (
 	.reset_n   ( !reset ),
 	.clk       ( clk_24 ),
 	.wait_n    ( 1'b1 ),
@@ -285,6 +288,8 @@ sprite_engine comet
 	.clk(clk_24),
 	.reset(reset),
 	.hsync(VGA_HS),
+	.vsync(VGA_VS),
+	.vblank(VGA_VB),
 	.hcnt(hcnt),
 	.vcnt(vcnt),
 	.spriterom_data_out(spriterom_data_out),

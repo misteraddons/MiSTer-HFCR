@@ -206,6 +206,9 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 localparam CONF_STR = {
 	"Aznable;;",
 	"-;",
+	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+	"OGJ,Analog Video H-Pos,0,-1,-2,-3,-4,-5,-6,-7,8,7,6,5,4,3,2,1;",
+	"OKN,Analog Video V-Pos,0,-1,-2,-3,-4,-5,-6,-7,8,7,6,5,4,3,2,1;",
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"-;",
 	"F0,BIN,Load BIOS;",
@@ -339,8 +342,9 @@ jtframe_cen24 divider
 );
 
 ///////////////////   VIDEO   ////////////////////
-wire hblank, vblank, hs, vs;
+wire hblank, vblank, hs, vs, hs_original, vs_original;
 wire [7:0] r, g, b;
+
 arcade_video #(320,24) arcade_video
 (
 	.*,
@@ -353,6 +357,23 @@ arcade_video #(320,24) arcade_video
 	.fx(status[5:3])
 );
 
+// H/V offset
+wire [3:0]  voffset = status[23:20];
+wire [3:0]  hoffset = status[19:16];
+jtframe_resync jtframe_resync
+(
+  .clk(clk_sys),
+  .pxl_cen(ce_pix),
+  .hs_in(hs_original),
+  .vs_in(vs_original),
+  .LVBL(~vblank),
+  .LHBL(~hblank),
+  .hoffset(hoffset),
+  .voffset(voffset),
+  .hs_out(hs),
+  .vs_out(vs)
+);
+
 ///////////////////   MAIN CORE   ////////////////////
 wire rom_download = ioctl_download && (ioctl_index < 8'd2);
 wire reset = (RESET | status[0] | buttons[1] | rom_download);
@@ -362,8 +383,8 @@ system system(
 	.clk_24(clk_sys),
 	.ce_6(ce_pix),
 	.reset(reset),
-	.VGA_HS(hs),
-	.VGA_VS(vs),
+	.VGA_HS(hs_original),
+	.VGA_VS(vs_original),
 	.VGA_R(r),
 	.VGA_G(g),
 	.VGA_B(b),
