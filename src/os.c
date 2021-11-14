@@ -31,34 +31,54 @@
 #include "ui.c"
 //#include "ui_custom.c"
 #include "sprite.c"
+#include "audio.c"
 //#include "app_console.c"
 #include "app_meteorstorm.c"
 
 //#define DEBUG_PRINT
 
-// Main entry and state machine
-void main()
+void test_loop()
 {
-	// Setup charmap
-	chram_size = chram_cols * chram_rows;
-	clear_bgcolor(0);
-	clear_chars(0);
 
-	setup_area();
-	setup_meteors();
-	setup_trails();
-	setup_player();
+	while (1)
+	{
+		// hsync = input0 & 0x80;
+		// vsync = input0 & 0x40;
+		// hblank = input0 & 0x20;
+		vblank = input0 & 0x10;
 
-#ifdef DEBUG_PRINT
-	unsigned short debug_t1;
-	unsigned short debug_t2;
-#endif
+		// console();
 
-	unsigned char player_speed_last = 0;
+		char s = 0;
+		for (char y = 0; y < 4; y++)
+		{
+			for (char x = 0; x < 8; x++)
+			{
+				spr_x[s] = 24 + (x * 16);
+				spr_y[s] = 24 + (y * 16);
+				spr_on[s] = 1;
+				spr_index[s] = 12 + s;
+				s++;
+			}
+		}
 
-	unsigned char sf_speed1 = 4;
-	// unsigned char sf_speed2 = 4;
-	// unsigned char sf_speed3 = 8;
+		if (VBLANK_RISING)
+		{
+			update_sprites();
+		}
+
+		// hsync_last = hsync;
+		// vsync_last = vsync;
+		// hblank_last = hblank;
+		vblank_last = vblank;
+	}
+}
+
+unsigned char player_speed_last = 0;
+
+unsigned char sf_speed1 = 4;
+void game_loop()
+{
 
 	while (1)
 	{
@@ -98,6 +118,29 @@ void main()
 			debug_t2 = GET_TIMER;
 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
+
+			ay_set_ch(0, 70);
+			// for (unsigned char c = 0; c < 2; c++)
+			// {
+			// 	if (channel_on[c])
+			// 	{
+			// 		channel_tick[c]++;
+			// 		if (channel_tick[c] == channel_speed[c])
+			// 		{
+			// 			channel_pos[c] += channel_dir[c];
+			// 			ay_set_ch(c, channel_pos[c]);
+			// 			if (channel_pos[c] >= channel_high[c])
+			// 			{
+			// 				channel_dir[c] = -channel_dir[c];
+			// 			}
+			// 			if (channel_pos[c] <= channel_low[c])
+			// 			{
+			// 				channel_dir[c] = -channel_dir[c];
+			// 			}
+			// 			channel_tick[c] = 0;
+			// 		}
+			// 	}
+			// }
 		}
 
 		if (VBLANK_FALLING)
@@ -140,4 +183,31 @@ void main()
 		// hblank_last = hblank;
 		vblank_last = vblank;
 	}
+}
+
+// Main entry and state machine
+void main()
+{
+	// Setup charmap
+	chram_size = chram_cols * chram_rows;
+	clear_bgcolor(0);
+	clear_chars(0);
+
+	init_audio();
+	channel_on[0] = 1;
+	ay_set_ch(0, channel_pos[0]);
+
+	setup_area();
+	setup_meteors();
+	setup_trails();
+	setup_player();
+
+#ifdef DEBUG_PRINT
+	unsigned short debug_t1;
+	unsigned short debug_t2;
+#endif
+
+	test_loop();
+
+	game_loop();
 }

@@ -37,7 +37,7 @@ module sprite_engine (
 
 	output reg 	[6:0]	spriteram_addr,
 	output reg 	[6:0]	spritecollisionram_addr,
-	output reg	[11:0]	sprom_addr,
+	output reg	[13:0]	sprom_addr,
 	output reg 	[4:0]	palrom_addr,
 	output 		[9:0]	spritelbram_rd_addr,
 	output reg	[9:0]	spritelbram_wr_addr,
@@ -92,7 +92,7 @@ localparam			spr_line_max = 352;
 reg			[15:0]	spr_y;
 reg			[15:0]	spr_x;
 reg					spr_enable;
-reg			[3:0]	spr_image_index;
+reg			[4:0]	spr_image_index;
 reg			[15:0]	spr_active_y;
 reg			[4:0]	spr_pixel_index;
 reg			[10:0]	spr_rom_offset;
@@ -256,10 +256,10 @@ begin
 `ifdef CASVAL_DEBUG
 			$display("CASVAL->SE_READ_X_UPPER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
 `endif
-			// Read image index 4 bits from sprite RAM
-			spr_image_index <= spriteram_data_out[7:4];
-			// Read Y upper 4 bits from sprite RAM
-			spr_x[11:8] <= spriteram_data_out[3:0];
+			// Read image index 5 bits from sprite RAM
+			spr_image_index <= spriteram_data_out[7:3];
+			// Read X upper 3 bits from sprite RAM
+			spr_x[11:9] <= spriteram_data_out[2:0];
 			// Increment sprite RAM address
 			spriteram_addr <= spriteram_addr + 1'b1;
 
@@ -289,7 +289,7 @@ begin
 			// Setup line buffer write address
 		 	spritelbram_wr_addr <= {spritelb_slot_wr, spr_x[8:0]};
 			// Set sprite rom read address
-		 	sprom_addr <= { spr_image_index[3:0], 8'b0} + {spr_rom_offset[6:0], 4'b0};
+		 	sprom_addr <= { 1'b0, spr_image_index[4:0], 8'b0} + {1'b0, spr_rom_offset[7:0], 4'b0};
 			// Reset sprite pixel index and count
 		 	spr_pixel_index <= 5'b0;
 

@@ -10,6 +10,7 @@ verilator \
 --top-module emu sim.v \
 -I../rtl \
 -I../rtl/JTFRAME \
+-I../rtl/jt49 \
 -I../rtl/tv80
     else
 	        echo "not running on windows"

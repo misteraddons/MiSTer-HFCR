@@ -61,7 +61,9 @@ module system (
 	output [7:0]	VGA_G,
 	output [7:0]	VGA_B,
 	output			VGA_HB,
-	output			VGA_VB
+	output			VGA_VB,
+	output	[15:0]	AUDIO_L,
+	output	[15:0]	AUDIO_R
 );
 
 localparam [8:0] VGA_WIDTH = 9'd320;
@@ -164,6 +166,9 @@ wire timer_cs = memory_map_addr == 8'b10001001;
 wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
 wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
 wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
+wire snd_cs = cpu_addr[15:8] == 8'b10001011;
+wire snd_reset_cs = cpu_addr == 16'b1000101100010000;
+
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
@@ -191,6 +196,7 @@ always @(posedge clk_24) begin
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
+	//if(snd_cs && !cpu_wr_n) $display("sndram %b %b", snd_addr, cpu_dout);
 end
 
 // CPU data mux
@@ -265,7 +271,7 @@ charmap casval
 );
 
 // Comet - sprite engine
-wire [11:0]	sprom_addr;
+wire [13:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
 wire [4:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
@@ -537,20 +543,63 @@ dpram_w1r2 #(5,8, "palette.hex") palrom
 	.q_b(palrom_data_out)
 );
 
-// Sprite ROM - 0x11000 - 0x11800 (0x0800 / 2048 bytes)
-dpram #(12,8, "sprite.hex") spriterom
+// Sprite ROM - 0x11000 - 0x11800 (0x1000 / 4096 bytes)
+dpram #(14,8, "sprite.hex") spriterom
 (
 	.clock_a(clk_24),
-	.address_a(sprom_addr[11:0]),
+	.address_a(sprom_addr),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(spriterom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[11:0]),
+	.address_b(dn_addr[13:0]),
 	.wren_b(spriterom_wr),
 	.data_b(dn_data),
 	.q_b()
 );
+
+
+// /// Audio
+// reg ce_2;
+// always @(posedge clk_24) begin
+// 	reg [3:0] cnt;
+// 	ce_2 <= (cnt == 0);
+// 	cnt <= cnt + 1'd1;
+// 	if(cnt>= 4'd12) cnt <= 4'd0;
+// end
+
+// wire [3:0] snd_addr = cpu_addr[3:0];
+// wire [7:0] snd_data_out;
+
+// wire [9:0] audio_out;
+// wire [7:0] audio_out_a;
+// wire [7:0] audio_out_b;
+
+// jt49 jt49 (
+// 	.clk         ( clk_24 ),
+// 	.clk_en      ( ce_2 ),
+// 	.rst_n       ( ~(reset | (snd_reset_cs & ~cpu_wr_n)) ),
+// 	.addr        ( snd_addr ),
+// 	.din         ( cpu_dout ),
+// 	.dout        ( snd_data_out ),
+// 	.sound       ( audio_out ),
+// 	.sample(),
+// 	.A(audio_out_a),
+// 	.B(audio_out_b),
+// 	.C(),
+// 	.sel(1'b1),
+// 	.cs_n(1'b0),
+// 	.wr_n(~(snd_cs && ~cpu_wr_n)),
+// 	.IOA_in(),
+// 	.IOA_out(),
+// 	.IOB_in(),
+// 	.IOB_out()
+// );
+
+// assign AUDIO_L =  { 1'b0, audio_out[9:0],5'd0};
+// assign AUDIO_R = AUDIO_L;
+//assign AUDIO_L =  { 3'b0, audio_out_a[7:0],5'd0};
+//assign AUDIO_R = { 3'b0, audio_out_b[7:0],5'd0};
 
 endmodule

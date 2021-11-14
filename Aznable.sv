@@ -187,8 +187,6 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_S = 0;
-assign AUDIO_L = 0;
-assign AUDIO_R = 0;
 assign AUDIO_MIX = 0;
 
 assign LED_DISK = 0;
@@ -401,7 +399,9 @@ system system(
 	.spinner({7'b0,spinner_5,7'b0,spinner_4,7'b0,spinner_3,7'b0,spinner_2,7'b0,spinner_1,7'b0,spinner_0}),
 	.ps2_key(ps2_key),
 	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
-	.timestamp(timestamp)
+	.timestamp(timestamp),
+	.AUDIO_L(AUDIO_L),
+	.AUDIO_R(AUDIO_R)
 );
 
 endmodule

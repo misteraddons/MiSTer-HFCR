@@ -19,7 +19,11 @@
 
 #include "../imgui/imgui_memory_editor.h"
 #include "../imgui/ImGuiFileDialog.h"
-#include <verilated_vcd_c.h> //VCD Trace
+//#include <verilated_vcd_c.h> //VCD Trace
+
+#include <iostream>
+#include <fstream>
+using namespace std;
 
 // Debug GUI 
 // ---------
@@ -83,6 +87,10 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 }
 
 SimClock clk_sys(1);
+SimClock clk_audio(8);
+
+// Audio
+ofstream audioFile;
 
 // VCD trace logging
 // -----------------
@@ -115,6 +123,7 @@ void resetSim() {
 	main_time = 0;
 	top->reset = 1;
 	clk_sys.Reset();
+	clk_audio.Reset();
 }
 
 int verilate() {
@@ -128,6 +137,7 @@ int verilate() {
 
 		// Clock dividers
 		clk_sys.Tick();
+		clk_audio.Tick();
 
 		// Set system clock in core
 		top->clk_sys = clk_sys.clk;
@@ -143,7 +153,16 @@ int verilate() {
 			//	if (!tfp->isOpen()) tfp->open(Trace_File);
 			//	tfp->dump(main_time); //Trace
 			//}
+			
 			if (clk_sys.clk) { bus.AfterEval(); }
+		}
+
+		if (clk_audio.IsRising()) {
+			// Output audio
+			unsigned short audio_l = top->AUDIO_L;
+			unsigned short audio_r = top->AUDIO_R;
+			audioFile.write((const char*)&audio_l, 2);
+			audioFile.write((const char*)&audio_r, 2);
 		}
 
 		// Output pixels on rising edge of pixel clock
@@ -196,6 +215,9 @@ int main(int argc, char** argv, char** env) {
 	bus.ioctl_dout = &top->ioctl_dout;
 	//bus.ioctl_din = &top->ioctl_din;
 	input.ps2_key = &top->ps2_key;
+
+	// Setup Audio output stream
+	audioFile.open("audio.wav", ios::binary);
 
 	// Set up input module
 	input.Initialise();
@@ -278,11 +300,14 @@ int main(int argc, char** argv, char** env) {
 		if (ImGui::Button("Multi Step")) { run_enable = 0; multi_step = 1; }
 		//ImGui::SameLine();
 		ImGui::SliderInt("Multi step amount", &multi_step_amount, 8, 1024);
+
 		ImGui::End();
 
 		// Debug log window
 		console.Draw(windowTitle_DebugLog, &showDebugLog, ImVec2(500, 700));
 		ImGui::SetWindowPos(windowTitle_DebugLog, ImVec2(0, 160), ImGuiCond_Once);
+
+
 
 		// Memory debug
 				/*ImGui::Begin("PGROM Editor");
@@ -303,18 +328,18 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("BGCOLRAM Editor");
 		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		ImGui::Begin("Sprite RAM");
+		/*ImGui::Begin("Sprite RAM");
 		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
 		ImGui::End();
 		ImGui::Begin("Sprite Linebuffer RAM");
 		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
-		ImGui::End();
-		ImGui::Begin("Palette ROM");
+		ImGui::End();*/
+		/*ImGui::Begin("Palette ROM");
 		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
 		ImGui::End();
 		ImGui::Begin("Sprite ROM");
 		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
-		ImGui::End();
+		ImGui::End();*/
 
 		// Trace/VCD window
 		//ImGui::Begin(windowTitle_Trace);
@@ -374,6 +399,13 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
+
+		float vol_l = (top->AUDIO_L) / 2048.0f;
+		float vol_r = (top->AUDIO_R) / 2048.0f;
+		ImGui::ProgressBar(vol_l, ImVec2(200, 16), 0); ImGui::SameLine();
+		ImGui::ProgressBar(vol_r, ImVec2(200, 16), 0);
+
+
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));
 		ImGui::End();
@@ -424,6 +456,9 @@ int main(int argc, char** argv, char** env) {
 
 	// Clean up before exit
 	// --------------------
+
+
+	audioFile.close();
 
 	video.CleanUp();
 	input.CleanUp();

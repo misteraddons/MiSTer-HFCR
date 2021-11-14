@@ -80,6 +80,9 @@ module emu (
 	output VGA_HB,
 	output VGA_VB,
 	
+	output	[15:0]	AUDIO_L,
+	output	[15:0]	AUDIO_R,
+	
 	input			ioctl_download,
 	input			ioctl_wr,
 	input [24:0]	ioctl_addr,
@@ -122,7 +125,9 @@ system system(
 	.spinner({7'b0,spinner_5,7'b0,spinner_4,7'b0,spinner_3,7'b0,spinner_2,7'b0,spinner_1,7'b0,spinner_0}),
 	.ps2_key(ps2_key),
 	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
-	.timestamp(timestamp)
+	.timestamp(timestamp),
+	.AUDIO_L(AUDIO_L),
+	.AUDIO_R(AUDIO_R)
 );
 
 endmodule 

@@ -16,7 +16,7 @@ void update_sprites()
 		{
 			spriteram[s++] = 1 << 7 | spr_y[sprite] >> 8; // Enabled + Position Y (upper 4 bits)
 			spriteram[s++] = (unsigned char)spr_y[sprite];		  // Position Y (lower 8 bits)
-			spriteram[s++] = spr_index[sprite] << 4 | spr_x[sprite] >> 8; // Sprite Index (4 bits) + Position X (upper 4 bits)
+			spriteram[s++] = spr_index[sprite] << 3 | spr_x[sprite] >> 7; // Sprite Index (5 bits) + Position X (upper 3 bits)
 			spriteram[s++] = (unsigned char)spr_x[sprite];		  // Position X (lower 8 bits)
 		}
 		else

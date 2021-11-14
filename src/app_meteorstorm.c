@@ -36,7 +36,7 @@ signed char trail_ys[const_trail_max];
 unsigned char trail_timer[const_trail_max];
 unsigned short trail_y_max;
 #define trail_sprite_index_first player_sprite_index_default + 4
-#define trail_sprite_index_last trail_sprite_index_first + 4
+#define trail_sprite_index_last trail_sprite_index_first + 3
 
 // Meteors
 #define const_meteor_max 16
