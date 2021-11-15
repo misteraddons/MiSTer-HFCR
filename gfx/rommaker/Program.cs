@@ -13,6 +13,8 @@ namespace rommaker
 
         static List<Color> Palette = new List<Color>();
 
+        static int PaletteMax = 32;
+
         static void Main(string[] args)
         {
 
@@ -76,7 +78,7 @@ namespace rommaker
                                 if (pi == -1)
                                 {
                                     pi = Palette.Count;
-                                    if (pi == 16)
+                                    if (pi == PaletteMax)
                                     {
                                         //   throw new Exception("too many colours");
                                         Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
@@ -99,7 +101,7 @@ namespace rommaker
                 }
             }
 
-            while (Palette.Count < 16)
+            while (Palette.Count < PaletteMax)
             {
                 Palette.Add(Color.FromArgb(255, 255, 0, 255));
             }

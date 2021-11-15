@@ -38,7 +38,7 @@ module sprite_engine (
 	output reg 	[6:0]	spriteram_addr,
 	output reg 	[6:0]	spritecollisionram_addr,
 	output reg	[13:0]	sprom_addr,
-	output reg 	[4:0]	palrom_addr,
+	output reg 	[5:0]	palrom_addr,
 	output 		[9:0]	spritelbram_rd_addr,
 	output reg	[9:0]	spritelbram_wr_addr,
 
@@ -318,7 +318,7 @@ begin
 				$display("CASVAL->SE_GET_PIXEL: y: %d, x: %d i: %d, sprom_addr < %x, palrom_addr < %x", spr_y, spr_pixel_index, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
 `endif
 				// Setup palette address to read pixel colour
-				palrom_addr <= {spriterom_data_out[3:0],1'b0};
+				palrom_addr <= {spriterom_data_out[4:0],1'b0};
 				// Increment sprite ROM address
 				sprom_addr <= sprom_addr + 1'b1;
 				// Disable line buffer write
