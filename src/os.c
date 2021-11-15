@@ -40,6 +40,24 @@
 void test_loop()
 {
 
+	clear_bgcolor(0b01000000);
+
+	starfield[0] = 2;
+	starfield[2] = 8;
+	starfield[4] = 32;
+	char s = 0;
+	for (char y = 0; y < 4; y++)
+	{
+		for (char x = 0; x < 8; x++)
+		{
+			spr_index[s] = 12 + s;
+			s++;
+		}
+	}
+
+	signed short logoX = 120;
+	signed short logoY = 100;
+
 	while (1)
 	{
 		// hsync = input0 & 0x80;
@@ -47,24 +65,31 @@ void test_loop()
 		// hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
-		// console();
-
-		char s = 0;
-		for (char y = 0; y < 4; y++)
-		{
-			for (char x = 0; x < 8; x++)
-			{
-				spr_x[s] = 24 + (x * 16);
-				spr_y[s] = 24 + (y * 16);
-				spr_on[s] = 1;
-				spr_index[s] = 12 + s;
-				s++;
-			}
-		}
-
 		if (VBLANK_RISING)
 		{
 			update_sprites();
+		}
+		if (VBLANK_FALLING)
+		{
+			char s = 0;
+
+			logoX += 1;
+			if (logoX > 336)
+			{
+				logoX = -112;
+			}
+
+			for (char y = 0; y < 4; y++)
+			{
+				for (char x = 0; x < 8; x++)
+				{
+					unsigned short lx = logoX + (x * 16);
+					spr_on[s] = lx > 0;
+					spr_x[s] = lx;
+					spr_y[s] = logoY + (y * 16);
+					s++;
+				}
+			}
 		}
 
 		// hsync_last = hsync;
@@ -119,28 +144,28 @@ void game_loop()
 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
 
-			ay_set_ch(0, 70);
-			// for (unsigned char c = 0; c < 2; c++)
-			// {
-			// 	if (channel_on[c])
-			// 	{
-			// 		channel_tick[c]++;
-			// 		if (channel_tick[c] == channel_speed[c])
-			// 		{
-			// 			channel_pos[c] += channel_dir[c];
-			// 			ay_set_ch(c, channel_pos[c]);
-			// 			if (channel_pos[c] >= channel_high[c])
-			// 			{
-			// 				channel_dir[c] = -channel_dir[c];
-			// 			}
-			// 			if (channel_pos[c] <= channel_low[c])
-			// 			{
-			// 				channel_dir[c] = -channel_dir[c];
-			// 			}
-			// 			channel_tick[c] = 0;
-			// 		}
-			// 	}
-			// }
+			// ay_set_ch(0, 70);
+			//  for (unsigned char c = 0; c < 2; c++)
+			//  {
+			//  	if (channel_on[c])
+			//  	{
+			//  		channel_tick[c]++;
+			//  		if (channel_tick[c] == channel_speed[c])
+			//  		{
+			//  			channel_pos[c] += channel_dir[c];
+			//  			ay_set_ch(c, channel_pos[c]);
+			//  			if (channel_pos[c] >= channel_high[c])
+			//  			{
+			//  				channel_dir[c] = -channel_dir[c];
+			//  			}
+			//  			if (channel_pos[c] <= channel_low[c])
+			//  			{
+			//  				channel_dir[c] = -channel_dir[c];
+			//  			}
+			//  			channel_tick[c] = 0;
+			//  		}
+			//  	}
+			//  }
 		}
 
 		if (VBLANK_FALLING)

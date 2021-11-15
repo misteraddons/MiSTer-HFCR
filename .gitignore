@@ -57,3 +57,4 @@ verilator/imgui.ini
 **/bin/*
 **/obj/*
 docs/vids/*
+verilator/audio.wav
