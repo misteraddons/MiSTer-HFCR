@@ -19,7 +19,6 @@
 
 #include "../imgui/imgui_memory_editor.h"
 #include "../imgui/ImGuiFileDialog.h"
-//#include <verilated_vcd_c.h> //VCD Trace
 
 #include <iostream>
 #include <fstream>
@@ -31,7 +30,6 @@ const char* windowTitle = "Verilator Sim: Aznable";
 const char* windowTitle_Control = "Simulation control";
 const char* windowTitle_DebugLog = "Debug log";
 const char* windowTitle_Video = "VGA output";
-const char* windowTitle_Trace = "Trace/VCD control";
 bool showDebugLog = true;
 DebugConsole console;
 MemoryEditor mem_edit_1;
@@ -87,36 +85,10 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 }
 
 SimClock clk_sys(1);
-SimClock clk_audio(8);
 
 // Audio
+SimClock clk_audio(1000);
 ofstream audioFile;
-
-// VCD trace logging
-// -----------------
-//VerilatedVcdC* tfp = new VerilatedVcdC; //Trace
-//bool Trace = 0;
-//char Trace_Deep[3] = "99";
-//char Trace_File[30] = "sim.vcd";
-//char Trace_Deep_tmp[3] = "99";
-//char Trace_File_tmp[30] = "sim.vcd";
-//int  iTrace_Deep_tmp = 99;
-//char SaveModel_File_tmp[20] = "test", SaveModel_File[20] = "test";
-//
-////Trace Save/Restore
-//void save_model(const char* filenamep) {
-//	VerilatedSave os;
-//	os.open(filenamep);
-//	os << main_time; // user code must save the timestamp, etc
-//	os << *top;
-//}
-//void restore_model(const char* filenamep) {
-//	VerilatedRestore os;
-//	os.open(filenamep);
-//	os >> main_time;
-//	os >> *top;
-//}
-
 
 // Reset simulation variables and clocks
 void resetSim() {
@@ -149,20 +121,18 @@ int verilate() {
 				bus.BeforeEval();
 			}
 			top->eval();
-			//if (Trace) {
-			//	if (!tfp->isOpen()) tfp->open(Trace_File);
-			//	tfp->dump(main_time); //Trace
-			//}
-			
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
 		if (clk_audio.IsRising()) {
-			// Output audio
-			unsigned short audio_l = top->AUDIO_L;
-			unsigned short audio_r = top->AUDIO_R;
-			audioFile.write((const char*)&audio_l, 2);
-			audioFile.write((const char*)&audio_r, 2);
+		//if (clk_sys.IsRising()) {
+			//if (top->emu__DOT__system__DOT__ce_2) {
+				// Output audio
+				unsigned short audio_l = top->AUDIO_L;
+				//unsigned short audio_r = top->AUDIO_R;
+				audioFile.write((const char*)&audio_l, 2);
+			//	audioFile.write((const char*)&audio_r, 2);
+			//}
 		}
 
 		// Output pixels on rising edge of pixel clock
@@ -194,11 +164,6 @@ int main(int argc, char** argv, char** env) {
 	// Create core and initialise
 	top = new Vemu();
 	Verilated::commandArgs(argc, argv);
-
-	//Prepare for Dump Signals
-	//Verilated::traceEverOn(true); //Trace
-	//top->trace(tfp, 1);// atoi(Trace_Deep) );  // Trace 99 levels of hierarchy
-	//if (Trace) tfp->open(Trace_File);//"simx.vcd"); //Trace
 
 #ifdef WIN32
 	// Attach debug console to the verilated code
@@ -341,52 +306,6 @@ int main(int argc, char** argv, char** env) {
 		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
 		ImGui::End();*/
 
-		// Trace/VCD window
-		//ImGui::Begin(windowTitle_Trace);
-		//ImGui::SetWindowPos(windowTitle_Trace, ImVec2(0, 870), ImGuiCond_Once);
-		//ImGui::SetWindowSize(windowTitle_Trace, ImVec2(500, 150), ImGuiCond_Once);
-
-		//if (ImGui::Button("Start VCD Export")) { Trace = 1; } ImGui::SameLine();
-		//if (ImGui::Button("Stop VCD Export")) { Trace = 0; } ImGui::SameLine();
-		//if (ImGui::Button("Flush VCD Export")) { tfp->flush(); } ImGui::SameLine();
-		//ImGui::Checkbox("Export VCD", &Trace);
-
-		// File Dialog to load rom 
-		//if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-
-		//ImGui::PushItemWidth(120);
-		//if (ImGui::InputInt("Deep Level", &iTrace_Deep_tmp, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-		//{
-		//	// action if OK
-		//	if (ImGuiFileDialog::Instance()->IsOk())
-		//	{
-		//		std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-		//		std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-		//		// action
-		//		bus.QueueDownload(filePathName, 0, true);
-		//	}
-		//	top->trace(tfp, iTrace_Deep_tmp);
-		//}
-
-		// close
-		//ImGuiFileDialog::Instance()->Close();
-		//if (ImGui::InputText("TraceFilename", Trace_File_tmp, IM_ARRAYSIZE(Trace_File), ImGuiInputTextFlags_EnterReturnsTrue))
-		//{
-		//	strcpy(Trace_File, Trace_File_tmp); //TODO onChange Close and open new trace file
-		//	tfp->close();
-		//	if (Trace) tfp->open(Trace_File);
-		//};
-		//ImGui::Separator();
-		//if (ImGui::Button("Save Model")) { save_model(SaveModel_File); } ImGui::SameLine();
-		//if (ImGui::Button("Load Model")) {
-		//	restore_model(SaveModel_File);
-		//} ImGui::SameLine();
-		//if (ImGui::InputText("SaveFilename", SaveModel_File_tmp, IM_ARRAYSIZE(SaveModel_File), ImGuiInputTextFlags_EnterReturnsTrue))
-		//{
-		//	strcpy(SaveModel_File, SaveModel_File_tmp); //TODO onChange Close and open new trace file
-		//}
-		//ImGui::End();
-
 		// Video window
 		ImGui::Begin(windowTitle_Video);
 		ImGui::SetWindowPos(windowTitle_Video, ImVec2(550, 0), ImGuiCond_Once);
@@ -400,8 +319,8 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
 
-		float vol_l = (top->AUDIO_L) / 2048.0f;
-		float vol_r = (top->AUDIO_R) / 2048.0f;
+		float vol_l = ((top->AUDIO_L) / 256.0f) /256.0f;
+		float vol_r = ((top->AUDIO_R) / 256.0f) / 256.0f;
 		ImGui::ProgressBar(vol_l, ImVec2(200, 16), 0); ImGui::SameLine();
 		ImGui::ProgressBar(vol_r, ImVec2(200, 16), 0);
 

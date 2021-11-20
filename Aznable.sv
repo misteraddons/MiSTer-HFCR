@@ -211,6 +211,7 @@ localparam CONF_STR = {
 	"-;",
 	"F0,BIN,Load BIOS;",
 	"F3,BIN,Load Sprite ROM;",
+	"F4,YM,Load Music (YM5/6);",
 	"-;",
 	"J1,A,B,X,Y,L,R,Select,Start,C,Z;",
 	"V,v",`BUILD_DATE

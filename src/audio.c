@@ -43,10 +43,10 @@ void ay_set_ch(unsigned char c, int i)
 void init_audio()
 {
 	
-	channel_high[0] = 64;
-	channel_low[0] = 62;
+	channel_high[0] = 60;
+	channel_low[0] = 50;
 	channel_dir[0] = 1;
-	channel_speed[0] = 10;
+	channel_speed[0] = 30;
 	channel_pos[0] = channel_low[0];
 
 	channel_high[1] = 78;
@@ -54,11 +54,14 @@ void init_audio()
 	channel_dir[1] = 1;
 	channel_speed[1] = 15;
 	channel_pos[1] = channel_low[1];
-	
+
 	ay_write(0x10, 0xFF);
 	for (char a = 0; a < 16; a++)
 	{
 		ay_write(a, 0xFF);
 	}
 	ay_write(0x07, 0b11111000);
+	ay_write(0x08, 0b00000111);
+	ay_write(0x09, 0b00000111);
+	ay_write(0x0A, 0b00000111);
 }

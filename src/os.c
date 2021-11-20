@@ -102,6 +102,9 @@ void test_loop()
 unsigned char player_speed_last = 0;
 
 unsigned char sf_speed1 = 4;
+
+unsigned char sound_timer = 0;
+
 void game_loop()
 {
 
@@ -125,7 +128,7 @@ void game_loop()
 			debug_t2 = GET_TIMER;
 			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
-// Update starfield
+			// Update starfield
 #ifdef DEBUG_PRINT
 			debug_t1 = GET_TIMER;
 #endif
@@ -144,28 +147,57 @@ void game_loop()
 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
 
+			// sound_timer++;
+			// if(sound_timer==60){
+			// 	sound_timer=0;
+
+			// 	channel_on[0] = !channel_on[0];
+			// 	ay_write(0x08, channel_on[0] ? 10 : 0);
+
+			// }
+
+			// if (CHECK_BIT(joystick[0], 4))
+			// {
+			// 	ay_write(0x08, 0x06);
+			// 	ay_set_ch(0, 64);
+			// }
+			// if (CHECK_BIT(joystick[0], 5))
+			// {
+			// 	ay_write(0x08, 0x00);
+			// }
+			// if (CHECK_BIT(joystick[0], 6))
+			// {
+			// 	ay_write(0x09, 0x06);
+			// 	ay_set_ch(1, 64);
+			// }
+			// if (CHECK_BIT(joystick[0], 7))
+			// {
+			// 	ay_write(0x09, 0x00);
+			// }
+
 			// ay_set_ch(0, 70);
-			//  for (unsigned char c = 0; c < 2; c++)
-			//  {
-			//  	if (channel_on[c])
-			//  	{
-			//  		channel_tick[c]++;
-			//  		if (channel_tick[c] == channel_speed[c])
-			//  		{
-			//  			channel_pos[c] += channel_dir[c];
-			//  			ay_set_ch(c, channel_pos[c]);
-			//  			if (channel_pos[c] >= channel_high[c])
-			//  			{
-			//  				channel_dir[c] = -channel_dir[c];
-			//  			}
-			//  			if (channel_pos[c] <= channel_low[c])
-			//  			{
-			//  				channel_dir[c] = -channel_dir[c];
-			//  			}
-			//  			channel_tick[c] = 0;
-			//  		}
-			//  	}
-			//  }
+			// for (unsigned char c = 0; c < 2; c++)
+			// {
+			// 	if (channel_on[c])
+			// 	{
+			// 		channel_tick[c]++;
+			// 		if (channel_tick[c] == channel_speed[c])
+			// 		{
+			// 			channel_pos[c] += channel_dir[c];
+			// 			ay_write(0x08 + c, 10);
+			// 			ay_set_ch(c, channel_pos[c]);
+			// 			if (channel_pos[c] >= channel_high[c])
+			// 			{
+			// 				channel_dir[c] = -channel_dir[c];
+			// 			}
+			// 			if (channel_pos[c] <= channel_low[c])
+			// 			{
+			// 				channel_dir[c] = -channel_dir[c];
+			// 			}
+			// 			channel_tick[c] = 0;
+			// 		}
+			// 	}
+			// }
 		}
 
 		if (VBLANK_FALLING)
@@ -201,6 +233,10 @@ void game_loop()
 
 			// Draw player score last
 			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
+
+			// Meteor difficulty debug
+			write_stringf_ushort("%4d", 0xFF, 0, 0, meteor_difficulty);
+			// write_stringf_ushort("%4d", 0xFF, 0, 1, meteor_difficulty_timer);
 		}
 
 		// hsync_last = hsync;
@@ -218,9 +254,15 @@ void main()
 	clear_bgcolor(0);
 	clear_chars(0);
 
-	init_audio();
-	channel_on[0] = 1;
-	ay_set_ch(0, channel_pos[0]);
+	//init_audio();
+
+	channel_on[0] = 0;
+	// ay_write(0x08, 0x00);
+	// ay_set_ch(0, channel_pos[0]);
+
+	channel_on[1] = 0;
+	// ay_write(0x09, 0x00);
+	// ay_set_ch(1, channel_pos[1]);
 
 	setup_area();
 	setup_meteors();
@@ -232,7 +274,7 @@ void main()
 	unsigned short debug_t2;
 #endif
 
-	test_loop();
+	// test_loop();
 
 	game_loop();
 }
