@@ -237,11 +237,6 @@ always @(posedge clk, negedge rst_n) begin
         endcase
         // Data write
         if( write ) begin
-            //$display("jt49 write: %d %x", addr, din);
-            if(din!=regarray[addr])
-            begin
-                $display("jt49 write: %d - %x > %x", addr, regarray[addr], din);
-            end
             regarray[addr] <= din;
             if ( addr == 4'hD && wr_edge ) eg_restart <= 1;
         end else begin

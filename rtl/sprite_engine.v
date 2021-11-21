@@ -85,7 +85,7 @@ reg			[3:0]	spr_state_next;
 reg			[4:0]	spr_index;
 localparam			spr_index_max = 5'd31;
 // Sprite maximum sizes
-localparam [15:0]	spr_size_x = 16'd15;
+localparam [9:0]	spr_size_x = 10'd15;
 localparam [15:0]	spr_size_y = 16'd15;
 localparam	[6:0]	spr_ram_item_width = 4;
 localparam			spr_line_max = 352;

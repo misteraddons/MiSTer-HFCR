@@ -334,10 +334,12 @@ pll pll
 
 ///////////////////   CLOCK DIVIDER   ////////////////////
 wire ce_pix;
+wire ce_2;
 jtframe_cen24 divider
 (
 	.clk(clk_sys),
-	.cen6(ce_pix)
+	.cen6(ce_pix),
+	.cen2(ce_2)
 );
 
 ///////////////////   VIDEO   ////////////////////
@@ -381,6 +383,7 @@ assign LED_USER = rom_download;
 system system(
 	.clk_24(clk_sys),
 	.ce_6(ce_pix),
+	.ce_2(ce_2),
 	.reset(reset),
 	.VGA_HS(hs_original),
 	.VGA_VS(vs_original),

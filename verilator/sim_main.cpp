@@ -86,16 +86,23 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
+#define DEBUG_AUDIO
+
+#ifdef DEBUG_AUDIO
 // Audio
 SimClock clk_audio(1000);
 ofstream audioFile;
+#endif
+
 
 // Reset simulation variables and clocks
 void resetSim() {
 	main_time = 0;
 	top->reset = 1;
 	clk_sys.Reset();
+#ifdef DEBUG_AUDIO
 	clk_audio.Reset();
+#endif
 }
 
 int verilate() {
@@ -109,7 +116,6 @@ int verilate() {
 
 		// Clock dividers
 		clk_sys.Tick();
-		clk_audio.Tick();
 
 		// Set system clock in core
 		top->clk_sys = clk_sys.clk;
@@ -124,16 +130,16 @@ int verilate() {
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
+#ifdef DEBUG_AUDIO
+		clk_audio.Tick();
 		if (clk_audio.IsRising()) {
-		//if (clk_sys.IsRising()) {
-			//if (top->emu__DOT__system__DOT__ce_2) {
-				// Output audio
-				unsigned short audio_l = top->AUDIO_L;
-				//unsigned short audio_r = top->AUDIO_R;
-				audioFile.write((const char*)&audio_l, 2);
+			// Output audio
+			unsigned short audio_l = top->AUDIO_L;
+			//unsigned short audio_r = top->AUDIO_R;
+			audioFile.write((const char*)&audio_l, 2);
 			//	audioFile.write((const char*)&audio_r, 2);
-			//}
 		}
+#endif
 
 		// Output pixels on rising edge of pixel clock
 		if (clk_sys.IsRising() && top->emu__DOT__ce_6) {
@@ -319,7 +325,7 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
 
-		float vol_l = ((top->AUDIO_L) / 256.0f) /256.0f;
+		float vol_l = ((top->AUDIO_L) / 256.0f) / 256.0f;
 		float vol_r = ((top->AUDIO_R) / 256.0f) / 256.0f;
 		ImGui::ProgressBar(vol_l, ImVec2(200, 16), 0); ImGui::SameLine();
 		ImGui::ProgressBar(vol_r, ImVec2(200, 16), 0);
@@ -353,7 +359,7 @@ int main(int argc, char** argv, char** env) {
 		/*mouse_buttons += 1;
 		mouse_x += 1;
 		mouse_y -= 1;
-		unsigned long mouse_temp = mouse_buttons;	
+		unsigned long mouse_temp = mouse_buttons;
 		mouse_temp += (mouse_x << 8);
 		mouse_temp += (mouse_y << 16);
 		if (mouse_clock) { mouse_temp |= (1UL << 24); }
@@ -376,8 +382,9 @@ int main(int argc, char** argv, char** env) {
 	// Clean up before exit
 	// --------------------
 
-
+#ifdef DEBUG_AUDIO
 	audioFile.close();
+#endif
 
 	video.CleanUp();
 	input.CleanUp();

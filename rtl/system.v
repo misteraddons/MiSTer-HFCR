@@ -23,6 +23,7 @@
 module system (
 	input			clk_24,
 	input 			ce_6,
+	input 			ce_2,
 	input			reset,
 	input [16:0]	dn_addr,
 	input			dn_wr,
@@ -166,8 +167,8 @@ wire timer_cs = memory_map_addr == 8'b10001001;
 wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
 wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
 wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
-wire snd_reset_cs = cpu_addr == 16'b1000101100010000;
-wire snd_cs = cpu_addr[15:8] == 8'b10001011 && !snd_reset_cs;
+wire snd_cs = cpu_addr[15:4] == 12'b100010110000;
+wire music_cs = cpu_addr[15:4] == 12'b100010110001;
 
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
@@ -197,8 +198,7 @@ always @(posedge clk_24) begin
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 	//if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", snd_addr, cpu_dout);
-	//if(snd_reset_cs && !cpu_wr_n) $display("snd_reset %b %b", snd_addr, cpu_dout);
-	if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
+	//if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
 end
 
 // CPU data mux
@@ -393,242 +393,57 @@ assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : {{2{charmap_g}},2'b0};
 assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : {{3{charmap_b}},2'b0};
 
 
-// AUDIO
-// -----
-
-// Music system state machine (ym player)
-localparam YM_INIT = 0;
-localparam YM_WAIT = 1;
-localparam YM_GETMODE = 2;
-localparam YM_GETLENGTH_0 = 3;
-localparam YM_GETLENGTH_1 = 4;
-localparam YM_WAITFORFRAME = 7;
-localparam YM_GETREGISTER = 8;
-localparam YM_SETREGISTER = 9;
-localparam YM_NEXTREGISTER = 10;
-
-localparam YM_REGCOUNT = 16;
-
-reg  [15:0] musicrom_addr;
+// Music player
+wire [15:0] musicrom_addr;
 wire  [7:0] musicrom_data_out;
-
-reg   [3:0] ymp_state;
-reg   [3:0] ymp_state_next;
-reg  [10:0] ymp_frame;
-reg   [3:0] ymp_register;
-reg			ymp_interleave;
-reg  [14:0] ymp_offset = 15'h5E;
-reg  [14:0] ymp_length;
-// reg  [(YM_REGCOUNT * 8)-1:0] ymp_registermask = {
-// 		8'b00000000,
-// 		8'b00000000,
-// 		8'b00001111,
-// 		8'b11111111,
-// 		8'b11111111,
-// 		8'b00011111,
-// 		8'b00011111,
-// 		8'b00011111,
-// 		8'b00111111,
-// 		8'b00011111,
-// 		8'b00001111,
-// 		8'b11111111,
-// 		8'b00001111,
-// 		8'b11111111,
-// 		8'b00001111,
-// 		8'b11111111
-// };
-reg  [(YM_REGCOUNT * 8)-1:0] ymp_registermask = {
-		8'b00000000,
-		8'b00000000,
-		8'b00001111,
-		8'b11111111,
-		8'b11111111,
-		8'b00011111,
-		8'b00011111,
-		8'b00011111,
-		8'b11111111,
-		8'b00011111,
-		8'b00001111,
-		8'b11111111,
-		8'b00001111,
-		8'b11111111,
-		8'b00001111,
-		8'b11111111
-};
-
-reg vblank_last;
-
-//`define YM_DEBUG
-
-always @(posedge clk_24)
-begin
-	vblank_last <= VGA_VB;
-
-	case (ymp_state)
-	YM_INIT:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_INIT");
-		`endif
-		// Reset player frame and register
-		ymp_frame <= 11'b0;
-		ymp_register <= 4'b0;
-		// Set address to read first song attribute byte
-		musicrom_addr <= 16'h13;
-		
-		ymp_state_next <= YM_GETMODE;
-		ymp_state <= YM_WAIT;
-	end
-
-	YM_WAIT:
-	begin
-		ymp_state <= ymp_state_next;
-	end
-
-	YM_GETMODE:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_GETMODE %x %x", musicrom_addr, musicrom_data_out);
-		`endif
-		ymp_interleave <= musicrom_data_out[0];
-
-		// Set address to read song length byte 0
-		musicrom_addr <= 16'd15;
-		ymp_state <= YM_WAIT;
-		ymp_state_next <= YM_GETLENGTH_0;
-	end
-	YM_GETLENGTH_0:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_GETLENGTH_0 %x %x", musicrom_addr, musicrom_data_out);
-		`endif
-		// Read song length byte 0
-		ymp_length[7:0] <= musicrom_data_out;
-
-		// Set address to read song length byte 1
-		musicrom_addr <= 16'd14;
-		ymp_state <= YM_WAIT;
-		ymp_state_next <= YM_GETLENGTH_1;
-	end
-	YM_GETLENGTH_1:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_GETLENGTH_1 %x %x", musicrom_addr, musicrom_data_out);
-		`endif
-		// Read song length byte 1
-		ymp_length[14:8] <= musicrom_data_out[6:0];
-		// Move to wait for VBL state
-		ymp_state <= YM_WAITFORFRAME;
-	end
-
-	YM_WAITFORFRAME:
-	begin
-		if(VGA_VB && !vblank_last)
-		begin
-			`ifdef YM_DEBUG
-			$display("YM_WAITFORFRAME %d", ymp_frame);
-			`endif
-			ymp_register <= 4'b0;
-			ymp_state <= YM_WAIT;
-			ymp_state_next <= YM_GETREGISTER;
-		end
-	end
-
-	YM_GETREGISTER:
-	begin
-		// Calculate address for this frame+register combo in ROM
-		// - If ymp_interleave=1 then position is (register * length) + frame
-		// - If ymp_interleave=0 then position is (frame * 16) + register
-		`ifdef YM_DEBUG
-		$display("YM_GETREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave, ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-		`endif
-		if(ymp_interleave)
-		begin
-			musicrom_addr <= (ymp_register * ymp_length) + {4'b0, ymp_frame} + ymp_offset;
-		end
-		else
-		begin
-			musicrom_addr <= {ymp_frame, 4'b0} + ymp_offset;
-		end
-		ymp_state <= YM_WAIT;
-		ymp_state_next <= YM_SETREGISTER;
-	end
-
-	YM_SETREGISTER:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_SETREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-		`endif
-		snd_data_in <= musicrom_data_out & ymp_registermask[{ymp_register, 3'b0}+:8];
-		snd_wr <= 1'b1;
-		ymp_state <= YM_NEXTREGISTER;
-	end
-
-	YM_NEXTREGISTER:
-	begin
-		`ifdef YM_DEBUG
-		$display("YM_NEXTREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-		`endif
-		snd_wr <= 1'b0;
-		if(ymp_register == 4'd13)
-		begin
-			ymp_frame <= ymp_frame + 11'd1;
-			ymp_state <= YM_WAITFORFRAME;
-		end
-		else
-		begin
-			ymp_register <= ymp_register + 4'b1;
-			ymp_state <= YM_GETREGISTER;
-		end
-
-	end
-
-	endcase
-end
-
-// 2Mhz clock enable
-reg ce_2;
-always @(posedge clk_24) begin
-	reg [3:0] cnt;
-	ce_2 <= (cnt == 0);
-	cnt <= cnt + 1'd1;
-	if(cnt== 4'd12) cnt <= 4'd0;
-end
- 
-// YM2149 sound generator
-
-wire [3:0] snd_addr = cpu_addr[3:0];
-reg  [7:0] snd_data_in;
-wire [7:0] snd_data_out;
-reg        snd_wr;
-wire [9:0] audio_out;
-wire [7:0] audio_out_a;
-wire [7:0] audio_out_b;
-wire 	   snd_cpu_cs = (snd_cs && ~cpu_wr_n);
-
-jt49 jt49 (
+music music (
 	.clk(clk_24),
-	.clk_en(ce_2),
-	.rst_n(~(reset | (snd_reset_cs & ~cpu_wr_n))),
-	.addr(snd_cpu_cs ? snd_addr : ymp_register),
-	.din(snd_cpu_cs ? cpu_dout : snd_data_in),
-	.dout(snd_data_out),
-	.sound(audio_out),
-	.sample(),
-	.A(audio_out_a),
-	.B(audio_out_b),
-	.C(),
-	.sel(1'b1),
-	.cs_n(1'b0),
-	.wr_n(~(snd_wr || snd_cpu_cs)),
-	.IOA_in(),
-	.IOA_out(),
-	.IOB_in(),
-	.IOB_out()
+	.ce_2(ce_2),
+	.reset(reset),
+	.addr(cpu_addr[1:0]),
+	.data_in(cpu_dout),
+	.write(~(music_cs && ~cpu_wr_n)),
+	.vblank(VGA_VB),
+	.musicrom_addr(musicrom_addr),
+	.musicrom_data_out(musicrom_data_out),
+	.audio_l(AUDIO_L),
+	.audio_r(AUDIO_R)
 );
 
-assign AUDIO_L =  { 1'b0, audio_out[9:0],5'd0};
-assign AUDIO_R = AUDIO_L;
+
+// // YM2149 sound generator
+// wire [3:0] snd_addr = cpu_addr[3:0];
+// reg  [7:0] snd_data_in;
+// wire [7:0] snd_data_out;
+// reg        snd_wr;
+// wire [9:0] audio_out;
+// wire [7:0] audio_out_a;
+// wire [7:0] audio_out_b;
+// wire 	   snd_cpu_cs = (snd_cs && ~cpu_wr_n);
+
+// jt49 jt49 (
+// 	.clk(clk_24),
+// 	.clk_en(ce_2),
+// 	.rst_n(~(reset),
+// 	.addr(snd_cpu_cs ? snd_addr : ymp_register),
+// 	.din(snd_cpu_cs ? cpu_dout : snd_data_in),
+// 	.dout(snd_data_out),
+// 	.sound(audio_out),
+// 	.sample(),
+// 	.A(audio_out_a),
+// 	.B(audio_out_b),
+// 	.C(),
+// 	.sel(1'b1),
+// 	.cs_n(1'b0),
+// 	.wr_n(~(snd_wr || snd_cpu_cs)),
+// 	.IOA_in(),
+// 	.IOA_out(),
+// 	.IOB_in(),
+// 	.IOB_out()
+// );
+
+// assign AUDIO_L =  { 1'b0, audio_out[9:0],5'd0};
+// assign AUDIO_R = AUDIO_L;
 // assign AUDIO_L =  { 3'b0, audio_out_a[7:0],5'd0};
 // assign AUDIO_R = { 3'b0, audio_out_b[7:0],5'd0};
 

@@ -10,6 +10,7 @@ set_global_assignment -name VERILOG_FILE rtl/charmap.v
 set_global_assignment -name VERILOG_FILE rtl/sprite_engine.v
 set_global_assignment -name VERILOG_FILE rtl/lfsr.v
 set_global_assignment -name VERILOG_FILE rtl/starfield.v
+set_global_assignment -name VERILOG_FILE rtl/music.v
 set_global_assignment -name VERILOG_FILE rtl/generic_timer.v
 set_global_assignment -name VERILOG_FILE rtl/system.v
 set_global_assignment -name VERILOG_FILE rtl/dpram.v
