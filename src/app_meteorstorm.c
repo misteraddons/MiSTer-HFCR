@@ -17,7 +17,7 @@ unsigned short player_y_max;
 unsigned char player_speed_min = 8;
 unsigned char player_speed_max = 32;
 unsigned char player_speed;
-unsigned int player_score = 0;
+unsigned long player_score = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_trail_timer = 1;
 
@@ -141,7 +141,7 @@ void setup_trails()
 
 void add_player_trail()
 {
-	for (int t = 0; t < trail_max; t++)
+	for (unsigned char t = 0; t < trail_max; t++)
 	{
 		if (trail_timer[t] == 0)
 		{

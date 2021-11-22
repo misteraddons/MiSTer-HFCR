@@ -32,6 +32,7 @@
 //#include "ui_custom.c"
 #include "sprite.c"
 #include "audio.c"
+#include "music.c"
 //#include "app_console.c"
 #include "app_meteorstorm.c"
 
@@ -103,10 +104,12 @@ unsigned char player_speed_last = 0;
 
 unsigned char sf_speed1 = 4;
 
-unsigned char sound_timer = 0;
+//unsigned char sound_timer = 0;
 
 void game_loop()
 {
+
+	play_music(0);
 
 	while (1)
 	{
@@ -155,7 +158,15 @@ void game_loop()
 			// 	ay_write(0x08, channel_on[0] ? 10 : 0);
 
 			// }
-
+			if (CHECK_BIT(joystick[0], 4))
+			{
+				play_music(1);
+			}
+			if (CHECK_BIT(joystick[0], 5))
+			{
+				play_music(2);
+			}
+	
 			// if (CHECK_BIT(joystick[0], 4))
 			// {
 			// 	ay_write(0x08, 0x06);

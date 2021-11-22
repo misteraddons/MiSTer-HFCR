@@ -39,6 +39,7 @@ unsigned char __at(0x8800) timestamp[5];
 unsigned char __at(0x8900) timer[2];
 unsigned char __at(0x8A00) starfield[6];
 unsigned char __at(0x8B00) sndram[17];
+unsigned char __at(0x8B10) musicram[4];
 
 // - Casval (character map)
 unsigned char __at(0x9800) chram[2048];
@@ -50,7 +51,7 @@ unsigned char __at(0xB000) spriteram[2048];
 // Character map
 const unsigned char chram_cols = 64;
 const unsigned char chram_rows = 32;
-unsigned int chram_size;
+unsigned short chram_size;
 
 // Hardware inputs
 bool hsync;

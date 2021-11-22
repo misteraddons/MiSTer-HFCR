@@ -22,7 +22,6 @@ od -An -t x1 -v  gfx/sprite.bin > verilator/x64/Release/sprite.hex
 od -An -t x1 -v gfx/palette.bin > verilator/palette.hex
 od -An -t x1 -v gfx/palette.bin > rtl/palette.hex
 od -An -t x1 -v  gfx/palette.bin > verilator/x64/Release/palette.hex
-
-od -An -t x1 -v  music/music.ym > verilator/music.hex
-od -An -t x1 -v  music/music.ym > rtl/music.hex
-od -An -t x1 -v  music/music.ym > verilator/x64/Release/music.hex
+od -An -t x1 -v  music/music.bin > verilator/music.hex
+od -An -t x1 -v  music/music.bin > rtl/music.hex
+od -An -t x1 -v  music/music.bin > verilator/x64/Release/music.hex

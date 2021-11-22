@@ -197,7 +197,8 @@ always @(posedge clk_24) begin
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
-	//if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", snd_addr, cpu_dout);
+	if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", cpu_addr, cpu_dout);
+	if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 	//if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
 end
 
@@ -394,15 +395,18 @@ assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : {{3{charmap_b}},2'b0};
 
 
 // Music player
-wire [15:0] musicrom_addr;
+localparam MUSIC_ROM_WIDTH = 17;
+wire [MUSIC_ROM_WIDTH-1:0] musicrom_addr;
 wire  [7:0] musicrom_data_out;
-music music (
+music #(
+	.ROM_WIDTH(MUSIC_ROM_WIDTH)
+) music (
 	.clk(clk_24),
 	.ce_2(ce_2),
 	.reset(reset),
 	.addr(cpu_addr[1:0]),
 	.data_in(cpu_dout),
-	.write(~(music_cs && ~cpu_wr_n)),
+	.write(music_cs && ~cpu_wr_n),
 	.vblank(VGA_VB),
 	.musicrom_addr(musicrom_addr),
 	.musicrom_data_out(musicrom_data_out),
@@ -618,8 +622,8 @@ dpram #(14,8, "sprite.hex") spriterom
 	.q_b()
 );
 
-// Music ROM - 0x12000 - 0x1A000 (0x8000 / 32768 bytes)
-dpram #(16,8, "music.hex") musicrom
+// Music ROM - 128kB
+dpram #(17,8, "music.hex") musicrom
 (
 	.clock_a(clk_24),
 	.address_a(musicrom_addr),
@@ -628,7 +632,7 @@ dpram #(16,8, "music.hex") musicrom
 	.q_a(musicrom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[15:0]),
+	.address_b(dn_addr[16:0]),
 	.wren_b(musicrom_wr),
 	.data_b(dn_data),
 	.q_b()

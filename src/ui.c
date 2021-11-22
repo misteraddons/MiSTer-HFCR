@@ -38,7 +38,7 @@ char asc_1 = 49;
 // Set all character RAM to specified character
 void clear_chars(char c)
 {
-	for (unsigned int p = 0; p < chram_size; p++)
+	for (unsigned short p = 0; p < chram_size; p++)
 	{
 		chram[p] = c;
 		fgcolram[p] = c;
@@ -49,7 +49,7 @@ void clear_chars(char c)
 // Set all character background colours to specified
 void clear_bgcolor(char color)
 {
-	for (unsigned int p = 0; p < chram_size; p++)
+	for (unsigned short p = 0; p < chram_size; p++)
 	{
 		bgcolram[p] = color;
 	}
@@ -58,7 +58,7 @@ void clear_bgcolor(char color)
 // Write string to character RAM
 void write_string(const char *string, char color, unsigned char x, unsigned char y)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	unsigned char l = strlen(string);
 	for (char c = 0; c < l; c++)
 	{
@@ -71,7 +71,7 @@ void write_string(const char *string, char color, unsigned char x, unsigned char
 // Write formatted string to character RAM (signed char data)
 void write_stringfs(const char *format, char color, unsigned char x, unsigned char y, signed char data)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	char temp[30];
 	sprintf(temp, format, data);
 	unsigned char l = strlen(temp);
@@ -90,7 +90,7 @@ void write_stringfs(const char *format, char color, unsigned char x, unsigned ch
 // Write formatted string to character RAM (unsigned char data)
 void write_stringf(const char *format, char color, unsigned char x, unsigned char y, char data)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	char temp[30];
 	sprintf(temp, format, data);
 	unsigned char l = strlen(temp);
@@ -109,7 +109,7 @@ void write_stringf(const char *format, char color, unsigned char x, unsigned cha
 // Write formatted string to character RAM (unsigned short data)
 void write_stringf_ushort(const char *format, char color, unsigned char x, unsigned char y, unsigned short data)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	char temp[40];
 	sprintf(temp, format, data);
 	unsigned char l = strlen(temp);
@@ -128,7 +128,7 @@ void write_stringf_ushort(const char *format, char color, unsigned char x, unsig
 // Write formatted string to character RAM (signed short data)
 void write_stringf_short(const char *format, char color, unsigned char x, unsigned char y, short data)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	char temp[40];
 	sprintf(temp, format, data);
 	unsigned char l = strlen(temp);
@@ -147,7 +147,7 @@ void write_stringf_short(const char *format, char color, unsigned char x, unsign
 // Write formatted string to character RAM (unsigned long data)
 void write_stringf_ulong(const char *format, char color, unsigned char x, unsigned char y, unsigned long data)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	char temp[40];
 	sprintf(temp, format, data);
 	unsigned char l = strlen(temp);
@@ -166,7 +166,7 @@ void write_stringf_ulong(const char *format, char color, unsigned char x, unsign
 // Write single char to character RAM and colour RAM
 void write_char(unsigned char c, char color, unsigned char x, unsigned char y)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	chram[p] = c;
 	fgcolram[p] = color;
 }
@@ -174,7 +174,7 @@ void write_char(unsigned char c, char color, unsigned char x, unsigned char y)
 // Write row of consecutive chars to character RAM and colour RAM
 void write_char_row(unsigned char c, char color, unsigned char x, unsigned char y, unsigned char count)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	for (char b = 0; b < count; b++)
 	{
 		chram[p] = c;
@@ -186,21 +186,21 @@ void write_char_row(unsigned char c, char color, unsigned char x, unsigned char 
 // Set colour of single char
 void set_fgcolour(char color, char x, char y)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	fgcolram[p] = color;
 }
 
 // Set background colour of single char
 void set_bgcolour(char color, char x, char y)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	bgcolram[p] = color;
 }
 
 // Write row of consecutive chars to character RAM and colour RAM
 void write_bgcol_row(char color, unsigned char x, unsigned char y, unsigned char count)
 {
-	unsigned int p = (y * chram_cols) + x;
+	unsigned short p = (y * chram_cols) + x;
 	for (char b = 0; b < count; b++)
 	{
 		bgcolram[p] = color;

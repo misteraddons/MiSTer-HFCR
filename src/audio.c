@@ -1,6 +1,6 @@
 #pragma once
 
-int tp[] = {
+unsigned short tp[] = {
 	// Frequencies related to MIDI note numbers
 	15289, 14431, 13621, 12856, 12135, 11454, 10811, 10204, // 0-o7
 	9631, 9091, 8581, 8099, 7645, 7215, 6810, 6428,			// 8-15
@@ -34,7 +34,7 @@ void ay_write(unsigned char addr, unsigned char data)
 	sndram[addr] = data;
 }
 
-void ay_set_ch(unsigned char c, int i)
+void ay_set_ch(unsigned char c, unsigned char i)
 {
 	ay_write(c * 2, tp[i] & 0xff);
 	ay_write((c * 2) + 1, (tp[i] >> 8) & 0x0f);

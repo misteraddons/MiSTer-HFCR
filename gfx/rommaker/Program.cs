@@ -13,15 +13,49 @@ namespace rommaker
 
         static List<Color> Palette = new List<Color>();
 
+        static string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
+        static string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
+        static string musicPath = @"C:\repos\Aznable\music\";
+        static string musicTrackListPath = @"C:\repos\Aznable\music\tracks.txt";
+        static string musicRomPath = @"C:\repos\Aznable\music\music.bin";
+        static string musicSourcePath = @"C:\repos\Aznable\src\music_tracks.c";
+
         static int PaletteMax = 32;
 
-        static void Main(string[] args)
+        static void CreateMusicRom()
+        {
+            if (File.Exists(musicRomPath)) { File.Delete(musicRomPath); }
+
+            // Read track list
+            string[] tracks = File.ReadAllLines(musicTrackListPath);
+
+            List<byte> trackData = new List<byte>();
+            string[] trackPos = new string[tracks.Length];
+
+            int t = 0;
+            uint p = 0;
+            foreach (string track in tracks)
+            {
+                string file = track.Split("#")[0];
+                byte[] data = File.ReadAllBytes(musicPath + file);
+                trackData.AddRange(data);
+                trackPos[t] = p + "u";
+                p += (uint)data.Length;
+                t++;
+            }
+
+            string array = "unsigned long music_track_address[const_music_track_max] = {" + string.Join(",", trackPos) + "};";
+            File.WriteAllText(musicSourcePath, array);
+
+            File.WriteAllBytes(musicRomPath, trackData.ToArray() );
+
+        }
+
+        static void CreateSpriteRom()
         {
 
             Palette.Clear();
 
-            string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
-            string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
 
             if (File.Exists(spriteRomPath)) { File.Delete(spriteRomPath); }
             if (File.Exists(palettePath)) { File.Delete(palettePath); }
@@ -32,7 +66,7 @@ namespace rommaker
 
             uint pos = 0;
 
-            foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\","*.png", SearchOption.TopDirectoryOnly))
+            foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly))
             {
                 Bitmap img = new(image);
 
@@ -56,9 +90,9 @@ namespace rommaker
                     {
                         Console.WriteLine($"Starting image: {image} - {xs},{ys} --> {pos}");
                         int ymin = ys * sizeY;
-                        int ymax = ymin + sizeY ;
+                        int ymax = ymin + sizeY;
                         int xmin = xs * sizeX;
-                        int xmax = xmin + sizeX ;
+                        int xmax = xmin + sizeX;
                         for (int y = ymin; y < ymax; y++)
                         {
                             for (int x = xmin; x < xmax; x++)
@@ -135,6 +169,12 @@ namespace rommaker
             }
         }
 
+
+        static void Main(string[] args)
+        {
+            CreateSpriteRom();
+            CreateMusicRom();
+        }
 
     }
 }
