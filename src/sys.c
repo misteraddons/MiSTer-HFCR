@@ -2,8 +2,8 @@
 	Aznable OS - System interface functions
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.1
-	Date: 2021-10-20
+	Version: 1.2
+	Date: 2021-11-27
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free

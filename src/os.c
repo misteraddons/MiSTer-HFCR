@@ -3,7 +3,7 @@
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
-	Date: 2021-07-03
+	Date: 2021-11-27
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -331,19 +331,6 @@ void main()
 	// test_loop();
 
 	// coltest_loop();
-
-	for (unsigned char m = 0; m < meteor_max; m++)
-	{
-		meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
-		meteor_y[m] = ((unsigned char)rand() + y_divisor) * y_divisor;
-		meteor_xs[m] = rand_schar(-8, 8);
-		meteor_ys[m] = rand_uchar(4, 32);
-		meteor_timer[m] = 0;
-		unsigned char sprite = meteor_sprite_first + m;
-		spr_on[sprite] = true;
-	}
-
-
 
 	game_loop();
 }

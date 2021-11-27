@@ -1,5 +1,28 @@
+/*============================================================================
+	Aznable OS - Meteor Storm demo application
+
+	Author: Jim Gregory - https://github.com/JimmyStones/
+	Version: 1.0
+	Date: 2021-11-27
+
+	This program is free software; you can redistribute it and/or modify it
+	under the terms of the GNU General Public License as published by the Free
+	Software Foundation; either version 3 of the License, or (at your option)
+	any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this program. If not, see <http://www.gnu.org/licenses/>.
+===========================================================================*/
+
 #pragma once
 #include "sprite.c"
+
+// Meteor Storm
 
 // Player
 const unsigned char player_sprite = 12;
@@ -84,6 +107,7 @@ void setup_player()
 	// Initialise player sprite
 	spr_index[player_sprite] = 1;
 	spr_on[player_sprite] = true;
+	spr_collide[player_sprite] = true;
 	spr_x[player_sprite] = player_x / x_divisor;
 	spr_y[player_sprite] = player_y;
 
@@ -131,6 +155,7 @@ void setup_meteors()
 		unsigned char sprite = meteor_sprite_first + m;
 		spr_index[sprite] = meteor_sprite_index_first + rand_uchar(0, meteor_sprite_index_count - 1);
 		spr_on[sprite] = false;
+		spr_collide[sprite] = true;		
 	}
 }
 void setup_trails()
@@ -329,10 +354,10 @@ void handle_meteors()
 					spr_y[sprite] = meteor_y[m] / y_divisor;
 				}
 			}
-		}
-		else
-		{
-			spr_on[sprite] = 0;
+		// }
+		// else
+		// {
+		// 	spr_on[sprite] = 0;
 		}
 	}
 

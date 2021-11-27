@@ -300,19 +300,20 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("BGCOLRAM Editor");
 		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		/*ImGui::Begin("Sprite RAM");
+		ImGui::Begin("Sprite RAM");
 		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
 		ImGui::End();
-		ImGui::Begin("Sprite Linebuffer RAM");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
-		ImGui::End();*/
 
-		ImGui::Begin("Sprite Collision Buffer RAM A");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
-		ImGui::End();
-		ImGui::Begin("Sprite Collision Buffer RAM B");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_b__DOT__mem, 512, 0);
-		ImGui::End();
+		//ImGui::Begin("Sprite Linebuffer RAM");
+		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
+		//ImGui::End();
+
+		//ImGui::Begin("Sprite Collision Buffer RAM A");
+		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
+		//ImGui::End();
+		//ImGui::Begin("Sprite Collision Buffer RAM B");
+		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_b__DOT__mem, 512, 0);
+		//ImGui::End();
 		ImGui::Begin("Sprite Collision RAM ");
 		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritecollisionram__DOT__mem, 32, 0);
 		ImGui::End();

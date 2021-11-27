@@ -632,11 +632,11 @@ dpram #(5,1) spritecollisionram
 reg 	[16:0]	spritedebugram_addr_a;
 wire 	[16:0]	spritedebugram_addr_b;
 reg		 [7:0]	spritedebugram_data_in_a;
-reg		 [7:0]	spritedebugram_data_in_b;
+wire	 [7:0]	spritedebugram_data_in_b;
 wire	 [7:0]	spritedebugram_data_out_a;
 wire	 [7:0]	spritedebugram_data_out_b;
 reg				spritedebugram_wr_a;
-reg				spritedebugram_wr_b;
+wire				spritedebugram_wr_b;
 
 // Sprite Debug Frame Buffer 
 dpram #(17,8) spritedebugram

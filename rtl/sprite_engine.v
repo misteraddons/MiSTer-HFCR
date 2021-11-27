@@ -98,6 +98,7 @@ localparam			spr_line_max = 352;
 reg			[15:0]	spr_y;
 reg			 [9:0]	spr_x;
 reg					spr_enable;
+reg					spr_collide;
 reg			[5:0]	spr_image_index;
 reg			[15:0]	spr_active_y;
 reg			[4:0]	spr_pixel_index;
@@ -151,8 +152,8 @@ reg			[31:0]	col_buffer_secondary_data_in;
 wire		[31:0]	col_buffer_secondary_data_out;
 
 reg			[31:0]	col_buffer_secondary_collisions;
-reg 		 [4:0]  col_buffer_secondary_collisions_count1;
-reg 		 [4:0]  col_buffer_secondary_collisions_count2;
+wire 		 [4:0]  col_buffer_secondary_collisions_count1;
+wire 		 [4:0]  col_buffer_secondary_collisions_count2;
 
 count count1 (
 	.clk(clk),
@@ -316,6 +317,8 @@ begin
 `endif
 			// Read enable bit from sprite RAM
 			spr_enable <= spriteram_data_out[7];
+			// Read collide bit from sprite RAM
+			spr_collide <= spriteram_data_out[6];
 			// Read Y upper 4 bits from sprite RAM
 			spr_y[11:8] <= spriteram_data_out[3:0];
 			// Increment sprite RAM address
@@ -465,7 +468,7 @@ begin
 				// spritedebugram_addr_b <= ((spr_active_y) * 9'd320) + {8'b0, spr_x[8:0] + {4'b0,spr_pixel_index}};
 			
 				// Trigger collision check (not in vblank)
-				if(!vblank)
+				if(!vblank && spr_collide)
 				begin
 					col_spriteindex <= spr_index;
 					col_x <= spr_x[8:0] + {4'b0,spr_pixel_index};
