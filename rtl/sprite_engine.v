@@ -620,10 +620,6 @@ begin
 	endcase
 end
 
-integer i;
-reg [7:0] ones = 0;  //initialize count variable.
-
-
 wire [31:0]	col_buffer_data_out_a;
 wire [31:0]	col_buffer_data_out_b;
 
@@ -649,7 +645,6 @@ spram #(9,32) spritecollisionbufferram_b
 	.q(col_buffer_data_out_b)
 );
 
-
 endmodule
 
 
@@ -660,22 +655,14 @@ module count
 	output reg [4:0] sum
 );
 
-reg [4:0] n;
+reg [5:0] n;
 
 always @(posedge clk) begin
 	/* verilator lint_off WIDTH */
 	sum = 0;
-	sum = sum + a[0];
-	sum = sum + a[1];
-	sum = sum + a[2];
-	sum = sum + a[3];
-	sum = sum + a[4];
-	sum = sum + a[5];
-	sum = sum + a[6];
-	sum = sum + a[7];
-	// for (n=0; n<=31; n=n+1) begin
-	// 	sum = sum + {4'b0,a[n]};
-	// end
+	for (n=0; n<=6'd31; n=n+1) begin
+		sum = sum + {4'b0,a[n]};
+	end
 	/* verilator lint_on WIDTH */
 end
 endmodule

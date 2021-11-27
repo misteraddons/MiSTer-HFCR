@@ -451,7 +451,7 @@ wire [7:0] bg_g = {{2{charmap_g}},2'b0};
 wire [7:0] bg_b = {{3{charmap_b}},2'b0};
 
 assign VGA_R = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
-assign VGA_G = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
+assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
 assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
 
 

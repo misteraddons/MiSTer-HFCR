@@ -106,7 +106,7 @@ void coltest_loop()
 	clear_bgcolor(0b01000000);
 
 	unsigned char scf = 0;
-	unsigned char sc = 12;
+	unsigned char sc = 20;
 
 	unsigned short sx = 100;
 	unsigned short sy = 80;
@@ -126,7 +126,7 @@ void coltest_loop()
 		}
 		spr_x[s] = sx;
 		spr_y[s] = sy;
-		sx += 12;
+		sx += 10;
 		sy+=1;
 		if (sx > 200)
 		{
@@ -250,65 +250,8 @@ void game_loop()
 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
 
-			// sound_timer++;
-			// if(sound_timer==60){
-			// 	sound_timer=0;
+			// Handle collision
 
-			// 	channel_on[0] = !channel_on[0];
-			// 	ay_write(0x08, channel_on[0] ? 10 : 0);
-
-			// }
-			if (CHECK_BIT(joystick[0], 4))
-			{
-				play_music(1);
-			}
-			if (CHECK_BIT(joystick[0], 5))
-			{
-				play_music(2);
-			}
-
-			// if (CHECK_BIT(joystick[0], 4))
-			// {
-			// 	ay_write(0x08, 0x06);
-			// 	ay_set_ch(0, 64);
-			// }
-			// if (CHECK_BIT(joystick[0], 5))
-			// {
-			// 	ay_write(0x08, 0x00);
-			// }
-			// if (CHECK_BIT(joystick[0], 6))
-			// {
-			// 	ay_write(0x09, 0x06);
-			// 	ay_set_ch(1, 64);
-			// }
-			// if (CHECK_BIT(joystick[0], 7))
-			// {
-			// 	ay_write(0x09, 0x00);
-			// }
-
-			// ay_set_ch(0, 70);
-			// for (unsigned char c = 0; c < 2; c++)
-			// {
-			// 	if (channel_on[c])
-			// 	{
-			// 		channel_tick[c]++;
-			// 		if (channel_tick[c] == channel_speed[c])
-			// 		{
-			// 			channel_pos[c] += channel_dir[c];
-			// 			ay_write(0x08 + c, 10);
-			// 			ay_set_ch(c, channel_pos[c]);
-			// 			if (channel_pos[c] >= channel_high[c])
-			// 			{
-			// 				channel_dir[c] = -channel_dir[c];
-			// 			}
-			// 			if (channel_pos[c] <= channel_low[c])
-			// 			{
-			// 				channel_dir[c] = -channel_dir[c];
-			// 			}
-			// 			channel_tick[c] = 0;
-			// 		}
-			// 	}
-			// }
 		}
 
 		if (VBLANK_FALLING)
@@ -387,7 +330,20 @@ void main()
 
 	// test_loop();
 
-	coltest_loop();
+	// coltest_loop();
 
-	// game_loop();
+	for (unsigned char m = 0; m < meteor_max; m++)
+	{
+		meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
+		meteor_y[m] = ((unsigned char)rand() + y_divisor) * y_divisor;
+		meteor_xs[m] = rand_schar(-8, 8);
+		meteor_ys[m] = rand_uchar(4, 32);
+		meteor_timer[m] = 0;
+		unsigned char sprite = meteor_sprite_first + m;
+		spr_on[sprite] = true;
+	}
+
+
+
+	game_loop();
 }
