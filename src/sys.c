@@ -46,7 +46,8 @@ unsigned char __at(0x9800) chram[2048];
 unsigned char __at(0xA000) fgcolram[2048];
 unsigned char __at(0xA800) bgcolram[2048];
 // - Comet (sprite engine)
-unsigned char __at(0xB000) spriteram[2048];
+unsigned char __at(0xB000) spriteram[512];
+unsigned char __at(0xB400) spritecollisionram[32];
 
 // Character map
 const unsigned char chram_cols = 64;

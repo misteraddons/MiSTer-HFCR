@@ -6,7 +6,17 @@
 
 ## Hardware
 
-Aznable is a (no longer) simple-ish bespoke (i.e. I made it up with no real plan) 8-bit multipurpose computer system, utilised by the MiSTer Input Test core.  Graphics functionality includes 40x30 character display (each character foreground and background colour can be set independently to one of 256 colours, using an extended C64 'Petscii' character set), a hardware sprite system (32 concurrent sprites, each 16x16 pixels, with a 32 colour palette out of 32768), and a variable speed 3 layer LFSR-based starfield.  No sound capabilities whatsoever.  All relevant MiSTer inputs are mapped into memory regions for the CPU to access directly.  There is also a dedicated microsecond timer (runs 0-32677, resettable by writing to any bit of the address).
+Aznable is a (no longer) simple-ish bespoke (i.e. I made it up with no real plan) 8-bit multipurpose computer system, utilised by the MiSTer Input Test core.  
+
+*Graphics:* 
+- 40x30 character display (each character foreground and background colour can be set independently to one of 256 colours, using an extended C64 'Petscii' character set)
+- Hardware sprites - 32 concurrent sprites, each 16x16 pixels, with a 32 colour palette out of 32768)
+- Variable speed 3 layer LFSR-based starfield
+
+*Sound:*
+- YM music playback system (YM5/YM6 format only) using a YM2149 synth
+
+All relevant MiSTer inputs are mapped into memory regions for the CPU to access directly.  There is also a dedicated microsecond timer (runs 0-32677, resettable by writing to any bit of the address).
 
 ### Components
  - Z80 CPU (tv80 by Guy Hutchison, based on VHDL T80 core by Daniel Wallner)

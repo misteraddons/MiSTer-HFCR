@@ -31,12 +31,13 @@ module sprite_engine (
 	
 	input		[7:0]	spriterom_data_out,
 	input		[7:0]	spriteram_data_out,
-	input		[7:0]	spritecollisionram_data_in,
 	input		[15:0]	palrom_data_out,
 	input		[15:0]	spritelbram_data_out,
+	input				spritecollisionram_data_out,
 
 	output reg 	[6:0]	spriteram_addr,
-	output reg 	[6:0]	spritecollisionram_addr,
+	output reg 	[4:0]	spritecollisionram_addr,
+	output reg			spritecollisionram_data_in,
 	output reg	[13:0]	sprom_addr,
 	output reg 	[5:0]	palrom_addr,
 	output 		[9:0]	spritelbram_rd_addr,
@@ -46,6 +47,11 @@ module sprite_engine (
 	output reg	[15:0]	spritelbram_data_in,
 
 	output reg			spritecollisionram_wr,
+
+	output reg	[16:0]	spritedebugram_addr_b,
+	output reg	 [7:0]	spritedebugram_data_in_b,
+	input		 [7:0]	spritedebugram_data_out_b,
+	output reg			spritedebugram_wr_b,
 
 	output		[7:0]	spr_r,
 	output		[7:0]	spr_g,
@@ -90,7 +96,7 @@ localparam [15:0]	spr_size_y = 16'd15;
 localparam	[6:0]	spr_ram_item_width = 4;
 localparam			spr_line_max = 352;
 reg			[15:0]	spr_y;
-reg			[15:0]	spr_x;
+reg			 [9:0]	spr_x;
 reg					spr_enable;
 reg			[5:0]	spr_image_index;
 reg			[15:0]	spr_active_y;
@@ -105,15 +111,125 @@ reg [SPR_TIMER_WIDTH-1:0] spr_linetime_max;
 reg [SPR_TIMER_WIDTH-1:0] spr_timer_line;
 `endif
 
-// Sprite engine state machine
+// Sprite engine outputs
+assign spritelbram_rd_addr = ({spritelb_slot_rd, (hcnt + 1'b1) + spr_size_x[8:0]}) + 10'd2;
+assign spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
+assign spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
+assign spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
+assign spr_a = spritelbram_data_out[15];
+
+// Collision system
+localparam CP_IDLE = 0;
+localparam CP_WAIT = 1;
+localparam CP_STAGE_PIXEL = 2;
+localparam CP_CHECK_PIXEL = 3;
+localparam CP_WRITE_PIXEL = 4;
+
+localparam CS_IDLE = 0;
+localparam CS_WAIT = 1;
+localparam CS_DETECT_BEGIN = 2;
+localparam CS_DETECT = 3;
+localparam CS_DETECT_COMPLETE = 4;
+
+reg [3:0] col_primary_state = CP_IDLE;
+reg [3:0] col_primary_state_next;
+
+reg [3:0] col_secondary_state = CS_IDLE;
+reg [3:0] col_secondary_state_next;
+
+reg			[8:0]	col_x;
+reg			[4:0]	col_spriteindex;
+
+reg			[8:0]	col_buffer_primary_addr;
+reg					col_buffer_primary_wr;
+reg			[31:0]	col_buffer_primary_data_in;
+wire		[31:0]	col_buffer_primary_data_out;
+
+reg			[8:0]	col_buffer_secondary_addr;
+reg					col_buffer_secondary_wr;
+reg			[31:0]	col_buffer_secondary_data_in;
+wire		[31:0]	col_buffer_secondary_data_out;
+
+reg			[31:0]	col_buffer_secondary_collisions;
+reg 		 [4:0]  col_buffer_secondary_collisions_count1;
+reg 		 [4:0]  col_buffer_secondary_collisions_count2;
+
+count count1 (
+	.clk(clk),
+	.a(col_buffer_secondary_collisions),
+	.sum(col_buffer_secondary_collisions_count1)
+);
+count count2 (
+	.clk(clk),
+	.a(col_buffer_secondary_data_out),
+	.sum(col_buffer_secondary_collisions_count2)
+);
+
+reg 				col_buffer_primary_is_a;
+
+//`define CASVAL_COLLISION_PRIMARY_DEBUG
+
 always @(posedge clk)
 begin
 
+
+	hsync_last <= hsync;
+
+	// Primary collision state machine - Takes stage pixel instruction from sprite engine state machine
+	case (col_primary_state)
+
+		CP_IDLE:
+		begin
+			
+		end
+
+		CP_WAIT:
+		begin
+			col_primary_state <= col_primary_state_next;
+		end
+
+		CP_STAGE_PIXEL:
+		begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display("CP_STAGE_PIXEL: x=%d i=%d", col_x, col_spriteindex);
+`endif
+			// Set primary buffer to read existing pixel
+			col_buffer_primary_addr <= col_x;
+			col_buffer_primary_wr <= 1'b0;
+			
+			//col_primary_state <= CP_CHECK_PIXEL;
+			 col_primary_state_next <= CP_CHECK_PIXEL;
+			 col_primary_state <= CP_WAIT;
+		end
+
+		CP_CHECK_PIXEL:
+		begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display("CP_CHECK_PIXEL: x,y=%d,%d i=%d ra=%x do=%b m=%b di=%", col_x, spr_active_y, col_spriteindex, col_buffer_primary_addr, col_buffer_primary_data_out, (32'b1 << col_spriteindex),col_buffer_primary_data_out | (32'b1 << col_spriteindex));
+`endif
+			col_buffer_primary_data_in <= col_buffer_primary_data_out | (32'b1 << col_spriteindex);
+			col_buffer_primary_wr <= 1'b1;
+			col_primary_state <= CP_WRITE_PIXEL;
+		end
+
+		CP_WRITE_PIXEL:
+		begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display("CP_WRITE_PIXEL: x,y=%d,%d i=%d - wa=%x di=%x do=%x", col_x, spr_active_y,  col_spriteindex, col_buffer_primary_addr, col_buffer_primary_data_in, col_buffer_primary_data_out);
+`endif
+			col_buffer_primary_wr <= 1'b0;
+			col_buffer_primary_data_in <= 32'b0;
+			col_primary_state <= CP_IDLE;
+		end
+	endcase
+
+
+
+
+// Sprite engine state machine
 `ifdef CASVAL_DEBUG
 	spr_timer_line <= spr_timer_line + 1'b1;
 `endif
-
-	hsync_last <= hsync;
 	case (spr_state)
 		SE_INIT:
 		begin
@@ -127,7 +243,7 @@ begin
 		SE_IDLE:
 		begin
 			// Wait for hsync to go high outside of reset
-			if(reset == 1'b0 && hsync == 1'b1 && hsync_last == 1'b0)
+			if(reset == 1'b0 && hsync && !hsync_last)
 			begin
 				// Rotate line buffer slots
 				spritelb_slot_rd <= spritelb_slot_rd + 1'b1;
@@ -331,18 +447,31 @@ begin
 
 		SE_STAGE_PIXEL:
 		begin
+
 			// Get pixel colour from palette rom
 			if(palrom_data_out[15])
 			begin
 				// If palette colour alpha is high, stage input to line buffer
 `ifdef CASVAL_DEBUG
-				$display("CASVAL->SE_STAGE_PIXEL: y: %d, x: %d i: %d, spritelbram_data_in < %x", spr_y,spr_pixel_index, spr_image_index, palrom_data_out);
+				$display("CASVAL->SE_STAGE_PIXEL: ay: %d y: %d, x: %d i: %d, spritelbram_data_in < %x", spr_active_y, spr_y, spr_pixel_index, spr_image_index, palrom_data_out);
 `endif
 				// Enable line buffer write
 				spritelbram_wr <= 1'b1;
 				// Fill line buffer data in with palette ROM data out
 				spritelbram_data_in <= palrom_data_out;
-				
+
+				// spritedebugram_data_in_b <= 8'hFF;
+				// spritedebugram_wr_b <= 1'b1;
+				// spritedebugram_addr_b <= ((spr_active_y) * 9'd320) + {8'b0, spr_x[8:0] + {4'b0,spr_pixel_index}};
+			
+				// Trigger collision check (not in vblank)
+				if(!vblank)
+				begin
+					col_spriteindex <= spr_index;
+					col_x <= spr_x[8:0] + {4'b0,spr_pixel_index};
+					col_primary_state <= CP_STAGE_PIXEL;
+				end
+				// Move to write pixel state
 				spr_state <= SE_WRITE_PIXEL;
 			end
 			else
@@ -392,16 +521,161 @@ begin
 			spr_state <= SE_IDLE;
 		end
 	endcase
+
+	// Collision FSM
+	// When hsync goes high, rotate collision buffers and start detection pass for previous line
+	if(hsync && !hsync_last)
+	begin
+		col_secondary_state <= CS_DETECT_BEGIN;
+		col_buffer_primary_is_a <= ~col_buffer_primary_is_a;
+	end
+
+	case (col_secondary_state)
+	CS_WAIT:
+	begin
+		col_secondary_state <= col_secondary_state_next;
+	end
+	CS_DETECT_BEGIN:
+	begin
+		// Reset address and write states for secondary buffer
+		col_buffer_secondary_addr <= 9'b0;
+		col_buffer_secondary_data_in <= 32'b0;
+		col_buffer_secondary_wr <= 1'b1;
+		col_buffer_secondary_collisions <= 32'b0;
+
+		col_secondary_state <= CS_DETECT;
+	end
+
+	CS_DETECT:
+	begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+		$display("CS_DETECT a=%b mx=%d c=%d cc1=%d cc2=%d", col_buffer_secondary_addr, spr_line_max, col_buffer_secondary_collisions, col_buffer_secondary_collisions_count1, col_buffer_secondary_count2);
+`endif
+		// Check each pixel for a collision
+		if(col_buffer_secondary_collisions_count2 > 5'd1)
+		begin
+			col_buffer_secondary_collisions <= col_buffer_secondary_collisions | col_buffer_secondary_data_out;
+			spritedebugram_data_in_b <= 8'hFF;
+			spritedebugram_wr_b <= 1'b1;
+			spritedebugram_addr_b <= ((spr_active_y) * 9'd320) + {8'b0, col_buffer_secondary_addr};
+		end
+
+		if(col_buffer_secondary_addr == spr_line_max - 1'b1)
+		begin
+			spritecollisionram_wr <= 1'b0;
+			spritecollisionram_addr <= 5'b0;
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display(">CS_DETECT_COMPLETE: y=%d hc=%d vc=%d", spr_active_y, hcnt, vcnt);
+`endif
+			col_secondary_state <= CS_DETECT_COMPLETE;
+		end
+		else
+		begin
+			col_buffer_secondary_addr <= col_buffer_secondary_addr + 9'b1;
+		end
+	end
+
+	CS_DETECT_COMPLETE:
+	begin
+		// Copy individual bits from col_buffer_secondary_collisions into sprite collision ram
+		if(spritecollisionram_wr == 1'b0)
+		begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display("CS_DETECT_COMPLETE RD b=%b c=%d x=%d col=%d y=%d do=%d di=%d", col_buffer_secondary_collisions, col_buffer_secondary_collisions_count1, spritecollisionram_addr, col_buffer_secondary_collisions[spritecollisionram_addr], spr_active_y, spritecollisionram_data_out, col_buffer_secondary_collisions[spritecollisionram_addr] | spritecollisionram_data_out);
+`endif
+			if(col_buffer_secondary_collisions_count1 > 5'b0)
+			begin
+				spritecollisionram_data_in <= col_buffer_secondary_collisions[spritecollisionram_addr] | spritecollisionram_data_out;
+			end
+			else
+			begin
+				spritecollisionram_data_in <= spritecollisionram_data_out;
+			end
+			spritecollisionram_wr <= 1'b1;
+			col_secondary_state <= CS_WAIT;
+			col_secondary_state_next <= CS_DETECT_COMPLETE;
+		end
+		else
+		begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+			$display("CS_DETECT_COMPLETE WR x=%d b=%b c=%d col=%d y=%d do=%d di=%d", spritecollisionram_addr, col_buffer_secondary_collisions, col_buffer_secondary_collisions_count1, col_buffer_secondary_collisions[spritecollisionram_addr], spr_active_y, spritecollisionram_data_out, col_buffer_secondary_collisions[spritecollisionram_addr] | spritecollisionram_data_out);
+`endif
+			if(spritecollisionram_addr == 5'b11111)
+			begin
+`ifdef CASVAL_COLLISION_PRIMARY_DEBUG
+				$display("CS_DETECT_COMPLETE FINISHED b=%b bc=%d col=%d y=%d do=%d di=%d", col_buffer_secondary_collisions,  col_buffer_secondary_collisions_count1, col_buffer_secondary_collisions[spritecollisionram_addr], spr_active_y, spritecollisionram_data_out, col_buffer_secondary_collisions[spritecollisionram_addr] | spritecollisionram_data_out);
+`endif
+				spritecollisionram_addr <= 5'b0;
+				col_secondary_state <= CS_IDLE;
+			end
+			else
+			begin
+				spritecollisionram_addr <= spritecollisionram_addr + 5'b1;
+				col_secondary_state <= CS_WAIT;
+				col_secondary_state_next <= CS_DETECT_COMPLETE;
+			end
+			spritecollisionram_wr <= 1'b0;
+		end
+	end
+	endcase
 end
 
-// Sprite engine outputs
-assign spritelbram_rd_addr = ({spritelb_slot_rd, (hcnt + 1'b1) + spr_size_x[8:0]}) + 10'd2;
-assign spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
-assign spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
-assign spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
-assign spr_a = spritelbram_data_out[15];
+integer i;
+reg [7:0] ones = 0;  //initialize count variable.
 
 
+wire [31:0]	col_buffer_data_out_a;
+wire [31:0]	col_buffer_data_out_b;
+
+assign col_buffer_primary_data_out = col_buffer_primary_is_a ? col_buffer_data_out_a : col_buffer_data_out_b;
+assign col_buffer_secondary_data_out = !col_buffer_primary_is_a ? col_buffer_data_out_a : col_buffer_data_out_b;
+
+// Sprite Collision Buffer RAM A
+spram #(9,32) spritecollisionbufferram_a
+(
+	.clock(clk),
+	.address(col_buffer_primary_is_a ? col_buffer_primary_addr : col_buffer_secondary_addr),
+	.wren(col_buffer_primary_is_a ? col_buffer_primary_wr : col_buffer_secondary_wr),
+	.data(col_buffer_primary_is_a ? col_buffer_primary_data_in : col_buffer_secondary_data_in),
+	.q(col_buffer_data_out_a)
+);
+// Sprite Collision Buffer RAM B
+spram #(9,32) spritecollisionbufferram_b
+(
+	.clock(clk),
+	.address(!col_buffer_primary_is_a ? col_buffer_primary_addr : col_buffer_secondary_addr),
+	.wren(!col_buffer_primary_is_a ? col_buffer_primary_wr : col_buffer_secondary_wr),
+	.data(!col_buffer_primary_is_a ? col_buffer_primary_data_in : col_buffer_secondary_data_in),
+	.q(col_buffer_data_out_b)
+);
 
 
+endmodule
+
+
+module count
+(
+	input 			clk,
+	input [31:0]	a,
+	output reg [4:0] sum
+);
+
+reg [4:0] n;
+
+always @(posedge clk) begin
+	/* verilator lint_off WIDTH */
+	sum = 0;
+	sum = sum + a[0];
+	sum = sum + a[1];
+	sum = sum + a[2];
+	sum = sum + a[3];
+	sum = sum + a[4];
+	sum = sum + a[5];
+	sum = sum + a[6];
+	sum = sum + a[7];
+	// for (n=0; n<=31; n=n+1) begin
+	// 	sum = sum + {4'b0,a[n]};
+	// end
+	/* verilator lint_on WIDTH */
+end
 endmodule

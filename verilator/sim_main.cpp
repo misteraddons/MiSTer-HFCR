@@ -24,6 +24,15 @@
 #include <fstream>
 using namespace std;
 
+// Simulation control
+// ------------------
+int initialReset = 48;
+bool run_enable = 1;
+int batchSize = 150000;
+bool single_step = 0;
+bool multi_step = 0;
+int multi_step_amount = 1024;
+
 // Debug GUI 
 // ---------
 const char* windowTitle = "Verilator Sim: Aznable";
@@ -66,14 +75,6 @@ const int input_start = 11;
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
 float vga_scale = 2.0;
 
-// Simulation control
-// ------------------
-int initialReset = 48;
-bool run_enable = 1;
-int batchSize = 150000;
-bool single_step = 0;
-bool multi_step = 0;
-int multi_step_amount = 1024;
 
 // Verilog module
 // --------------
@@ -148,9 +149,9 @@ int verilate() {
 		}
 
 		main_time++;
-
 		return 1;
 	}
+
 	// Stop verilating and cleanup
 	top->final();
 	delete top;
@@ -305,10 +306,25 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Begin("Sprite Linebuffer RAM");
 		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
 		ImGui::End();*/
+
+		ImGui::Begin("Sprite Collision Buffer RAM A");
+		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
+		ImGui::End();
+		ImGui::Begin("Sprite Collision Buffer RAM B");
+		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_b__DOT__mem, 512, 0);
+		ImGui::End();
+		ImGui::Begin("Sprite Collision RAM ");
+		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritecollisionram__DOT__mem, 32, 0);
+		ImGui::End();
+		//ImGui::Begin("Sprite Debug RAM");
+		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritedebugram__DOT__mem, 128000, 0);
+		//ImGui::End();
+
+
 		/*ImGui::Begin("Palette ROM");
 		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
 		ImGui::End();
-		ImGui::Begin("Sprite ROM");
+		ImGui::Begin("Sprite ROM");---
 		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
 		ImGui::End();*/
 

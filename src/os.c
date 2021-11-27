@@ -100,11 +100,111 @@ void test_loop()
 	}
 }
 
+void coltest_loop()
+{
+
+	clear_bgcolor(0b01000000);
+
+	unsigned char scf = 0;
+	unsigned char sc = 12;
+
+	unsigned short sx = 100;
+	unsigned short sy = 80;
+
+	unsigned char is = 0;
+	unsigned char ic = 0;
+	unsigned char icm = 16;
+
+	for (char s = scf; s < sc; s++)
+	{
+		spr_on[s] = 1;
+		spr_index[s] = is + ic;
+		ic++;
+		if (ic == icm)
+		{
+			ic = 0;
+		}
+		spr_x[s] = sx;
+		spr_y[s] = sy;
+		sx += 12;
+		sy+=1;
+		if (sx > 200)
+		{
+			sx = 100;
+			sy += 20;
+		}
+	}
+
+	// char x1 = 80;
+	// char x2 = 94;
+	// char y1 = 80;
+	// char y2 = 94;
+
+	while (1)
+	{
+		vblank = input0 & 0x10;
+
+		if (VBLANK_RISING)
+		{
+			update_sprites();
+		}
+		if (VBLANK_FALLING)
+		{
+
+			// if (CHECK_BIT(joystick[0], 0))
+			// {
+			// 	x1--;
+			// 	x2++;
+			// }
+			// if (CHECK_BIT(joystick[0], 1))
+			// {
+			// 	x1++;
+			// 	x2--;
+			// }
+			// if (CHECK_BIT(joystick[0], 2))
+			// {
+			// 	y1--;
+			// }
+			// if (CHECK_BIT(joystick[0], 3))
+			// {
+			// 	y2++;
+			// }
+			// if (CHECK_BIT(joystick[0], 4))
+			// {
+			// 	y1++;
+			// }
+			// if (CHECK_BIT(joystick[0], 5))
+			// {
+			// 	y2--;
+			// }
+			// spr_x[0] = x1;
+			// spr_x[1] = x2;
+			// spr_y[0] = y1;
+			// spr_y[1] = y2;
+
+			for (char c = 0; c < sc; c++)
+			{
+				write_char(spritecollisionram[c] ? 'X' : '.', 0xFF, c, 2);
+			}
+
+			// if (CHECK_BIT(joystick[0], 6))
+			// {
+			for (char c = 0; c < sc; c++)
+			{
+				spritecollisionram[c] = 0;
+			}
+			// }
+		}
+
+		vblank_last = vblank;
+	}
+}
+
 unsigned char player_speed_last = 0;
 
 unsigned char sf_speed1 = 4;
 
-//unsigned char sound_timer = 0;
+// unsigned char sound_timer = 0;
 
 void game_loop()
 {
@@ -166,7 +266,7 @@ void game_loop()
 			{
 				play_music(2);
 			}
-	
+
 			// if (CHECK_BIT(joystick[0], 4))
 			// {
 			// 	ay_write(0x08, 0x06);
@@ -265,7 +365,7 @@ void main()
 	clear_bgcolor(0);
 	clear_chars(0);
 
-	//init_audio();
+	// init_audio();
 
 	channel_on[0] = 0;
 	// ay_write(0x08, 0x00);
@@ -287,5 +387,7 @@ void main()
 
 	// test_loop();
 
-	game_loop();
+	coltest_loop();
+
+	// game_loop();
 }

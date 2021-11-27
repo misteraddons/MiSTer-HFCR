@@ -42,7 +42,7 @@ module system (
 	// 6 devices, 8 bits each - paddle 0..255
 	input [47:0]	paddle,
 
-	// 6 devices, 16 bits eachspinner [7:0] -128..+127, [8] - toggle with every update, [9-15] padding
+	// 6 devices, 16 bits each spinner [7:0] -128..+127, [8] - toggle with every update, [9-15] padding
 	input [95:0]	spinner,
 
 	// ps2 alternative interface.
@@ -175,7 +175,7 @@ wire chram_cs = cpu_addr[15:11] == 5'b10011;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
 wire bgcolram_cs = cpu_addr[15:11] == 5'b10101;
 // - Comet (sprite engine)
-wire spriteram_cs = cpu_addr[15:11] == 5'b10110;
+wire spriteram_cs = cpu_addr[15:11] == 5'b10110 && !spritecollisionram_cs;
 wire spritecollisionram_cs = memory_map_addr == 8'b10110100;
 // -  (starfield)
 // - CPU working RAM
@@ -197,8 +197,10 @@ always @(posedge clk_24) begin
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
-	if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", cpu_addr, cpu_dout);
-	if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
+	//if(!cpu_wr_n) $display("cpu_write %x %b",cpu_addr, cpu_dout);
+	//if(spritecollisionram_cs && !cpu_wr_n) $display("spritecollisionram %b %b %b", cpu_wr_n, cpu_addr, cpu_dout);
+	//if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", cpu_addr, cpu_dout);
+	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 	//if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
 end
 
@@ -208,7 +210,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 chram_cs ? chram_data_out :
 				 fgcolram_cs ? fgcolram_data_out :
 				 bgcolram_cs ? bgcolram_data_out :
-				 spritecollisionram_cs ? spritecollisionram_data_out :
+				 spritecollisionram_cs ? {8{spritecollisionram_data_out_cpu}} :
 				 in0_cs ? in0_data_out :
 				 joystick_cs ? joystick_data_out :
 				 analog_l_cs ? analog_l_data_out :
@@ -281,9 +283,10 @@ wire [5:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
 wire [6:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
-wire [6:0]	spritecollisionram_addr;
-wire [7:0]	spritecollisionram_data_out;
-wire [7:0]	spritecollisionram_data_in;
+wire [4:0]	spritecollisionram_addr;
+wire		spritecollisionram_data_out_cpu;
+wire		spritecollisionram_data_out;
+wire		spritecollisionram_data_in;
 wire [9:0]	spritelbram_rd_addr;
 wire [9:0]	spritelbram_wr_addr;
 wire 		spritelbram_wr;
@@ -307,6 +310,7 @@ sprite_engine comet
 	.palrom_data_out(palrom_data_out),
 	.spritelbram_data_out(spritelbram_data_out),
 	.spritecollisionram_data_in(spritecollisionram_data_in),
+	.spritecollisionram_data_out(spritecollisionram_data_out),
 	.spriteram_addr(spriteram_addr),
 	.spritecollisionram_addr(spritecollisionram_addr),
 	.sprom_addr(sprom_addr),
@@ -316,6 +320,10 @@ sprite_engine comet
 	.spritelbram_wr(spritelbram_wr),
 	.spritecollisionram_wr(spritecollisionram_wr),
 	.spritelbram_data_in(spritelbram_data_in),
+	.spritedebugram_addr_b(spritedebugram_addr_b),
+	.spritedebugram_wr_b(spritedebugram_wr_b),
+	.spritedebugram_data_in_b(spritedebugram_data_in_b),
+	.spritedebugram_data_out_b(spritedebugram_data_out_b),
 	.spr_r(spr_r),
 	.spr_g(spr_g),
 	.spr_b(spr_b),
@@ -388,10 +396,64 @@ starfield #(
 wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
+
+// Sprite debug
+
+wire [7:0] spritedebug_colour = spritedebugram_data_out_a;
+
+localparam SD_WAIT = 0;
+localparam SD_CLEAR_BEGIN = 1;
+localparam SD_CLEAR = 2;
+reg [2:0] sd_state;
+reg vblank_last;
+always @(posedge clk_24) begin
+	vblank_last <= VGA_VB;
+	case(sd_state)
+		SD_WAIT:
+		begin
+			spritedebugram_wr_a <= 1'b0;
+			spritedebugram_addr_a <= (({8'b0,vcnt} + 17'd16) * 17'd320) + {8'b0,hcnt} + 17'd19;
+			if(VGA_VB && !vblank_last)
+			begin
+				sd_state <= SD_CLEAR_BEGIN;
+			end
+		end
+
+		SD_CLEAR_BEGIN:
+		begin
+			//$display("SD_CLEAR_BEGIN: %d %d", hcnt, vcnt);
+			spritedebugram_addr_a <= 17'b0;
+			spritedebugram_data_in_a <= 8'd0;
+			spritedebugram_wr_a <= 1'b1;
+			sd_state <= SD_CLEAR;
+		end
+
+		SD_CLEAR:
+		begin
+			if(spritedebugram_addr_a > 17'd74000)
+			begin
+				spritedebugram_addr_a <= 17'b0;
+				sd_state <= SD_WAIT;
+				//$display("SD_CLEAR_END: %d %d", hcnt, vcnt);
+				spritedebugram_wr_a <= 1'b0;
+			end
+			else
+			begin
+				spritedebugram_addr_a <= spritedebugram_addr_a + 17'b1;
+			end
+		end
+	endcase
+end
+
 // RGB mixer
-assign VGA_R = spr_a ? spr_r : sf_on ? sf_star_colour : {{2{charmap_r}},2'b0}; 
-assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : {{2{charmap_g}},2'b0};
-assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : {{3{charmap_b}},2'b0};
+wire [7:0] bg_r = {{2{charmap_r}},2'b0};
+wire [7:0] bg_g = {{2{charmap_g}},2'b0};
+wire [7:0] bg_b = {{3{charmap_b}},2'b0};
+
+assign VGA_R = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
+assign VGA_G = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
+assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
+
 
 
 // Music player
@@ -552,19 +614,44 @@ dpram #(7,8) spriteram
 );
 
 // Sprite Collision RAM - 0xB400 - 0xB47F (0x0080 / 128 bytes)
-dpram #(7,8) spritecollisionram
+dpram #(5,1) spritecollisionram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[6:0]),
-	.wren_a(1'b0),
-	.data_a(),
-	.q_a(spritecollisionram_data_out),
+	.address_a(cpu_addr[4:0]),
+	.wren_a(spritecollisionram_cs && ~cpu_wr_n),
+	.data_a(cpu_dout[0]),
+	.q_a(spritecollisionram_data_out_cpu),
 
 	.clock_b(clk_24),
 	.address_b(spritecollisionram_addr),
 	.wren_b(spritecollisionram_wr),
 	.data_b(spritecollisionram_data_in),
-	.q_b()
+	.q_b(spritecollisionram_data_out)
+);
+
+reg 	[16:0]	spritedebugram_addr_a;
+wire 	[16:0]	spritedebugram_addr_b;
+reg		 [7:0]	spritedebugram_data_in_a;
+reg		 [7:0]	spritedebugram_data_in_b;
+wire	 [7:0]	spritedebugram_data_out_a;
+wire	 [7:0]	spritedebugram_data_out_b;
+reg				spritedebugram_wr_a;
+reg				spritedebugram_wr_b;
+
+// Sprite Debug Frame Buffer 
+dpram #(17,8) spritedebugram
+(
+	.clock_a(clk_24),
+	.address_a(spritedebugram_addr_a),
+	.wren_a(spritedebugram_wr_a),
+	.data_a(spritedebugram_data_in_a),
+	.q_a(spritedebugram_data_out_a),
+
+	.clock_b(clk_24),
+	.address_b(spritedebugram_addr_b),
+	.wren_b(spritedebugram_wr_b),
+	.data_b(spritedebugram_data_in_b),
+	.q_b(spritedebugram_data_out_b)
 );
 
 // Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)

@@ -180,7 +180,7 @@ assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
-assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
+//assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
 
 assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
@@ -208,6 +208,9 @@ localparam CONF_STR = {
 	"OGJ,Analog Video H-Pos,0,-1,-2,-3,-4,-5,-6,-7,8,7,6,5,4,3,2,1;",
 	"OKN,Analog Video V-Pos,0,-1,-2,-3,-4,-5,-6,-7,8,7,6,5,4,3,2,1;",
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"-;",
+	"O6,No Rotate,Off,On;",
+	"O7,Rotate CCW,Off,On;",
 	"-;",
 	"F0,BIN,Load BIOS;",
 	"F3,BIN,Load Sprite ROM;",
@@ -345,6 +348,10 @@ jtframe_cen24 divider
 ///////////////////   VIDEO   ////////////////////
 wire hblank, vblank, hs, vs, hs_original, vs_original;
 wire [7:0] r, g, b;
+
+wire rotate_ccw = status[7];
+wire no_rotate = status[6];
+screen_rotate screen_rotate (.*);
 
 arcade_video #(320,24) arcade_video
 (
