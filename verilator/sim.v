@@ -104,6 +104,10 @@ jtframe_cen24 divider
 );
 /* verilator lint_on PINMISSING */
 
+// Debug defines
+// `define DEBUG_SPRITE_COLLISION
+`define DISABLE_MUSIC
+
 system system(
 	.clk_24(clk_sys),
 	.ce_6(ce_6),

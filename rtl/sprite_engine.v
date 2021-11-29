@@ -48,10 +48,12 @@ module sprite_engine (
 
 	output reg			spritecollisionram_wr,
 
+`ifdef DEBUG_SPRITE_COLLISION
 	output reg	[16:0]	spritedebugram_addr_b,
 	output reg	 [7:0]	spritedebugram_data_in_b,
 	input		 [7:0]	spritedebugram_data_out_b,
 	output reg			spritedebugram_wr_b,
+`endif
 
 	output		[7:0]	spr_r,
 	output		[7:0]	spr_g,
@@ -223,9 +225,6 @@ begin
 			col_primary_state <= CP_IDLE;
 		end
 	endcase
-
-
-
 
 // Sprite engine state machine
 `ifdef CASVAL_DEBUG
@@ -463,10 +462,6 @@ begin
 				// Fill line buffer data in with palette ROM data out
 				spritelbram_data_in <= palrom_data_out;
 
-				// spritedebugram_data_in_b <= 8'hFF;
-				// spritedebugram_wr_b <= 1'b1;
-				// spritedebugram_addr_b <= ((spr_active_y) * 9'd320) + {8'b0, spr_x[8:0] + {4'b0,spr_pixel_index}};
-			
 				// Trigger collision check (not in vblank)
 				if(!vblank && spr_collide)
 				begin
@@ -558,9 +553,12 @@ begin
 		if(col_buffer_secondary_collisions_count2 > 5'd1)
 		begin
 			col_buffer_secondary_collisions <= col_buffer_secondary_collisions | col_buffer_secondary_data_out;
+
+`ifdef DEBUG_SPRITE_COLLISION			
 			spritedebugram_data_in_b <= 8'hFF;
 			spritedebugram_wr_b <= 1'b1;
 			spritedebugram_addr_b <= ((spr_active_y) * 9'd320) + {8'b0, col_buffer_secondary_addr};
+`endif
 		end
 
 		if(col_buffer_secondary_addr == spr_line_max - 1'b1)

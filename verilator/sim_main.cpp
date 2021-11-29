@@ -279,10 +279,8 @@ int main(int argc, char** argv, char** env) {
 		console.Draw(windowTitle_DebugLog, &showDebugLog, ImVec2(500, 700));
 		ImGui::SetWindowPos(windowTitle_DebugLog, ImVec2(0, 160), ImGuiCond_Once);
 
-
-
 		// Memory debug
-				/*ImGui::Begin("PGROM Editor");
+		/*ImGui::Begin("PGROM Editor");
 		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 16384, 0);
 		ImGui::End();
 		ImGui::Begin("CHROM Editor");
@@ -320,8 +318,6 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("Sprite Debug RAM");
 		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritedebugram__DOT__mem, 128000, 0);
 		//ImGui::End();
-
-
 		/*ImGui::Begin("Palette ROM");
 		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
 		ImGui::End();
@@ -337,16 +333,13 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8);
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
-
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
-
 
 		float vol_l = ((top->AUDIO_L) / 256.0f) / 256.0f;
 		float vol_r = ((top->AUDIO_R) / 256.0f) / 256.0f;
 		ImGui::ProgressBar(vol_l, ImVec2(200, 16), 0); ImGui::SameLine();
 		ImGui::ProgressBar(vol_r, ImVec2(200, 16), 0);
-
 
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));

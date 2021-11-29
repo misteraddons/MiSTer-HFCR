@@ -127,7 +127,7 @@ void coltest_loop()
 		spr_x[s] = sx;
 		spr_y[s] = sy;
 		sx += 10;
-		sy+=1;
+		sy += 1;
 		if (sx > 200)
 		{
 			sx = 100;
@@ -204,7 +204,10 @@ unsigned char player_speed_last = 0;
 
 unsigned char sf_speed1 = 4;
 
+
+
 // unsigned char sound_timer = 0;
+
 
 void game_loop()
 {
@@ -250,8 +253,12 @@ void game_loop()
 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
 
-			// Handle collision
-
+			// Handle player collision
+			if (spritecollisionram[player_sprite])
+			{
+				player_hit=true;
+				spritecollisionram[player_sprite] = 0;
+			}
 		}
 
 		if (VBLANK_FALLING)
@@ -274,6 +281,15 @@ void game_loop()
 #ifdef DEBUG_PRINT
 			debug_t2 = GET_TIMER;
 			write_stringf_ushort("trl: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
+
+#ifdef DEBUG_PRINT
+			debug_t1 = GET_TIMER;
+#endif
+			handle_explosions();
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("exp: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
 #endif
 
 #ifdef DEBUG_PRINT

@@ -320,10 +320,12 @@ sprite_engine comet
 	.spritelbram_wr(spritelbram_wr),
 	.spritecollisionram_wr(spritecollisionram_wr),
 	.spritelbram_data_in(spritelbram_data_in),
+`ifdef DEBUG_SPRITE_COLLISION
 	.spritedebugram_addr_b(spritedebugram_addr_b),
 	.spritedebugram_wr_b(spritedebugram_wr_b),
 	.spritedebugram_data_in_b(spritedebugram_data_in_b),
 	.spritedebugram_data_out_b(spritedebugram_data_out_b),
+`endif
 	.spr_r(spr_r),
 	.spr_g(spr_g),
 	.spr_b(spr_b),
@@ -397,10 +399,8 @@ wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
 
-// Sprite debug
-
-wire [7:0] spritedebug_colour = spritedebugram_data_out_a;
-
+`ifdef DEBUG_SPRITE_COLLISION
+// Sprite collision debug
 localparam SD_WAIT = 0;
 localparam SD_CLEAR_BEGIN = 1;
 localparam SD_CLEAR = 2;
@@ -430,7 +430,7 @@ always @(posedge clk_24) begin
 
 		SD_CLEAR:
 		begin
-			if(spritedebugram_addr_a > 17'd74000)
+			if(spritedebugram_addr_a > 17'd78000)
 			begin
 				spritedebugram_addr_a <= 17'b0;
 				sd_state <= SD_WAIT;
@@ -444,18 +444,26 @@ always @(posedge clk_24) begin
 		end
 	endcase
 end
+`endif
 
 // RGB mixer
 wire [7:0] bg_r = {{2{charmap_r}},2'b0};
 wire [7:0] bg_g = {{2{charmap_g}},2'b0};
 wire [7:0] bg_b = {{3{charmap_b}},2'b0};
 
+`ifdef DEBUG_SPRITE_COLLISION
 assign VGA_R = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
 assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
 assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
+`endif
 
+`ifndef DEBUG_SPRITE_COLLISION
+assign VGA_R = spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
+assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
+assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
+`endif
 
-
+`ifndef DISABLE_MUSIC
 // Music player
 localparam MUSIC_ROM_WIDTH = 17;
 wire [MUSIC_ROM_WIDTH-1:0] musicrom_addr;
@@ -475,7 +483,7 @@ music #(
 	.audio_l(AUDIO_L),
 	.audio_r(AUDIO_R)
 );
-
+`endif
 
 // // YM2149 sound generator
 // wire [3:0] snd_addr = cpu_addr[3:0];
@@ -629,6 +637,7 @@ dpram #(5,1) spritecollisionram
 	.q_b(spritecollisionram_data_out)
 );
 
+`ifdef DEBUG_SPRITE_COLLISION
 reg 	[16:0]	spritedebugram_addr_a;
 wire 	[16:0]	spritedebugram_addr_b;
 reg		 [7:0]	spritedebugram_data_in_a;
@@ -636,7 +645,7 @@ wire	 [7:0]	spritedebugram_data_in_b;
 wire	 [7:0]	spritedebugram_data_out_a;
 wire	 [7:0]	spritedebugram_data_out_b;
 reg				spritedebugram_wr_a;
-wire				spritedebugram_wr_b;
+wire			spritedebugram_wr_b;
 
 // Sprite Debug Frame Buffer 
 dpram #(17,8) spritedebugram
@@ -653,6 +662,7 @@ dpram #(17,8) spritedebugram
 	.data_b(spritedebugram_data_in_b),
 	.q_b(spritedebugram_data_out_b)
 );
+`endif
 
 // Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)
 dpram #(10,16) spritelbram
@@ -709,6 +719,7 @@ dpram #(14,8, "sprite.hex") spriterom
 	.q_b()
 );
 
+`ifndef DISABLE_MUSIC
 // Music ROM - 128kB
 dpram #(17,8, "music.hex") musicrom
 (
@@ -724,7 +735,7 @@ dpram #(17,8, "music.hex") musicrom
 	.data_b(dn_data),
 	.q_b()
 );
-
+`endif
 
 
 endmodule

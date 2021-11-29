@@ -180,7 +180,8 @@ assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
-//assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
+//assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;
+assign FB_FORCE_BLANK = 0;
 
 assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
@@ -216,7 +217,7 @@ localparam CONF_STR = {
 	"F3,BIN,Load Sprite ROM;",
 	"F4,YM,Load Music (YM5/6);",
 	"-;",
-	"J1,A,B,X,Y,L,R,Select,Start,C,Z;",
+	"J,A,B,X,Y,L,R,Select,Start,C,Z;",
 	"V,v",`BUILD_DATE
 };
 

@@ -19,13 +19,21 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
+/*
+	Sprite indexes:
+	0-11	- Trails
+	12		- Player
+	13-15   - Explosions
+	16-31	- Meteors
+*/
+
 #pragma once
 #include "sprite.c"
 
 // Meteor Storm
 
 // Player
-const unsigned char player_sprite = 12;
+const unsigned char player_sprite = 11;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
 const unsigned char player_trail_frequency = 14;
@@ -43,13 +51,20 @@ unsigned char player_speed;
 unsigned long player_score = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_trail_timer = 1;
+unsigned char player_invincible_timer = 0;
+unsigned char player_invincible_flash = 0;
+unsigned char player_invincible_timeout = 120;
+unsigned char player_respawn_timer = 0;
+unsigned char player_respawn_timeout = 120;
+unsigned char player_explosion_timeout = 0;
+bool player_hit = 0;
 
 #define player_sprite_index_default meteor_sprite_index_count
 #define player_sprite_index_left player_sprite_index_default + 2
 #define player_sprite_index_right player_sprite_index_default + 3
 
 // Trails
-#define const_trail_max 12
+#define const_trail_max 11
 unsigned char trail_max = const_trail_max;
 unsigned char trail_sprite_first = 0;
 unsigned short trail_x[const_trail_max];
@@ -62,10 +77,19 @@ unsigned char trail_y_offset;
 #define trail_sprite_index_first player_sprite_index_default + 4
 #define trail_sprite_index_last trail_sprite_index_first + 3
 
+// Explosions
+#define const_explosion_max 4
+unsigned char explosion_max = const_explosion_max;
+unsigned char explosion_sprite_first = 29;
+unsigned char explosion_timer[const_explosion_max];
+#define explosion_sprite_index_first trail_sprite_index_last + 1
+#define explosion_sprite_index_last explosion_sprite_index_first + 3
+const unsigned char explosion_lifespan = 4;
+
 // Meteors
 #define const_meteor_max 16
 unsigned char meteor_max = const_meteor_max;
-unsigned char meteor_sprite_first = 16;
+unsigned char meteor_sprite_first = 13;
 unsigned short meteor_x[const_meteor_max];
 unsigned short meteor_y[const_meteor_max];
 signed char meteor_xs[const_meteor_max];
@@ -104,10 +128,13 @@ void setup_player()
 	player_y = 216 * y_divisor;
 	player_speed = player_speed_min;
 
+	player_invincible_timer = 0;
+	player_invincible_flash = 0;
+
 	// Initialise player sprite
 	spr_index[player_sprite] = 1;
 	spr_on[player_sprite] = true;
-	spr_collide[player_sprite] = true;
+	spr_collide[player_sprite] = false;
 	spr_x[player_sprite] = player_x / x_divisor;
 	spr_y[player_sprite] = player_y;
 
@@ -117,6 +144,9 @@ void setup_player()
 	// Score
 	player_score = 0;
 	player_score_timer = 0;
+
+	// Trigger invincibility
+	player_invincible_timer = player_invincible_timeout;
 }
 
 void update_meteordifficulty()
@@ -155,7 +185,7 @@ void setup_meteors()
 		unsigned char sprite = meteor_sprite_first + m;
 		spr_index[sprite] = meteor_sprite_index_first + rand_uchar(0, meteor_sprite_index_count - 1);
 		spr_on[sprite] = false;
-		spr_collide[sprite] = true;		
+		spr_collide[sprite] = true;
 	}
 }
 void setup_trails()
@@ -170,7 +200,7 @@ void add_player_trail()
 	{
 		if (trail_timer[t] == 0)
 		{
-			trail_x[t] = player_x + rand_schar(-1, 1);
+			trail_x[t] = player_x;
 			trail_y[t] = player_y + (trail_y_offset - player_trail_speed);
 			unsigned char spread = 3 + (player_speed / 8);
 			trail_xs[t] = rand_schar(-spread, spread);
@@ -184,8 +214,70 @@ void add_player_trail()
 	}
 }
 
+void add_explosion(unsigned char count)
+{
+	for (unsigned char e = 0; e < explosion_max; e++)
+	{
+		if (explosion_timer[e] == 0)
+		{
+			explosion_timer[e] = rand_uchar(2, 7);
+			unsigned char sprite = explosion_sprite_first + e;
+			spr_on[sprite] = true;
+			spr_index[sprite] = explosion_sprite_index_first;
+			spr_x[sprite] = (player_x + (signed short)rand_schar(-32, 64)) / x_divisor;
+			spr_y[sprite] = (player_y + (signed short)rand_schar(-32, 64)) / y_divisor;
+			count--;
+			if (count == 0)
+			{
+				return;
+			}
+		}
+	}
+}
+
 void handle_player()
 {
+	if (player_respawn_timer > 0)
+	{
+		player_respawn_timer--;
+		if (player_respawn_timer == 0)
+		{
+			setup_player();
+		}
+		return;
+	}
+
+	if (player_invincible_timer > 0)
+	{
+		player_hit = false;
+		player_invincible_timer--;
+		player_invincible_flash++;
+
+		if (player_invincible_timer == 0)
+		{
+			spr_on[player_sprite] = true;
+			spr_collide[player_sprite] = true;
+		}
+		else
+		{
+			if (player_invincible_flash == 4)
+			{
+				player_invincible_flash = 0;
+				spr_on[player_sprite] = !spr_on[player_sprite];
+			}
+		}
+	}
+	else
+	{
+		if (player_hit)
+		{
+			player_hit = false;
+			add_explosion(4);
+			player_respawn_timer = player_respawn_timeout;
+			spr_on[player_sprite] = false;
+		}
+	}
+
 	if (player_xs > 0)
 	{
 		player_xs--;
@@ -313,6 +405,30 @@ void handle_trails()
 	}
 }
 
+void handle_explosions()
+{
+	for (unsigned char t = 0; t < explosion_max; t++)
+	{
+		if (explosion_timer[t] > 0)
+		{
+			explosion_timer[t]--;
+			if (explosion_timer[t] == 0)
+			{
+				unsigned char sprite = explosion_sprite_first + t;
+				spr_index[sprite]++;
+				if (spr_index[sprite] > explosion_sprite_index_last)
+				{
+					spr_on[sprite] = false;
+				}
+				else
+				{
+					explosion_timer[t] = explosion_lifespan;
+				}
+			}
+		}
+	}
+}
+
 void handle_meteors()
 {
 	for (unsigned char m = 0; m < meteor_max; m++)
@@ -354,10 +470,10 @@ void handle_meteors()
 					spr_y[sprite] = meteor_y[m] / y_divisor;
 				}
 			}
-		// }
-		// else
-		// {
-		// 	spr_on[sprite] = 0;
+			// }
+			// else
+			// {
+			// 	spr_on[sprite] = 0;
 		}
 	}
 
