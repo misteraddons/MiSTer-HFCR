@@ -37,27 +37,46 @@
 #include "app_meteorstorm.c"
 
 //#define DEBUG_PRINT
+unsigned short debug_t1;
+unsigned short debug_t2;
 
-void test_loop()
+void intro_loop()
 {
 
-	clear_bgcolor(0b01000000);
+	clear_bgcolor(0);
 
 	starfield[0] = 2;
 	starfield[2] = 8;
 	starfield[4] = 32;
-	char s = 0;
-	for (char y = 0; y < 4; y++)
+	unsigned char s = 0;
+	unsigned short logoX = 115;
+	unsigned char logoY = 100;
+
+	for (unsigned char t = 0; t < 1; t++)
 	{
-		for (char x = 0; x < 8; x++)
+		unsigned char si = 0;
+		for (unsigned char y = 0; y < 2; y++)
 		{
-			spr_index[s] = 12 + s;
-			s++;
+			for (unsigned char x = 0; x < 8; x++)
+			{
+				enable_sprite(s, 2, 0);
+				spr_index[s] = 18 + si;
+				spr_x[s] = logoX + (x * 16);
+				unsigned short sy = logoY + (y * 16);
+				spr_y_h[s] = sy >> 8;
+				spr_y_l[s] = (unsigned char)sy;
+				si++;
+				s++;
+			}
 		}
+		logoY += 32;
 	}
 
-	signed short logoX = 120;
-	signed short logoY = 100;
+	starfield[0] = 8;
+	starfield[1] = 16;
+	starfield[2] = 32;
+
+	write_string("Press A to start", 0xFF, 12, 20);
 
 	while (1)
 	{
@@ -68,29 +87,20 @@ void test_loop()
 
 		if (VBLANK_RISING)
 		{
+			// If button pressed, leave intro and start game
+			if (CHECK_BIT(joystick[0], 4))
+			{
+				return;
+			}
+#ifdef DEBUG_PRINT
+			unsigned char debug_y = 16;
+			debug_t1 = GET_TIMER;
+#endif
 			update_sprites();
-		}
-		if (VBLANK_FALLING)
-		{
-			char s = 0;
-
-			logoX += 1;
-			if (logoX > 336)
-			{
-				logoX = -112;
-			}
-
-			for (char y = 0; y < 4; y++)
-			{
-				for (char x = 0; x < 8; x++)
-				{
-					unsigned short lx = logoX + (x * 16);
-					spr_on[s] = lx > 0;
-					spr_x[s] = lx;
-					spr_y[s] = logoY + (y * 16);
-					s++;
-				}
-			}
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 		}
 
 		// hsync_last = hsync;
@@ -100,117 +110,31 @@ void test_loop()
 	}
 }
 
-void coltest_loop()
+// Starfield variables
+unsigned char player_speed_last = 0;
+unsigned char sf_speed1 = 4;
+// unsigned char sound_timer = 0;
+
+void vblank_loop(unsigned char count)
 {
-
-	clear_bgcolor(0b01000000);
-
-	unsigned char scf = 0;
-	unsigned char sc = 20;
-
-	unsigned short sx = 100;
-	unsigned short sy = 80;
-
-	unsigned char is = 0;
-	unsigned char ic = 0;
-	unsigned char icm = 16;
-
-	for (char s = scf; s < sc; s++)
-	{
-		spr_on[s] = 1;
-		spr_index[s] = is + ic;
-		ic++;
-		if (ic == icm)
-		{
-			ic = 0;
-		}
-		spr_x[s] = sx;
-		spr_y[s] = sy;
-		sx += 10;
-		sy += 1;
-		if (sx > 200)
-		{
-			sx = 100;
-			sy += 20;
-		}
-	}
-
-	// char x1 = 80;
-	// char x2 = 94;
-	// char y1 = 80;
-	// char y2 = 94;
-
-	while (1)
+	while (count > 0)
 	{
 		vblank = input0 & 0x10;
-
 		if (VBLANK_RISING)
 		{
 			update_sprites();
+			count--;
 		}
-		if (VBLANK_FALLING)
-		{
-
-			// if (CHECK_BIT(joystick[0], 0))
-			// {
-			// 	x1--;
-			// 	x2++;
-			// }
-			// if (CHECK_BIT(joystick[0], 1))
-			// {
-			// 	x1++;
-			// 	x2--;
-			// }
-			// if (CHECK_BIT(joystick[0], 2))
-			// {
-			// 	y1--;
-			// }
-			// if (CHECK_BIT(joystick[0], 3))
-			// {
-			// 	y2++;
-			// }
-			// if (CHECK_BIT(joystick[0], 4))
-			// {
-			// 	y1++;
-			// }
-			// if (CHECK_BIT(joystick[0], 5))
-			// {
-			// 	y2--;
-			// }
-			// spr_x[0] = x1;
-			// spr_x[1] = x2;
-			// spr_y[0] = y1;
-			// spr_y[1] = y2;
-
-			for (char c = 0; c < sc; c++)
-			{
-				write_char(spritecollisionram[c] ? 'X' : '.', 0xFF, c, 2);
-			}
-
-			// if (CHECK_BIT(joystick[0], 6))
-			// {
-			for (char c = 0; c < sc; c++)
-			{
-				spritecollisionram[c] = 0;
-			}
-			// }
-		}
-
 		vblank_last = vblank;
 	}
+	return;
 }
-
-unsigned char player_speed_last = 0;
-
-unsigned char sf_speed1 = 4;
-
-
-
-// unsigned char sound_timer = 0;
-
 
 void game_loop()
 {
+	clear_sprites();
+	clear_bgcolor(0);
+	clear_chars(0);
 
 	play_music(0);
 
@@ -221,23 +145,22 @@ void game_loop()
 		// hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
-		// console();
-
 		if (VBLANK_RISING)
 		{
-			unsigned char debug_y = 16;
+
 #ifdef DEBUG_PRINT
+			unsigned char debug_y = 16;
 			debug_t1 = GET_TIMER;
 #endif
 			update_sprites();
-#ifdef DEBUG_PRINT
-			debug_t2 = GET_TIMER;
-			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
-#endif
+			// #ifdef DEBUG_PRINT
+			// 			debug_t2 = GET_TIMER;
+			// 			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+			// #endif
 			// Update starfield
-#ifdef DEBUG_PRINT
-			debug_t1 = GET_TIMER;
-#endif
+			// #ifdef DEBUG_PRINT
+			// 			debug_t1 = GET_TIMER;
+			// #endif
 			if (player_speed != player_speed_last)
 			{
 				player_speed_last = player_speed;
@@ -248,24 +171,28 @@ void game_loop()
 				s = s / 2;
 				starfield[4] = s;
 			}
-#ifdef DEBUG_PRINT
-			debug_t2 = GET_TIMER;
-			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
-#endif
+			// #ifdef DEBUG_PRINT
+			// 			debug_t2 = GET_TIMER;
+			// 			write_stringf_ushort(" sf: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+			// #endif
 
 			// Handle player collision
 			if (spritecollisionram[player_sprite])
 			{
-				player_hit=true;
+				player_hit = true;
 				spritecollisionram[player_sprite] = 0;
 			}
+#ifdef DEBUG_PRINT
+			debug_t2 = GET_TIMER;
+			write_stringf_ushort("vbl: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
+#endif
 		}
 
 		if (VBLANK_FALLING)
 		{
-			unsigned char debug_y = 26;
 
 #ifdef DEBUG_PRINT
+			unsigned char debug_y = 23;
 			debug_t1 = GET_TIMER;
 #endif
 			handle_player();
@@ -306,7 +233,6 @@ void game_loop()
 
 			// Meteor difficulty debug
 			write_stringf_ushort("%4d", 0xFF, 0, 0, meteor_difficulty);
-			// write_stringf_ushort("%4d", 0xFF, 0, 1, meteor_difficulty_timer);
 		}
 
 		// hsync_last = hsync;
@@ -334,19 +260,15 @@ void main()
 	// ay_write(0x09, 0x00);
 	// ay_set_ch(1, channel_pos[1]);
 
+	intro_loop();
+	clear_chars(0);
+	clear_sprites();
+
 	setup_area();
 	setup_meteors();
 	setup_trails();
+	setup_explosions();
 	setup_player();
-
-#ifdef DEBUG_PRINT
-	unsigned short debug_t1;
-	unsigned short debug_t2;
-#endif
-
-	// test_loop();
-
-	// coltest_loop();
 
 	game_loop();
 }

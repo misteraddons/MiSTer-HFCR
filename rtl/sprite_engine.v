@@ -39,7 +39,7 @@ module sprite_engine (
 	output reg 	[4:0]	spritecollisionram_addr,
 	output reg			spritecollisionram_data_in,
 	output reg	[13:0]	sprom_addr,
-	output reg 	[5:0]	palrom_addr,
+	output reg 	[7:0]	palrom_addr,
 	output 		[9:0]	spritelbram_rd_addr,
 	output reg	[9:0]	spritelbram_wr_addr,
 
@@ -87,24 +87,25 @@ reg					spritelb_slot_wr = 1'b1;
 reg					hsync_last;
 
 // Sprite state machine control
-reg			[3:0]	spr_state;
-reg			[3:0]	spr_state_next;
+reg			 [3:0]	spr_state;
+reg			 [3:0]	spr_state_next;
 // Sprite index counter and maximum sprite limit
-reg			[4:0]	spr_index;
+reg			 [4:0]	spr_index;
 localparam			spr_index_max = 5'd31;
 // Sprite maximum sizes
-localparam [9:0]	spr_size_x = 10'd15;
-localparam [15:0]	spr_size_y = 16'd15;
-localparam	[6:0]	spr_ram_item_width = 4;
+localparam	 [9:0]	spr_size_x = 10'd15;
+localparam	 [9:0]	spr_size_y = 10'd15;
+localparam	 [6:0]	spr_ram_item_width = 4;
 localparam			spr_line_max = 352;
-reg			[15:0]	spr_y;
-reg			 [9:0]	spr_x;
-reg					spr_enable;
-reg					spr_collide;
-reg			[5:0]	spr_image_index;
-reg			[15:0]	spr_active_y;
-reg			[4:0]	spr_pixel_index;
-reg			[10:0]	spr_rom_offset;
+reg			 [9:0]	spr_x;					// Sprite X position
+reg			 [9:0]	spr_y;					// Sprite Y position 
+reg					spr_enable;				// Sprite visibility enabled
+reg					spr_collide;			// Sprite collision enabled
+reg			 [1:0]	spr_palette_index;		// Sprite palette index
+reg			 [5:0]	spr_image_index;		// Sprite image index
+reg			 [9:0]	spr_active_y;			// Current active sprite engine Y
+reg			 [4:0]	spr_pixel_index;		// Current sprite X pixel
+reg			[10:0]	spr_rom_offset;			// Offset for current sprite Y line in image ROM
 
 //`define CASVAL_DEBUG
 `ifdef CASVAL_DEBUG
@@ -249,7 +250,7 @@ begin
 				spritelb_slot_rd <= spritelb_slot_rd + 1'b1;
 				spritelb_slot_wr <= spritelb_slot_wr + 1'b1;
 				// Calculate active Y line
-				spr_active_y <= ({6'b0,vcnt} + spr_size_y) + 16'd1;
+				spr_active_y <= (vcnt + spr_size_y) + 10'd1;
 `ifdef CASVAL_DEBUG
 					$display("CASVAL->LEAVING SE_IDLE: spr_timer_idle = %d, spr_linetime_max=%d", spr_timer_idle, spr_linetime_max);
 					spr_timer_line <= {SPR_TIMER_WIDTH{1'b0}};
@@ -318,8 +319,10 @@ begin
 			spr_enable <= spriteram_data_out[7];
 			// Read collide bit from sprite RAM
 			spr_collide <= spriteram_data_out[6];
-			// Read Y upper 4 bits from sprite RAM
-			spr_y[11:8] <= spriteram_data_out[3:0];
+			// Read palette index bits from sprite RAM
+			spr_palette_index <= spriteram_data_out[5:4];
+			// Read Y upper 2 bits from sprite RAM
+			spr_y[9:8] <= spriteram_data_out[1:0];
 			// Increment sprite RAM address
 			spriteram_addr <= spriteram_addr + 1'b1;
 
@@ -392,7 +395,7 @@ begin
 			// Read X lower 8 bits from sprite RAM
 			spr_x[7:0] <= spriteram_data_out;
 			// Set up offset for sprite ROM read
-			spr_rom_offset <= spr_active_y[10:0] - spr_y[10:0];
+			spr_rom_offset <= spr_active_y - spr_y;
 
 			spr_state <= SE_SETUP_WRITE;
 		end
@@ -436,7 +439,7 @@ begin
 				$display("CASVAL->SE_GET_PIXEL: y: %d, x: %d i: %d, sprom_addr < %x, palrom_addr < %x", spr_y, spr_pixel_index, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
 `endif
 				// Setup palette address to read pixel colour
-				palrom_addr <= {spriterom_data_out[4:0],1'b0};
+				palrom_addr <= {spr_palette_index, spriterom_data_out[4:0],1'b0};
 				// Increment sprite ROM address
 				sprom_addr <= sprom_addr + 1'b1;
 				// Disable line buffer write

@@ -181,7 +181,23 @@ wire spritecollisionram_cs = memory_map_addr == 8'b10110100;
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
 
+
+reg [15:0] cycle_timer;
+reg vblank_last;
+reg [15:0] vblank_start;
+
 always @(posedge clk_24) begin
+	vblank_last <= VGA_VB;
+	// cycle_timer <= cycle_timer + 16'd1;
+	// if(VGA_VB && !vblank_last)
+	// begin
+	// 	vblank_start <= cycle_timer;
+	// 	$display("VBL START %d", cycle_timer);
+	// end
+	// if(!VGA_VB && vblank_last)
+	// begin
+	// 	$display("VBL END %d - LEN %d", cycle_timer, cycle_timer-vblank_start);
+	// end
 	// if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 	// if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 	// if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -193,7 +209,8 @@ always @(posedge clk_24) begin
 	// if(paddle_cs) $display("paddle %b", paddle_data_out);
 	// if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
  	// $display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
-	//if(timer_cs) $display("timer %b", timer_data_out);
+	// if(timer_cs) $display("timer %d - %b", cycle_timer, timer_data_out);
+	// if(spriteram_cs) $display("spriteram %d - %d %b %b %b", cycle_timer, cpu_addr[7:2], cpu_addr, cpu_dout, ~cpu_wr_n);
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
@@ -202,6 +219,7 @@ always @(posedge clk_24) begin
 	//if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", cpu_addr, cpu_dout);
 	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 	//if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
+
 end
 
 // CPU data mux
@@ -279,7 +297,7 @@ charmap casval
 // Comet - sprite engine
 wire [13:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
-wire [5:0]	palrom_addr;
+wire [7:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
 wire [6:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
@@ -399,15 +417,15 @@ wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
 
+
 `ifdef DEBUG_SPRITE_COLLISION
 // Sprite collision debug
 localparam SD_WAIT = 0;
 localparam SD_CLEAR_BEGIN = 1;
 localparam SD_CLEAR = 2;
 reg [2:0] sd_state;
-reg vblank_last;
-always @(posedge clk_24) begin
-	vblank_last <= VGA_VB;
+always @(posedge clk_24) 
+begin
 	case(sd_state)
 		SD_WAIT:
 		begin
@@ -690,11 +708,11 @@ spram #(14,8) wkram
 	.q(wkram_data_out)
 );
 
-// Palette ROM - 0x10000 - 0x10040 (0x0040 / 64 bytes)
-dpram_w1r2 #(6,8, "palette.hex") palrom
+// Palette ROM - 0x10000 - 0x10040 (0x0100 / 256 bytes)
+dpram_w1r2 #(8,8, "palette.hex") palrom
 (
 	.clock_a(clk_24),
-	.address_a(dn_addr[5:0]),
+	.address_a(dn_addr[7:0]),
 	.wren_a(palrom_wr),
 	.data_a(dn_data),
 

@@ -24,10 +24,15 @@
 #define const_sprite_max 32
 unsigned char sprite_max = const_sprite_max;
 unsigned short spr_x[const_sprite_max];
-unsigned short spr_y[const_sprite_max];
+unsigned char spr_y_l[const_sprite_max];
+unsigned char spr_y_h[const_sprite_max];
 bool spr_on[const_sprite_max];
 bool spr_collide[const_sprite_max];
+unsigned char spr_palette_index[const_sprite_max];
 unsigned char spr_index[const_sprite_max];
+
+unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
+// bool spr_highbits_dirty[const_sprite_max];
 
 void update_sprites()
 {
@@ -36,15 +41,35 @@ void update_sprites()
 	{
 		if (spr_on[sprite])
 		{
-			spriteram[s++] = 1 << 7 | spr_collide[sprite] << 6 | spr_y[sprite] >> 8; // Enabled + Collide + Position Y (upper 4 bits)
-			spriteram[s++] = (unsigned char)spr_y[sprite];		  // Position Y (lower 8 bits)
-			spriteram[s++] = spr_index[sprite] << 2 | spr_x[sprite] >> 8; // Sprite Index (6 bits) + Position X (upper 2 bits)
-			spriteram[s++] = (unsigned char)spr_x[sprite];		  // Position X (lower 8 bits)
+			unsigned short x = spr_x[sprite];
+			//unsigned short y = spr_y[sprite];
+			// Set sprite properties
+			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];	// Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Position Y (upper 2 bits)
+			spriteram[s++] = spr_y_l[sprite];							// Position Y (lower 8 bits)
+			spriteram[s++] = spr_index[sprite] << 2 | x >> 8;			// Sprite Index (6 bits) + Position X (upper 2 bits)
+			spriteram[s++] = (unsigned char)x;							// Position X (lower 8 bits)
 		}
 		else
 		{
-			spriteram[s++] = 0; // Disabled
-			s += 3;
+			// Clear first sprite byte to disable
+			spriteram[s] = 0;
+			s += 4;
 		}
+	}
+}
+
+void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char collide)
+{
+	spr_on[sprite] = 1;
+	spr_collide[sprite] = collide;
+	spr_palette_index[sprite] = palette_index;
+	spr_highbits[sprite] = 1 << 7 | spr_collide[sprite] << 6 | spr_palette_index[sprite] << 4;
+}
+
+void clear_sprites()
+{
+	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+	{
+		spr_on[sprite] = 0;
 	}
 }

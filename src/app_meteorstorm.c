@@ -34,6 +34,7 @@
 
 // Player
 const unsigned char player_sprite = 11;
+unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
 const unsigned char player_trail_frequency = 14;
@@ -67,6 +68,7 @@ bool player_hit = 0;
 #define const_trail_max 11
 unsigned char trail_max = const_trail_max;
 unsigned char trail_sprite_first = 0;
+unsigned char trail_sprite_palette = 1;
 unsigned short trail_x[const_trail_max];
 unsigned short trail_y[const_trail_max];
 signed char trail_xs[const_trail_max];
@@ -81,6 +83,7 @@ unsigned char trail_y_offset;
 #define const_explosion_max 4
 unsigned char explosion_max = const_explosion_max;
 unsigned char explosion_sprite_first = 29;
+unsigned char explosion_sprite_palette = 1;
 unsigned char explosion_timer[const_explosion_max];
 #define explosion_sprite_index_first trail_sprite_index_last + 1
 #define explosion_sprite_index_last explosion_sprite_index_first + 3
@@ -90,14 +93,15 @@ const unsigned char explosion_lifespan = 4;
 #define const_meteor_max 16
 unsigned char meteor_max = const_meteor_max;
 unsigned char meteor_sprite_first = 13;
+unsigned char meteor_sprite_palette = 0;
 unsigned short meteor_x[const_meteor_max];
 unsigned short meteor_y[const_meteor_max];
 signed char meteor_xs[const_meteor_max];
 signed char meteor_ys[const_meteor_max];
-unsigned short meteor_timer[const_meteor_max];
+unsigned char meteor_timer[const_meteor_max];
 unsigned short meteor_y_max;
 #define meteor_sprite_index_first 0
-#define meteor_sprite_index_count 4
+#define meteor_sprite_index_count 6
 unsigned char meteor_active_max;
 unsigned char meteor_difficulty;
 unsigned short meteor_difficulty_timer;
@@ -133,10 +137,10 @@ void setup_player()
 
 	// Initialise player sprite
 	spr_index[player_sprite] = 1;
-	spr_on[player_sprite] = true;
-	spr_collide[player_sprite] = false;
+	enable_sprite(player_sprite, player_sprite_palette, false);
 	spr_x[player_sprite] = player_x / x_divisor;
-	spr_y[player_sprite] = player_y;
+	spr_y_l[player_sprite] = player_y;
+	spr_y_h[player_sprite] = 0;
 
 	// Trails
 	player_trail_timer = player_trail_frequency;
@@ -153,18 +157,20 @@ void update_meteordifficulty()
 {
 	meteor_difficulty_timer = 0;
 	meteor_difficulty++;
-	meteor_active_max = 3 + meteor_difficulty;
+	meteor_active_max = 5 + meteor_difficulty;
 	if (meteor_active_max > meteor_max)
 	{
 		meteor_active_max = meteor_max;
 	}
 }
 
-unsigned short get_meteortimer()
+unsigned char get_meteortimer()
 {
-	unsigned char always_wait = meteor_difficulty < 10 ? 50 - (meteor_difficulty * 5) : 0;
-	unsigned char random = (unsigned char)rand() + ((unsigned char)rand() / meteor_difficulty);
-	return always_wait + random;
+	// unsigned char always_wait = meteor_difficulty < 10 ? 50 - (meteor_difficulty * 5) : 0;
+	unsigned char always_wait = 0;
+	unsigned char max_wait = 120 / meteor_difficulty;
+	unsigned char random = rand_uchar(always_wait, max_wait);
+	return random;
 }
 
 void setup_meteors()
@@ -176,22 +182,35 @@ void setup_meteors()
 
 	for (unsigned char m = 0; m < meteor_max; m++)
 	{
-		meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
+		meteor_x[m] = rand_uchar(24, 296);
 		meteor_y[m] = 0;
 		meteor_xs[m] = rand_schar(-8, 8);
-		meteor_ys[m] = rand_uchar(4, 32);
+		meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 		meteor_timer[m] = get_meteortimer();
 
 		unsigned char sprite = meteor_sprite_first + m;
 		spr_index[sprite] = meteor_sprite_index_first + rand_uchar(0, meteor_sprite_index_count - 1);
+		enable_sprite(sprite, meteor_sprite_palette, true);
 		spr_on[sprite] = false;
-		spr_collide[sprite] = true;
 	}
 }
 void setup_trails()
 {
 	trail_y_max = 248 * y_divisor;
 	trail_y_offset = (8 * y_divisor);
+	for (int t = trail_sprite_first; t < trail_sprite_first + trail_max; t++)
+	{
+		enable_sprite(t, trail_sprite_palette, false);
+		spr_on[t] = false;
+	}
+}
+void setup_explosions()
+{
+	for (int e = explosion_sprite_first; e < explosion_sprite_first + explosion_max; e++)
+	{
+		enable_sprite(e, explosion_sprite_palette, false);
+		spr_on[e] = false;
+	}
 }
 
 void add_player_trail()
@@ -225,7 +244,9 @@ void add_explosion(unsigned char count)
 			spr_on[sprite] = true;
 			spr_index[sprite] = explosion_sprite_index_first;
 			spr_x[sprite] = (player_x + (signed short)rand_schar(-32, 64)) / x_divisor;
-			spr_y[sprite] = (player_y + (signed short)rand_schar(-32, 64)) / y_divisor;
+			unsigned short y = (player_y + (signed short)rand_schar(-32, 64)) / y_divisor;
+			spr_y_h[sprite] = y >> 8;
+			spr_y_l[sprite] = (unsigned char)y;
 			count--;
 			if (count == 0)
 			{
@@ -255,8 +276,7 @@ void handle_player()
 
 		if (player_invincible_timer == 0)
 		{
-			spr_on[player_sprite] = true;
-			spr_collide[player_sprite] = true;
+			enable_sprite(player_sprite, player_sprite_palette, true);
 		}
 		else
 		{
@@ -348,7 +368,10 @@ void handle_player()
 		}
 	}
 	spr_x[player_sprite] = player_x / x_divisor;
-	spr_y[player_sprite] = player_y / y_divisor;
+	
+	unsigned short y = player_y / y_divisor;
+	spr_y_h[player_sprite] = y >> 8;
+	spr_y_l[player_sprite] = (unsigned char)y;
 
 	// Trail
 	player_trail_timer--;
@@ -400,7 +423,10 @@ void handle_trails()
 			}
 			trail_x[t] += trail_xs[t];
 			spr_x[sprite] = trail_x[t] / x_divisor;
-			spr_y[sprite] = trail_y[t] / y_divisor;
+			
+			unsigned short y = trail_y[t] / y_divisor;
+			spr_y_h[sprite] = y >> 8;
+			spr_y_l[sprite] = (unsigned char)y;
 		}
 	}
 }
@@ -467,13 +493,11 @@ void handle_meteors()
 				{
 					meteor_y[m] += meteor_ys[m] + player_speed;
 					spr_x[sprite] = meteor_x[m] / x_divisor;
-					spr_y[sprite] = meteor_y[m] / y_divisor;
+					unsigned short y = meteor_y[m] / y_divisor;
+					spr_y_h[sprite] = y >> 8;
+					spr_y_l[sprite] = (unsigned char)y;
 				}
 			}
-			// }
-			// else
-			// {
-			// 	spr_on[sprite] = 0;
 		}
 	}
 
