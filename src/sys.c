@@ -88,6 +88,10 @@ unsigned char rand_uchar(unsigned char lower, unsigned char upper)
 {
 	return (rand() % (upper - lower + 1)) + lower;
 }
+unsigned short rand_ushort(unsigned short lower, unsigned short upper)
+{
+	return (rand() % (upper - lower + 1)) + lower;
+}
 
 signed char rand_schar(signed char lower, signed char upper)
 {

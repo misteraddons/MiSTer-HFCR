@@ -182,10 +182,10 @@ void setup_meteors()
 
 	for (unsigned char m = 0; m < meteor_max; m++)
 	{
-		meteor_x[m] = rand_uchar(24, 296);
-		meteor_y[m] = 0;
-		meteor_xs[m] = rand_schar(-8, 8);
-		meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
+		// meteor_x[m] = rand_ushort(24, 296);
+		// meteor_y[m] = 0;
+		// meteor_xs[m] = rand_schar(-8, 8);
+		// meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 		meteor_timer[m] = get_meteortimer();
 
 		unsigned char sprite = meteor_sprite_first + m;
@@ -368,7 +368,7 @@ void handle_player()
 		}
 	}
 	spr_x[player_sprite] = player_x / x_divisor;
-	
+
 	unsigned short y = player_y / y_divisor;
 	spr_y_h[player_sprite] = y >> 8;
 	spr_y_l[player_sprite] = (unsigned char)y;
@@ -423,7 +423,7 @@ void handle_trails()
 			}
 			trail_x[t] += trail_xs[t];
 			spr_x[sprite] = trail_x[t] / x_divisor;
-			
+
 			unsigned short y = trail_y[t] / y_divisor;
 			spr_y_h[sprite] = y >> 8;
 			spr_y_l[sprite] = (unsigned char)y;
@@ -468,8 +468,11 @@ void handle_meteors()
 				if (meteor_timer[m] == 0)
 				{
 					spr_on[sprite] = 1;
-					meteor_x[m] = ((unsigned char)rand() + x_divisor) * x_divisor;
+					spr_index[sprite] = rand_uchar(meteor_sprite_index_first, meteor_sprite_index_first + meteor_sprite_index_count - 1);
+					meteor_x[m] = rand_ushort(24, 296) * x_divisor;
 					meteor_y[m] = 0;
+					meteor_xs[m] = rand_schar(-(2+(meteor_difficulty/4)), 2+(meteor_difficulty/4));
+					meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 				}
 			}
 			else

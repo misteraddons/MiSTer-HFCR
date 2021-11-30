@@ -42,7 +42,6 @@ void update_sprites()
 		if (spr_on[sprite])
 		{
 			unsigned short x = spr_x[sprite];
-			//unsigned short y = spr_y[sprite];
 			// Set sprite properties
 			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];	// Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Position Y (upper 2 bits)
 			spriteram[s++] = spr_y_l[sprite];							// Position Y (lower 8 bits)
