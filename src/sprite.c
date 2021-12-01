@@ -32,7 +32,6 @@ unsigned char spr_palette_index[const_sprite_max];
 unsigned char spr_index[const_sprite_max];
 
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
-// bool spr_highbits_dirty[const_sprite_max];
 
 void update_sprites()
 {

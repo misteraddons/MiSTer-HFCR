@@ -48,29 +48,25 @@ void intro_loop()
 	starfield[0] = 2;
 	starfield[2] = 8;
 	starfield[4] = 32;
-	unsigned char s = 0;
+	unsigned char s = 16;
 	unsigned short logoX = 115;
 	unsigned char logoY = 100;
-
-	for (unsigned char t = 0; t < 1; t++)
+	unsigned char si = 0;
+	for (unsigned char y = 0; y < 2; y++)
 	{
-		unsigned char si = 0;
-		for (unsigned char y = 0; y < 2; y++)
+		for (unsigned char x = 0; x < 8; x++)
 		{
-			for (unsigned char x = 0; x < 8; x++)
-			{
-				enable_sprite(s, 2, 0);
-				spr_index[s] = 18 + si;
-				spr_x[s] = logoX + (x * 16);
-				unsigned short sy = logoY + (y * 16);
-				spr_y_h[s] = sy >> 8;
-				spr_y_l[s] = (unsigned char)sy;
-				si++;
-				s++;
-			}
+			enable_sprite(s, 2, 0);
+			spr_index[s] = 18 + si;
+			spr_x[s] = logoX + (x * 16);
+			unsigned short sy = logoY + (y * 16);
+			spr_y_h[s] = sy >> 8;
+			spr_y_l[s] = (unsigned char)sy;
+			si++;
+			s++;
 		}
-		logoY += 32;
 	}
+	logoY += 32;
 
 	starfield[0] = 8;
 	starfield[1] = 16;
@@ -260,6 +256,9 @@ void main()
 	// ay_write(0x09, 0x00);
 	// ay_set_ch(1, channel_pos[1]);
 
+	setup_area();
+	setup_player(160, 210);
+	setup_trails();
 	intro_loop();
 	clear_chars(0);
 	clear_sprites();
@@ -268,7 +267,7 @@ void main()
 	setup_meteors();
 	setup_trails();
 	setup_explosions();
-	setup_player();
+	setup_player(160, 216);
 
 	game_loop();
 }

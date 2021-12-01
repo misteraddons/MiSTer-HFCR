@@ -121,26 +121,26 @@ void setup_area()
 	x_h_max = (unsigned short)(x_max * x_divisor);
 }
 
-void setup_player()
+void setup_player(unsigned short x, unsigned short y)
 {
 	// Player bounds
 	player_y_min = 20 * x_divisor;
 	player_y_max = 216 * y_divisor;
 
 	// Player initial position
-	player_x = 160 * x_divisor;
-	player_y = 216 * y_divisor;
+	player_x = x * x_divisor;
+	player_y = y * y_divisor;
 	player_speed = player_speed_min;
 
 	player_invincible_timer = 0;
 	player_invincible_flash = 0;
 
 	// Initialise player sprite
-	spr_index[player_sprite] = 1;
+	spr_index[player_sprite] = player_sprite_index_default;
 	enable_sprite(player_sprite, player_sprite_palette, false);
 	spr_x[player_sprite] = player_x / x_divisor;
-	spr_y_l[player_sprite] = player_y;
-	spr_y_h[player_sprite] = 0;
+	spr_y_h[player_sprite] = y >> 8;
+	spr_y_l[player_sprite] = (unsigned char)y;
 
 	// Trails
 	player_trail_timer = player_trail_frequency;
@@ -182,16 +182,17 @@ void setup_meteors()
 
 	for (unsigned char m = 0; m < meteor_max; m++)
 	{
-		// meteor_x[m] = rand_ushort(24, 296);
-		// meteor_y[m] = 0;
-		// meteor_xs[m] = rand_schar(-8, 8);
-		// meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
+		meteor_x[m] = rand_ushort(24, 296) * x_divisor;
+		meteor_y[m] = 0;
 		meteor_timer[m] = get_meteortimer();
 
 		unsigned char sprite = meteor_sprite_first + m;
 		spr_index[sprite] = meteor_sprite_index_first + rand_uchar(0, meteor_sprite_index_count - 1);
 		enable_sprite(sprite, meteor_sprite_palette, true);
 		spr_on[sprite] = false;
+		spr_x[sprite] = meteor_x[m] / x_divisor;
+		spr_y_h[sprite] = 0;
+		spr_y_l[sprite] = 0;
 	}
 }
 void setup_trails()
@@ -263,7 +264,7 @@ void handle_player()
 		player_respawn_timer--;
 		if (player_respawn_timer == 0)
 		{
-			setup_player();
+			setup_player(160, 210);
 		}
 		return;
 	}
@@ -469,10 +470,6 @@ void handle_meteors()
 				{
 					spr_on[sprite] = 1;
 					spr_index[sprite] = rand_uchar(meteor_sprite_index_first, meteor_sprite_index_first + meteor_sprite_index_count - 1);
-					meteor_x[m] = rand_ushort(24, 296) * x_divisor;
-					meteor_y[m] = 0;
-					meteor_xs[m] = rand_schar(-(2+(meteor_difficulty/4)), 2+(meteor_difficulty/4));
-					meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 				}
 			}
 			else
@@ -488,7 +485,10 @@ void handle_meteors()
 				}
 				if (meteor_y[m] >= meteor_y_max)
 				{
+					meteor_x[m] = rand_ushort(24, 296) * x_divisor;
 					meteor_y[m] = 0;
+					meteor_xs[m] = rand_schar(-(2 + (meteor_difficulty / 4)), 2 + (meteor_difficulty / 4));
+					meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 					meteor_timer[m] = get_meteortimer();
 					spr_on[sprite] = 0;
 				}
