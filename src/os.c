@@ -57,7 +57,7 @@ void intro_loop()
 		for (unsigned char x = 0; x < 8; x++)
 		{
 			enable_sprite(s, 2, 0);
-			spr_index[s] = 18 + si;
+			spr_index[s] = 22 + si;
 			spr_x[s] = logoX + (x * 16);
 			unsigned short sy = logoY + (y * 16);
 			spr_y_h[s] = sy >> 8;
@@ -257,7 +257,7 @@ void main()
 	// ay_set_ch(1, channel_pos[1]);
 
 	setup_area();
-	setup_player(160, 210);
+	setup_player(176, 216);
 	setup_trails();
 	intro_loop();
 	clear_chars(0);
@@ -267,7 +267,7 @@ void main()
 	setup_meteors();
 	setup_trails();
 	setup_explosions();
-	setup_player(160, 216);
+	setup_player(176, 216);
 
 	game_loop();
 }

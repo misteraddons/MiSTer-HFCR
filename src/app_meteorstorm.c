@@ -37,13 +37,15 @@ const unsigned char player_sprite = 11;
 unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
-const unsigned char player_trail_frequency = 14;
+const unsigned char player_trail_frequency = 12;
 const unsigned char player_trail_speed = 3;
 const unsigned char player_trail_lifespan = 5;
 unsigned short player_x;
 unsigned short player_y;
 signed char player_xs = 0;
 signed char player_ys = 0;
+unsigned short player_x_min;
+unsigned short player_x_max;
 unsigned short player_y_min;
 unsigned short player_y_max;
 unsigned char player_speed_min = 8;
@@ -85,9 +87,13 @@ unsigned char explosion_max = const_explosion_max;
 unsigned char explosion_sprite_first = 29;
 unsigned char explosion_sprite_palette = 1;
 unsigned char explosion_timer[const_explosion_max];
+unsigned char explosion_frame[const_explosion_max];
+unsigned char explosion_type[const_explosion_max];
 #define explosion_sprite_index_first trail_sprite_index_last + 1
-#define explosion_sprite_index_last explosion_sprite_index_first + 3
+#define explosion_sprite_index_last explosion_sprite_index_first + 7
 const unsigned char explosion_lifespan = 4;
+#define explosion_frame_count 4
+#define explosion_type_count 2
 
 // Meteors
 #define const_meteor_max 16
@@ -124,13 +130,17 @@ void setup_area()
 void setup_player(unsigned short x, unsigned short y)
 {
 	// Player bounds
-	player_y_min = 20 * x_divisor;
+	player_x_min = 16 * x_divisor;
+	player_x_max = 320 * x_divisor;
+	player_y_min = 20 * y_divisor;
 	player_y_max = 216 * y_divisor;
 
 	// Player initial position
 	player_x = x * x_divisor;
 	player_y = y * y_divisor;
 	player_speed = player_speed_min;
+	player_xs = 0;
+	player_ys = 0;
 
 	player_invincible_timer = 0;
 	player_invincible_flash = 0;
@@ -184,6 +194,8 @@ void setup_meteors()
 	{
 		meteor_x[m] = rand_ushort(24, 296) * x_divisor;
 		meteor_y[m] = 0;
+		meteor_xs[m] = rand_schar(-(2 + (meteor_difficulty / 4)), 2 + (meteor_difficulty / 4));
+		meteor_ys[m] = rand_uchar(4, 16 + meteor_difficulty);
 		meteor_timer[m] = get_meteortimer();
 
 		unsigned char sprite = meteor_sprite_first + m;
@@ -234,16 +246,18 @@ void add_player_trail()
 	}
 }
 
-void add_explosion(unsigned char count)
+void add_explosion(unsigned type, unsigned char count)
 {
 	for (unsigned char e = 0; e < explosion_max; e++)
 	{
 		if (explosion_timer[e] == 0)
 		{
 			explosion_timer[e] = rand_uchar(2, 7);
+			explosion_frame[e] = 0;
+			explosion_type[e] = type;
 			unsigned char sprite = explosion_sprite_first + e;
 			spr_on[sprite] = true;
-			spr_index[sprite] = explosion_sprite_index_first;
+			spr_index[sprite] = explosion_sprite_index_first + (type * explosion_frame_count);
 			spr_x[sprite] = (player_x + (signed short)rand_schar(-32, 64)) / x_divisor;
 			unsigned short y = (player_y + (signed short)rand_schar(-32, 64)) / y_divisor;
 			spr_y_h[sprite] = y >> 8;
@@ -261,10 +275,14 @@ void handle_player()
 {
 	if (player_respawn_timer > 0)
 	{
+		if (player_speed > player_speed_min)
+		{
+			player_speed--;
+		}
 		player_respawn_timer--;
 		if (player_respawn_timer == 0)
 		{
-			setup_player(160, 210);
+			setup_player(176, 216);
 		}
 		return;
 	}
@@ -293,7 +311,8 @@ void handle_player()
 		if (player_hit)
 		{
 			player_hit = false;
-			add_explosion(4);
+			add_explosion(0, 1);
+			add_explosion(1, 3);
 			player_respawn_timer = player_respawn_timeout;
 			spr_on[player_sprite] = false;
 		}
@@ -351,6 +370,23 @@ void handle_player()
 																						 : player_sprite_index_default;
 
 	player_x += player_xs;
+	if (player_x < player_x_min)
+	{
+		player_x = player_x_min;
+		if (player_xs < 0)
+		{
+			player_xs = 0;
+		}
+	}
+	else if (player_x > player_x_max)
+	{
+		player_x = player_x_max;
+		if (player_xs > 0)
+		{
+			player_xs = 0;
+		}
+	}
+
 	player_y += player_ys;
 	if (player_y < player_y_min)
 	{
@@ -443,7 +479,8 @@ void handle_explosions()
 			{
 				unsigned char sprite = explosion_sprite_first + t;
 				spr_index[sprite]++;
-				if (spr_index[sprite] > explosion_sprite_index_last)
+				explosion_frame[t]++;
+				if (explosion_frame[t] == explosion_frame_count)
 				{
 					spr_on[sprite] = false;
 				}
