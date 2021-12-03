@@ -23,24 +23,19 @@
 
 #include "sys.h"
 
-extern char kbd_in[2];
-extern char kbd_lastclock;
 extern char kbd_shift_left;
 extern char kbd_shift_right;
 extern char kbd_scan;
 extern char kbd_pressed;
 extern char kbd_extend;
 extern char kbd_ascii;
-extern char kbd_clock_index;
 
-extern char mse_lastclock;
 extern bool mse_changed;
 extern signed char mse_x;
 extern signed char mse_y;
 extern signed char mse_w;
 extern char mse_button1;
 extern char mse_button2;
-extern char mse_clock_index;
 
 extern char kbd_buffer[128];
 extern char kbd_buffer_len;

@@ -23,7 +23,6 @@
 
 #include "sys.h"
 
-extern unsigned char sprite_max;
 extern unsigned short spr_x[];
 extern unsigned char spr_y_l[];
 extern unsigned char spr_y_h[];
@@ -31,8 +30,6 @@ extern bool spr_on[];
 extern bool spr_collide[];
 extern unsigned char spr_palette_index[];
 extern unsigned char spr_index[];
-
-extern unsigned char spr_highbits[]; // Temp cache of high bits excluding upper 2 Y bits
 
 extern void update_sprites();
 

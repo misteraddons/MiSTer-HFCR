@@ -21,14 +21,12 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include "sys.h"
-
-extern unsigned char channel_on[2];
-extern unsigned char channel_high[2];
-extern unsigned char channel_low[2];
-extern unsigned char channel_pos[2];
-extern signed char channel_dir[2];
-extern unsigned char channel_speed[2];
+extern unsigned char channel_on[];
+extern unsigned char channel_high[];
+extern unsigned char channel_low[];
+extern unsigned char channel_pos[];
+extern signed char channel_dir[];
+extern unsigned char channel_speed[];
 
 extern void ay_write(unsigned char addr, unsigned char data);
 

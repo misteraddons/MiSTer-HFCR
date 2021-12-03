@@ -19,18 +19,9 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include "sys.h"
-#include "ps2.h"
 #include "ui.h"
-#include "sprite.h"
 #include "audio.h"
-#include "music.h"
 
 #include "zorblaxx_app.h"
 

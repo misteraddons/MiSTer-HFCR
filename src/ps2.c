@@ -198,7 +198,6 @@ char kbd_scan = 0;
 char kbd_pressed;
 char kbd_extend;
 char kbd_ascii = 0;
-char kbd_clock_index = 1;
 
 char mse_lastclock = 0;
 bool mse_changed = 1;
@@ -207,7 +206,6 @@ signed char mse_y;
 signed char mse_w;
 char mse_button1;
 char mse_button2;
-char mse_clock_index = 3;
 
 char kbd_buffer[128];
 char kbd_buffer_len = 0;
@@ -230,7 +228,7 @@ void get_ascii()
 
 void handle_ps2()
 {
-	bool kbd_clock = CHECK_BIT(ps2_key[kbd_clock_index], 2);
+	bool kbd_clock = CHECK_BIT(ps2_key[1], 2);
 	if (kbd_clock != kbd_lastclock)
 	{
 		for (char k = 0; k < 2; k++)
@@ -276,7 +274,7 @@ void handle_ps2()
 	}
 	kbd_lastclock = kbd_clock;
 
-	bool mse_clock = CHECK_BIT(ps2_mouse[mse_clock_index], 0);
+	bool mse_clock = CHECK_BIT(ps2_mouse[3], 0);
 	if (mse_clock != mse_lastclock)
 	{
 		mse_changed = 1;

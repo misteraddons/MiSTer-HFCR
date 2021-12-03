@@ -21,10 +21,7 @@
 #ifndef MUSIC_H
 #define MUSIC_H
 
-#include "sys.h"
-
 extern unsigned char music_track_max;
-//#include "music_tracks.c" // Include auto generated track array
 
 extern void play_music(unsigned char track);
 
