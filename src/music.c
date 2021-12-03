@@ -19,12 +19,12 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#pragma once
-#include "sys.c"
+#include "sys.h"
+#include "music.h"
 
 #define const_music_track_max 32
 unsigned char music_track_max = const_music_track_max;
-#include "music_tracks.c" // Include auto generated track array
+#include "music_tracks.h" // Include auto generated track array
 
 void play_music(unsigned char track)
 {

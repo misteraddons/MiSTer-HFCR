@@ -19,7 +19,8 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#pragma once
+#include "sys.h"
+#include "sprite.h"
 
 #define const_sprite_max 32
 unsigned char sprite_max = const_sprite_max;

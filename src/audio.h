@@ -1,9 +1,9 @@
 /*============================================================================
-	Aznable OS - System interface functions
+	Aznable OS - Audio functions
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.2
-	Date: 2021-11-27
+	Version: 1.1
+	Date: 2021-07-15
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -18,41 +18,22 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
-
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+#ifndef AUDIO_H
+#define AUDIO_H
 
 #include "sys.h"
 
-// Character map
-const unsigned char chram_cols = 64;
-const unsigned char chram_rows = 32;
-unsigned short chram_size;
+extern unsigned char channel_on[2];
+extern unsigned char channel_high[2];
+extern unsigned char channel_low[2];
+extern unsigned char channel_pos[2];
+extern signed char channel_dir[2];
+extern unsigned char channel_speed[2];
 
-// Hardware inputs
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+extern void ay_write(unsigned char addr, unsigned char data);
 
-// Helper functions
-unsigned char rand_uchar(unsigned char lower, unsigned char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern void ay_set_ch(unsigned char c, unsigned char i);
 
-unsigned short rand_ushort(unsigned short lower, unsigned short upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern void init_audio();
 
-signed char rand_schar(signed char lower, signed char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+#endif

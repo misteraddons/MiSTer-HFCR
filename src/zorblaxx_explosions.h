@@ -1,8 +1,8 @@
 /*============================================================================
-	Aznable OS - System interface functions
+	Aznable OS - Zorblaxx demo application - Explosion routines
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.2
+	Version: 1.0
 	Date: 2021-11-27
 
 	This program is free software; you can redistribute it and/or modify it
@@ -19,40 +19,22 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+#ifndef ZORBLAXX_EXPLOSIONS_H
+#define ZORBLAXX_EXPLOSIONS_H
 
-#include "sys.h"
+// Explosions
+extern unsigned char explosion_max;
+extern unsigned char explosion_sprite_first;
+extern unsigned char explosion_sprite_palette;
+extern unsigned char explosion_timer[];
+extern unsigned char explosion_frame[];
+extern unsigned char explosion_type[];
+extern const unsigned char explosion_lifespan;
 
-// Character map
-const unsigned char chram_cols = 64;
-const unsigned char chram_rows = 32;
-unsigned short chram_size;
+extern void setup_explosions();
 
-// Hardware inputs
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+extern void add_explosion(unsigned type, unsigned char count);
 
-// Helper functions
-unsigned char rand_uchar(unsigned char lower, unsigned char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern void handle_explosions();
 
-unsigned short rand_ushort(unsigned short lower, unsigned short upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
-
-signed char rand_schar(signed char lower, signed char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+#endif

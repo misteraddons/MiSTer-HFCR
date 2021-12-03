@@ -19,21 +19,11 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#pragma once
-#include "sys.c"
+#include "sys.h"
+#include "ui.h"
 
 char asc_0 = 48;
 char asc_1 = 49;
-
-#define char_corner_round_tl 149
-#define char_corner_round_tr 137
-#define char_corner_round_bl 138
-#define char_corner_round_br 139
-#define char_line_h 131
-#define char_line_v 130
-#define char_t_up 177
-#define char_dot 27
-#define char_cross 155
 
 // Set all character RAM to specified character
 void clear_chars(char c)

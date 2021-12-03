@@ -1,7 +1,29 @@
-#pragma once
+/*============================================================================
+	Aznable OS - Audio functions
 
+	Author: Jim Gregory - https://github.com/JimmyStones/
+	Version: 1.1
+	Date: 2021-07-15
+
+	This program is free software; you can redistribute it and/or modify it
+	under the terms of the GNU General Public License as published by the Free
+	Software Foundation; either version 3 of the License, or (at your option)
+	any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this program. If not, see <http://www.gnu.org/licenses/>.
+===========================================================================*/
+
+#include "sys.h"
+#include "audio.h"
+
+// Frequencies related to MIDI note numbers
 unsigned short tp[] = {
-	// Frequencies related to MIDI note numbers
 	15289, 14431, 13621, 12856, 12135, 11454, 10811, 10204, // 0-o7
 	9631, 9091, 8581, 8099, 7645, 7215, 6810, 6428,			// 8-15
 	6067, 5727, 5405, 5102, 4816, 4545, 4290, 4050,			// 16-23
@@ -27,7 +49,6 @@ unsigned char channel_low[2];
 unsigned char channel_pos[2];
 signed char channel_dir[2];
 unsigned char channel_speed[2];
-unsigned char channel_tick[2];
 
 void ay_write(unsigned char addr, unsigned char data)
 {

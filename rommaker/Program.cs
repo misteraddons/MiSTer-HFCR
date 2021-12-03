@@ -10,17 +10,17 @@ namespace rommaker
 {
     class Program
     {
-        static string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
-        static string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
-        static string musicPath = @"C:\repos\Aznable\music\";
-        static string musicTrackListPath = @"C:\repos\Aznable\music\tracks.txt";
-        static string musicRomPath = @"C:\repos\Aznable\music\music.bin";
-        static string musicSourcePath = @"C:\repos\Aznable\src\music_tracks.c";
+        static readonly string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
+        static readonly string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
+        static readonly string musicPath = @"C:\repos\Aznable\music\";
+        static readonly string musicTrackListPath = @"C:\repos\Aznable\music\tracks.txt";
+        static readonly string musicRomPath = @"C:\repos\Aznable\music\music.bin";
+        static readonly string musicSourcePath = @"C:\repos\Aznable\src\music_tracks";
 
-        static int PaletteMax = 4;
-        static int PaletteIndexMax = 32;
+        static readonly int PaletteMax = 4;
+        static readonly int PaletteIndexMax = 32;
 
-        static List<List<Color>> Palettes = new List<List<Color>>();
+        static readonly List<List<Color>> Palettes = new();
 
 
         static void CreateMusicRom()
@@ -45,8 +45,22 @@ namespace rommaker
                 t++;
             }
 
-            string array = "unsigned long music_track_address[const_music_track_max] = {" + string.Join(",", trackPos) + "};";
-            File.WriteAllText(musicSourcePath, array);
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("#ifndef MUSIC_TRACKS_H");
+            builder.AppendLine("#define MUSIC_TRACKS_H");
+            builder.AppendLine("#define const_music_track_max 32");
+            builder.AppendLine("extern unsigned long music_track_address[const_music_track_max];");
+
+            builder.AppendLine("#endif");
+            File.WriteAllText(musicSourcePath+".h", builder.ToString());
+
+            builder = new StringBuilder();
+            builder.AppendLine("#ifndef MUSIC_TRACKS_C");
+            builder.AppendLine("#define MUSIC_TRACKS_C");
+            builder.AppendLine("#include \"music_tracks.h\"");
+            builder.AppendLine("unsigned long music_track_address[] = {" + string.Join(",", trackPos) + "};");
+            builder.AppendLine("#endif");
+            File.WriteAllText(musicSourcePath + ".c", builder.ToString());
 
             File.WriteAllBytes(musicRomPath, trackData.ToArray());
 

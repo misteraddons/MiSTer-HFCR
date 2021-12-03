@@ -1,9 +1,9 @@
 /*============================================================================
-	Aznable OS - System interface functions
+	Aznable OS - PS/2 interface functions
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.2
-	Date: 2021-11-27
+	Version: 1.1
+	Date: 2021-10-20
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -18,41 +18,36 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
-
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+#ifndef PS2_H
+#define PS2_H
 
 #include "sys.h"
 
-// Character map
-const unsigned char chram_cols = 64;
-const unsigned char chram_rows = 32;
-unsigned short chram_size;
+extern char kbd_in[2];
+extern char kbd_lastclock;
+extern char kbd_shift_left;
+extern char kbd_shift_right;
+extern char kbd_scan;
+extern char kbd_pressed;
+extern char kbd_extend;
+extern char kbd_ascii;
+extern char kbd_clock_index;
 
-// Hardware inputs
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+extern char mse_lastclock;
+extern bool mse_changed;
+extern signed char mse_x;
+extern signed char mse_y;
+extern signed char mse_w;
+extern char mse_button1;
+extern char mse_button2;
+extern char mse_clock_index;
 
-// Helper functions
-unsigned char rand_uchar(unsigned char lower, unsigned char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern char kbd_buffer[128];
+extern char kbd_buffer_len;
+extern bool kbd_down[256];
 
-unsigned short rand_ushort(unsigned short lower, unsigned short upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern void get_ascii();
 
-signed char rand_schar(signed char lower, signed char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+extern void handle_ps2();
+
+#endif
