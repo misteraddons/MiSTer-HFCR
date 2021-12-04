@@ -31,6 +31,7 @@
 #include "sprite.h"
 #include "ui.h"
 #include "music.h"
+#include "zorblaxx_app.h"
 #include "zorblaxx_player.h"
 #include "zorblaxx_trails.h"
 #include "zorblaxx_explosions.h"
@@ -82,7 +83,7 @@ void intro_loop()
 		for (unsigned char x = 0; x < 8; x++)
 		{
 			enable_sprite(title_sprite, 2, 0);
-			spr_index[title_sprite] = 22 + si;
+			spr_index[title_sprite] = title_sprite_index_first + si;
 			spr_x[title_sprite] = title_x + (x * 16);
 			signed short sy = -32 + (y * 16);
 			spr_y_h[title_sprite] = sy >> 8;
