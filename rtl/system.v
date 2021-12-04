@@ -25,6 +25,7 @@ module system (
 	input 			ce_6,
 	input 			ce_2,
 	input			reset,
+	input			pause,
 	input [16:0]	dn_addr,
 	input			dn_wr,
 	input [7:0]		dn_data,
@@ -120,7 +121,7 @@ tv80s #(
 ) T80x  (
 	.reset_n   ( !reset ),
 	.clk       ( clk_24 ),
-	.wait_n    ( 1'b1 ),
+	.wait_n    ( !pause ),
 	.int_n     ( 1'b1 ),
 	.nmi_n     ( 1'b1 ),
 	.busrq_n   ( 1'b1 ),
@@ -367,6 +368,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),
 	.en(ce_6),
+	.pause(pause),
 	.data_in(cpu_dout),
 	.write(starfield1_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on1),
@@ -387,6 +389,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),	
 	.en(ce_6),
+	.pause(pause),
 	.data_in(cpu_dout),
 	.write(starfield2_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on2),
@@ -407,6 +410,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),	
 	.en(ce_6),
+	.pause(pause),
 	.data_in(cpu_dout),
 	.write(starfield3_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on3),
@@ -415,8 +419,6 @@ starfield #(
 
 wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
-
-
 
 `ifdef DEBUG_SPRITE_COLLISION
 // Sprite collision debug

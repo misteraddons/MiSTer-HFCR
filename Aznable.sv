@@ -180,7 +180,6 @@ assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
-//assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;
 assign FB_FORCE_BLANK = 0;
 
 assign VGA_F1 = 0;
@@ -212,6 +211,10 @@ localparam CONF_STR = {
 	"-;",
 	"O6,No Rotate,Off,On;",
 	"O7,Rotate CCW,Off,On;",
+	"-;",	
+	"P1,Pause options;",
+	"P1OP,Pause when OSD is open,On,Off;",
+	"P1OQ,Dim video after 10s,On,Off;",
 	"-;",
 	"F0,BIN,Load BIOS;",
 	"F3,BIN,Load Sprite ROM;",
@@ -358,7 +361,7 @@ arcade_video #(320,24) arcade_video
 (
 	.*,
 	.clk_video(clk_sys),
-	.RGB_in({r,g,b}),
+	.RGB_in(rgb_out),
 	.HBlank(hblank),
 	.VBlank(vblank),
 	.HSync(hs),
@@ -388,11 +391,23 @@ wire rom_download = ioctl_download && (ioctl_index < 8'd2);
 wire reset = (RESET | status[0] | buttons[1] | rom_download);
 assign LED_USER = rom_download;
 
+wire m_pause   = joystick_0[8];
+// PAUSE SYSTEM
+wire				pause_cpu;
+wire [23:0]		rgb_out;
+pause #(8,8,8,24) pause (
+	.*,
+	.user_button(m_pause),
+	.pause_request(),
+	.options(~status[26:25])
+);
+
 system system(
 	.clk_24(clk_sys),
 	.ce_6(ce_pix),
 	.ce_2(ce_2),
 	.reset(reset),
+	.pause(pause_cpu),
 	.VGA_HS(hs_original),
 	.VGA_VS(vs_original),
 	.VGA_R(r),

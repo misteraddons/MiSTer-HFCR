@@ -36,6 +36,7 @@ module starfield #(
     ) (
     input  wire clk,
     input  wire en,
+    input  wire pause,
     input  wire rst,
     input  wire vblank,
     input  wire [7:0] data_in,
@@ -46,11 +47,13 @@ module starfield #(
 
     reg  [LEN-1:0] RST_CNT;  // counter starts at zero, so sub 1
     reg  [LEN-1:0] seed;
-    reg   [7:0]    speed;
+    reg   [7:0]    speed_set;
     reg   [4:0]    increment;    
     reg   [7:0]    timer;
     wire [LEN-1:0] sf_reg;
     reg  [LEN-1:0] sf_cnt;
+
+    wire [7:0]     speed_actual = pause ? 8'b0 : speed_set;
 
     always @(posedge clk) 
     begin
@@ -64,7 +67,7 @@ module starfield #(
         // CPU write
         if(write)
         begin
-            speed <= data_in[7:0];
+            speed_set <= data_in[7:0];
         end
 
         if (en)
@@ -73,15 +76,15 @@ module starfield #(
             /* verilator lint_off WIDTH */
             if (sf_cnt == RST_CNT) 
             begin
-                if(speed >= 8'd8)
+                if(speed_actual >= 8'd8)
                 begin
-                    // If speed is 8 or above, use the speed directly as an increment multiplier
-                    increment = speed[7:3];
+                    // If speed_actual is 8 or above, use the speed_actual directly as an increment multiplier
+                    increment = speed_actual[7:3];
                 end
                 else
                 begin
-                    // If speed is less than 8, increment a timer by that speed
-                    timer <= timer + speed;
+                    // If speed_actual is less than 8, increment a timer by that speed_actual
+                    timer <= timer + speed_actual;
                     if (timer == 0)
                     begin
                         // If timer is zero then increment is low
@@ -102,7 +105,9 @@ module starfield #(
             end
             /* verilator lint_on WIDTH */
         end
+
         if (rst) sf_cnt <= 0;
+
     end
 
     assign sf_on = &{sf_reg | MASK};
