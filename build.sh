@@ -10,9 +10,9 @@ cd verilator
 cd ..
 
 # Hexify roms
-od -An -t x1 -v src/os.bin > verilator/rom.hex
-od -An -t x1 -v src/os.bin > verilator/x64/Release/rom.hex
-od -An -t x1 -v src/os.bin > rtl/rom.hex
+od -An -t x1 -v src/bin/os.bin > verilator/rom.hex
+od -An -t x1 -v src/bin/os.bin > verilator/x64/Release/rom.hex
+od -An -t x1 -v src/bin/os.bin > rtl/rom.hex
 od -An -t x1 -v PETSCII.pf > verilator/font.hex
 od -An -t x1 -v PETSCII.pf > verilator/x64/Release/font.hex
 od -An -t x1 -v PETSCII.pf > rtl/font.hex

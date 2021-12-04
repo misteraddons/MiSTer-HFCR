@@ -43,8 +43,8 @@ verilator/x64/*
 verilator/roms/*
 verilator/*.hex
 rtl/*.hex
-src/*.asm
-src/*.bin
+src/asm/*.asm
+src/bin/*.bin
 src/*.lk
 src/*.lst
 src/*.map
