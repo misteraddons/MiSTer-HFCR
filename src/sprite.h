@@ -37,4 +37,6 @@ extern void enable_sprite(unsigned char sprite, unsigned char palette_index, uns
 
 extern void clear_sprites();
 
+extern void clear_sprites_range(unsigned char first, unsigned char last);
+
 #endif

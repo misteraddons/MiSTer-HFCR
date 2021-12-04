@@ -62,7 +62,7 @@ void add_player_trail()
 			trail_ys[t] = player_trail_speed;
 			trail_timer[t] = player_trail_lifespan;
 			unsigned char sprite = trail_sprite_first + t;
-			spr_on[sprite] = true;
+			enable_sprite(sprite, trail_sprite_palette, 0);
 			spr_index[sprite] = trail_sprite_index_first;
 			return;
 		}

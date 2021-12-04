@@ -8,7 +8,7 @@ all: os.bin
 
 os.ihx: os.c sys.rel ui.rel ps2.rel sprite.rel audio.rel music.rel music_tracks.rel ui.rel \
 			zorblaxx_app.rel zorblaxx_asteroids.rel zorblaxx_explosions.rel zorblaxx_player.rel zorblaxx_trails.rel
-	$(SDCC) -m$(CPU) --verbose --data-loc $(DATALOC) $^
+	$(SDCC) -m$(CPU) --data-loc $(DATALOC) $^
 
 %.rel: %.c
 	$(SDCC) -m$(CPU) --data-loc $(DATALOC) -c $<	

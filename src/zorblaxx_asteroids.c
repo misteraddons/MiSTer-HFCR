@@ -27,7 +27,7 @@
 
 #define const_meteor_max 16
 unsigned char meteor_max = const_meteor_max;
-unsigned char meteor_sprite_first = 13;
+unsigned char meteor_sprite_first = 12;
 unsigned char meteor_sprite_palette = 0;
 unsigned short meteor_x[const_meteor_max];
 unsigned short meteor_y[const_meteor_max];

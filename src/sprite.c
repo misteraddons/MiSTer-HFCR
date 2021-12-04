@@ -72,3 +72,10 @@ void clear_sprites()
 		spr_on[sprite] = 0;
 	}
 }
+void clear_sprites_range(unsigned char first, unsigned char last)
+{
+	for (unsigned char sprite = first; sprite <= last; sprite++)
+	{
+		spr_on[sprite] = 0;
+	}
+}

@@ -21,12 +21,11 @@
 
 /*
 	Sprite indexes:
-	0-11	- Trails
-	12		- Player
-	13-15   - Explosions
-	16-31	- Meteors
+	0-10	- Trails
+	11		- Player
+	12-27   - Asteroids
+	28-31	- Explosions
 */
-
 
 #include "sys.h"
 #include "sprite.h"
@@ -46,6 +45,10 @@ unsigned short x_h_min;
 unsigned short x_h_max;
 unsigned char scroll_speed;
 
+// Game defaults
+unsigned short player_spawn_x = 166;
+unsigned short player_spawn_y = 200;
+
 void setup_area()
 {
 	x_h_min = (unsigned short)(x_min * x_divisor);
@@ -58,43 +61,46 @@ unsigned short debug_t2;
 
 void intro_loop()
 {
-
 	clear_bgcolor(0);
 
-	starfield[0] = 2;
-	starfield[2] = 8;
-	starfield[4] = 32;
-	unsigned char s = 16;
-	unsigned short logoX = 115;
-	unsigned char logoY = 100;
+	// Start intro music loop
+	play_music(0);
+
+	// Setup starfield layer speeds
+	starfield[0] = 8;
+	starfield[1] = 16;
+	starfield[2] = 32;
+
+	// Setup title sprites
+	unsigned char title_sprite = 16;
+	unsigned short title_x = 115;
+	signed short title_y = -32 * y_divisor;
+	signed short title_target_y = 100 * y_divisor;
 	unsigned char si = 0;
 	for (unsigned char y = 0; y < 2; y++)
 	{
 		for (unsigned char x = 0; x < 8; x++)
 		{
-			enable_sprite(s, 2, 0);
-			spr_index[s] = 22 + si;
-			spr_x[s] = logoX + (x * 16);
-			unsigned short sy = logoY + (y * 16);
-			spr_y_h[s] = sy >> 8;
-			spr_y_l[s] = (unsigned char)sy;
+			enable_sprite(title_sprite, 2, 0);
+			spr_index[title_sprite] = 22 + si;
+			spr_x[title_sprite] = title_x + (x * 16);
+			signed short sy = -32 + (y * 16);
+			spr_y_h[title_sprite] = sy >> 8;
+			spr_y_l[title_sprite] = (unsigned char)sy;
 			si++;
-			s++;
+			title_sprite++;
 		}
 	}
-	logoY += 32;
 
-	starfield[0] = 8;
-	starfield[1] = 16;
-	starfield[2] = 32;
+	unsigned short player_y_target = player_spawn_y * y_divisor;
 
-	write_string("Press A to start", 0xFF, 12, 20);
+	unsigned char show_instruction = 0;
+	unsigned char title_ready = 0;
+	unsigned char player_ready = 0;
+
 
 	while (1)
 	{
-		// hsync = input0 & 0x80;
-		// vsync = input0 & 0x40;
-		// hblank = input0 & 0x20;
 		vblank = input0 & 0x10;
 
 		if (VBLANK_RISING)
@@ -104,20 +110,82 @@ void intro_loop()
 			{
 				return;
 			}
-#ifdef DEBUG_PRINT
-			unsigned char debug_y = 16;
-			debug_t1 = GET_TIMER;
-#endif
 			update_sprites();
-#ifdef DEBUG_PRINT
-			debug_t2 = GET_TIMER;
-			write_stringf_ushort("spr: %4d us", 0b01011011, 0, debug_y++, debug_t2 - debug_t1);
-#endif
 		}
 
-		// hsync_last = hsync;
-		// vsync_last = vsync;
-		// hblank_last = hblank;
+		if (VBLANK_FALLING)
+		{
+			// Move title into position
+			if (title_y < title_target_y)
+			{
+				signed short diff = (title_target_y - title_y) / 6;
+				if (diff > 64)
+				{
+					diff = 64;
+				}
+				else if (diff == 0)
+				{
+					diff = 2;
+				}
+				title_y += diff;
+				title_sprite = 16;
+				for (unsigned char y = 0; y < 2; y++)
+				{
+					unsigned short sy = (title_y / y_divisor) + (y * 16);
+					for (unsigned char x = 0; x < 8; x++)
+					{
+						spr_y_h[title_sprite] = sy >> 8;
+						spr_y_l[title_sprite] = (unsigned char)sy;
+						title_sprite++;
+					}
+				}
+			}
+			else
+			{
+				title_ready = 1;
+			}
+
+			// Move player into position
+			if (player_y > player_y_target)
+			{
+				unsigned short diff = (-(player_y_target - player_y)) / 6;
+				if (diff > 28)
+				{
+					diff = 28;
+				}
+				else if (diff == 0)
+				{
+					diff = 2;
+				}
+				player_y -= diff;
+				unsigned short y = player_y / y_divisor;
+				spr_y_h[player_sprite] = y >> 8;
+				spr_y_l[player_sprite] = (unsigned char)y;
+			}
+			else
+			{
+				player_ready = 1;
+			}
+
+			if (show_instruction == 0 && player_ready == 1 && title_ready == 1)
+			{
+				write_string("Press A to start", 0xFF, 12, 17);
+				show_instruction = 1;
+			}
+
+			// Trail
+			player_trail_timer--;
+			if (player_trail_timer <= 0)
+			{
+				player_trail_timer = player_trail_frequency - ((player_speed * 10) / 50);
+				if (player_trail_timer <= 0)
+				{
+					player_trail_timer = 1;
+				}
+				add_player_trail();
+			}
+			handle_trails();
+		}
 		vblank_last = vblank;
 	}
 }
@@ -129,11 +197,9 @@ unsigned char sf_speed1 = 4;
 
 void game_loop()
 {
-	clear_sprites();
-	clear_bgcolor(0);
-	clear_chars(0);
 
-	play_music(0);
+	// Start game music loop
+	play_music(1);
 
 	while (1)
 	{
@@ -243,17 +309,18 @@ void game_loop()
 void app_zorblaxx()
 {
 	setup_area();
-	setup_player(176, 216);
+	setup_player(player_spawn_x, 256);
 	setup_trails();
-	intro_loop();
-	clear_chars(0);
-	clear_sprites();
 
-	setup_area();
+	intro_loop();
+
+	// Clear character map and title sprites
+	clear_chars(0);
+	clear_sprites_range(16, 32);
+
+	setup_player(player_spawn_x, player_spawn_y);
 	setup_meteors();
-	setup_trails();
 	setup_explosions();
-	setup_player(176, 216);
 
 	game_loop();
 }

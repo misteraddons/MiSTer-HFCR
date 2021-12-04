@@ -29,10 +29,10 @@
 
 // Player
 const unsigned char player_sprite = 11;
-unsigned char player_sprite_palette = 1;
+const unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
-const unsigned char player_trail_frequency = 12;
+const unsigned char player_trail_frequency = 10;
 const unsigned char player_trail_speed = 3;
 const unsigned char player_trail_lifespan = 5;
 unsigned short player_x;
@@ -43,18 +43,17 @@ unsigned short player_x_min;
 unsigned short player_x_max;
 unsigned short player_y_min;
 unsigned short player_y_max;
-unsigned char player_speed_min = 8;
-unsigned char player_speed_max = 32;
+const unsigned char player_speed_min = 8;
+const unsigned char player_speed_max = 32;
 unsigned char player_speed;
 unsigned long player_score = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_trail_timer = 1;
 unsigned char player_invincible_timer = 0;
 unsigned char player_invincible_flash = 0;
-unsigned char player_invincible_timeout = 120;
+const unsigned char player_invincible_timeout = 120;
 unsigned char player_respawn_timer = 0;
-unsigned char player_respawn_timeout = 120;
-unsigned char player_explosion_timeout = 0;
+const unsigned char player_respawn_timeout = 120;
 unsigned char player_hit = 0;
 
 // Player
@@ -80,6 +79,7 @@ void setup_player(unsigned short x, unsigned short y)
 	spr_index[player_sprite] = player_sprite_index_default;
 	enable_sprite(player_sprite, player_sprite_palette, false);
 	spr_x[player_sprite] = player_x / x_divisor;
+
 	spr_y_h[player_sprite] = y >> 8;
 	spr_y_l[player_sprite] = (unsigned char)y;
 
@@ -105,7 +105,7 @@ void handle_player()
 		player_respawn_timer--;
 		if (player_respawn_timer == 0)
 		{
-			setup_player(176, 216);
+			setup_player(player_spawn_x, player_spawn_y);
 		}
 		return;
 	}

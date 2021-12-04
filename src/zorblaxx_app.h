@@ -31,7 +31,7 @@ extern unsigned short x_h_min;
 extern unsigned short x_h_max;
 extern unsigned char scroll_speed;
 
-// Sprite indexes
+// Sprite ROM image indexes
 #define meteor_sprite_index_first 0
 #define meteor_sprite_index_count 6
 #define player_sprite_index_default meteor_sprite_index_count
@@ -41,6 +41,10 @@ extern unsigned char scroll_speed;
 #define trail_sprite_index_last trail_sprite_index_first + 3 
 #define explosion_sprite_index_first trail_sprite_index_last + 1
 #define explosion_sprite_index_last explosion_sprite_index_first + 7
+
+// Game defaults
+extern unsigned short player_spawn_x;
+extern unsigned short player_spawn_y;
 
 extern void setup_area();
 

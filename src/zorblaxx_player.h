@@ -23,7 +23,7 @@
 
 // Player
 extern const unsigned char player_sprite;
-extern unsigned char player_sprite_palette;
+extern const unsigned char player_sprite_palette;
 extern const signed char player_max_speed;
 extern const unsigned char player_accel;
 extern const unsigned char player_trail_frequency;
@@ -37,18 +37,17 @@ extern unsigned short player_x_min;
 extern unsigned short player_x_max;
 extern unsigned short player_y_min;
 extern unsigned short player_y_max;
-extern unsigned char player_speed_min;
-extern unsigned char player_speed_max;
+extern const unsigned char player_speed_min;
+extern const unsigned char player_speed_max;
 extern unsigned char player_speed;
 extern unsigned long player_score;
 extern unsigned char player_score_timer;
 extern unsigned char player_trail_timer;
 extern unsigned char player_invincible_timer;
 extern unsigned char player_invincible_flash;
-extern unsigned char player_invincible_timeout;
+extern const unsigned char player_invincible_timeout;
 extern unsigned char player_respawn_timer;
-extern unsigned char player_respawn_timeout;
-extern unsigned char player_explosion_timeout;
+extern const unsigned char player_respawn_timeout;
 extern unsigned char player_hit;
 
 extern void setup_player(unsigned short x, unsigned short y);
