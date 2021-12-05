@@ -50,10 +50,22 @@ unsigned char scroll_speed;
 unsigned short player_spawn_x = 166;
 unsigned short player_spawn_y = 200;
 
+// Game states
+typedef enum
+{
+	enter_field,
+	in_field,
+	field_ending,
+	field_complete,
+	in_warp,
+	approaching_field
+} game_state_enum;
+
+game_state_enum game_state = 0;
+unsigned short game_state_timer = 0;
+
 // Level progression
 unsigned char level_number = 0;
-unsigned char level_state = 0; // 0 = start, 1 = in field, 2 = field ended
-unsigned short level_state_timer = 0;
 unsigned char level_time = 0;
 unsigned char level_time_timer = 0;
 unsigned char level_playercontrol = 0;
@@ -62,9 +74,11 @@ unsigned char level_progress_timer = 0;
 unsigned short level_progress_max;
 const unsigned short level_progress_base = 30000;
 const unsigned short level_progress_per_level = 2500;
-const unsigned short level_state_warp_timeout_first = 60;
-const unsigned short level_state_warp_timeout = 300;
-const unsigned short level_state_danger_timeout = 120;
+const unsigned short game_state_warp_timeout_first = 60;
+const unsigned short game_state_warp_timeout = 300;
+const unsigned short game_state_danger_timeout = 120;
+
+unsigned long high_score = 5000;
 unsigned long player_score = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_score_timer_frequency = 100;
@@ -107,6 +121,19 @@ void intro_loop()
 			title_sprite++;
 		}
 	}
+
+	// unsigned char smax = 32;
+	// unsigned char x = 16;
+	// signed short sy = 32;
+	// for (unsigned char s = 0; s < smax; s++)
+	// {
+	// 	enable_sprite(s, 0, false);
+	// 	spr_index[s] = asteroids_sprite_index_first;
+	// 	spr_x[s] = x;
+	// 	x += 8;
+	// 	spr_y_h[s] = sy >> 8;
+	// 	spr_y_l[s] = (unsigned char)sy;
+	// }
 
 	unsigned char show_instruction = 0;
 	unsigned char title_ready = 0;
@@ -190,14 +217,14 @@ unsigned char sf_speed1 = 4;
 
 void game_loop()
 {
-	
+
 	// Reset progress
 	level_number = 0;
 	level_progress = 0;
 	level_playercontrol = 0;
 
-	level_state = 4; // Start in warp mode
-	level_state_timer = level_state_warp_timeout_first;
+	game_state = 4; // Start in warp mode
+	game_state_timer = game_state_warp_timeout_first;
 
 	// Setup player
 	setup_player(player_spawn_x, 260);
@@ -247,7 +274,7 @@ void game_loop()
 			handle_player(level_playercontrol);
 			handle_trails();
 			handle_explosions();
-			handle_asteroids(level_state == 1);
+			handle_asteroids(game_state == 1);
 
 			level_time_timer++;
 			if (level_time_timer >= 60)
@@ -257,14 +284,13 @@ void game_loop()
 			}
 
 			// Game state machine
-			switch (level_state)
+			switch (game_state)
 			{
-			case 0:
-				// Level beginning
+			case enter_field: // Player is entering a new field
+				game_state = in_field;
 				level_progress = 0;
 				level_progress_timer = 0;
 				level_number++;
-				level_state = 1;
 				level_time = 0;
 				level_time_timer = 0;
 				level_playercontrol = 1;
@@ -284,7 +310,7 @@ void game_loop()
 
 				write_stringf("Field %d", 0xFF, 15, 0, level_number);
 				break;
-			case 1:
+			case in_field:
 				// Level progress
 				level_progress += player_speed;
 				level_progress_timer++;
@@ -297,7 +323,7 @@ void game_loop()
 				if (level_progress >= level_progress_max)
 				{
 					write_string("100%", 0xFF, 18, 29);
-					level_state = 2;
+					game_state = field_ending;
 				}
 
 				// Player score
@@ -309,7 +335,7 @@ void game_loop()
 				}
 
 				break;
-			case 2:
+			case field_ending:
 				// Level ended - wait for all asteroids to clear
 
 				// Keep scoring until asteroids are clear
@@ -321,9 +347,9 @@ void game_loop()
 				}
 				if (asteroids_active == 0)
 				{
-					level_state = 3;
-					level_state_timer = 0;
-					level_state_timer = level_state_warp_timeout;
+					game_state = field_complete;
+					game_state_timer = 0;
+					game_state_timer = game_state_warp_timeout;
 
 					// Start score music loop
 					play_music(2);
@@ -352,10 +378,10 @@ void game_loop()
 					{
 						write_string("No bonus :(", 0b01011011, 12, 17);
 					}
-					write_stringf_ushort("Score: %6d", 0xFF, 11, 19, player_score);
+					write_stringf_ulong("Score: %6d", 0xFF, 11, 19, player_score);
 				}
 				break;
-			case 3: // Display field completed screen while bringing ship up to speed
+			case field_complete: // Display field completed screen while bringing ship up to speed
 				move_player_to_target();
 				if (player_speed < player_speed_warp)
 				{
@@ -363,41 +389,41 @@ void game_loop()
 				}
 				else
 				{
-					level_state = 4;
+					game_state = in_warp;
 				}
 				break;
-			case 4: // Do a bit of warp speed
+			case in_warp: // Do a bit of warp speed
 				move_player_to_target();
-				level_state_timer--;
+				game_state_timer--;
 
-				write_stringf_ushort("%6d", 0xFF, 0, 2, level_state_timer);
-				if (level_state_timer == 0)
+				write_stringf_ushort("%6d", 0xFF, 0, 2, game_state_timer);
+				if (game_state_timer == 0)
 				{
 					clear_chars(0);
 					write_string("DANGER!", 0b00000011, 16, 14);
 					write_string("- Entering asteroid field -", 0xFF, 07, 16);
-					level_state = 5;
-					level_state_timer = level_state_danger_timeout;
+					game_state = approaching_field;
+					game_state_timer = game_state_danger_timeout;
 				}
 				break;
-			case 5: // Slow down again ready for start
+			case approaching_field: // Slow down again ready for start
 				move_player_to_target();
 				if (player_speed > player_speed_min)
 				{
 					player_speed--;
 				}
 
-				level_state_timer--;
-				if (level_state_timer == 0)
+				game_state_timer--;
+				if (game_state_timer == 0)
 				{
 					clear_chars(0);
-					level_state = 0;
+					game_state = enter_field;
 				}
 				break;
 			}
 
 			// Draw player score last
-			write_stringf_ushort("%10d", 0xFF, 30, 0, player_score);
+			write_stringf_ulong("%10d", 0xFF, 30, 0, player_score);
 		}
 
 		vblank_last = vblank;

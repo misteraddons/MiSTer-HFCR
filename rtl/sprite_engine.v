@@ -272,13 +272,9 @@ begin
 
 		SE_RESET:
 		begin
-`ifdef CASVAL_DEBUG
-				$display("CASVAL->RESET");	
-`endif
-
 			// Reset sprite index
 			spr_index <= 5'd0;
-			
+
 			// Setup line buffer RAM for clear operation
 			spritelbram_wr_addr <= {spritelb_slot_wr, 9'b0};
 			spritelbram_wr <= 1'b1;
@@ -429,7 +425,7 @@ begin
 		 		end
 		 		else
 		 		begin
-		 			spr_index <= spr_index + 1'd1;
+		 			spr_index <= spr_index + 5'd1;
 		 			spr_state <= SE_SETUP_READ_Y;
 		 		end
 		 	end
