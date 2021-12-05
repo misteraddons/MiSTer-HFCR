@@ -55,11 +55,13 @@ void add_player_trail()
 	{
 		if (trail_timer[t] == 0)
 		{
-			trail_x[t] = player_x;
-			trail_y[t] = player_y + (trail_y_offset - player_trail_speed);
 			unsigned char spread = 3 + (player_speed / 8);
 			trail_xs[t] = rand_schar(-spread, spread);
 			trail_ys[t] = player_trail_speed;
+
+			trail_x[t] = player_x;
+			trail_y[t] = (player_y + trail_y_offset) - (player_trail_speed + player_speed);
+
 			trail_timer[t] = player_trail_lifespan;
 			unsigned char sprite = trail_sprite_first + t;
 			enable_sprite(sprite, trail_sprite_palette, 0);

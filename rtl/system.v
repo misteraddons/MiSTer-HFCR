@@ -514,7 +514,6 @@ music #(
 // wire [7:0] audio_out_a;
 // wire [7:0] audio_out_b;
 // wire 	   snd_cpu_cs = (snd_cs && ~cpu_wr_n);
-
 // jt49 jt49 (
 // 	.clk(clk_24),
 // 	.clk_en(ce_2),
@@ -540,7 +539,6 @@ music #(
 // assign AUDIO_R = AUDIO_L;
 // assign AUDIO_L =  { 3'b0, audio_out_a[7:0],5'd0};
 // assign AUDIO_R = { 3'b0, audio_out_b[7:0],5'd0};
-
 
 // MEMORY
 // ------

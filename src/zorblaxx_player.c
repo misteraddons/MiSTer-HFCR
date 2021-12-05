@@ -45,16 +45,99 @@ unsigned short player_y_min;
 unsigned short player_y_max;
 const unsigned char player_speed_min = 8;
 const unsigned char player_speed_max = 32;
+const unsigned char player_speed_warp = 64;
 unsigned char player_speed;
-unsigned long player_score = 0;
-unsigned char player_score_timer = 0;
-unsigned char player_trail_timer = 1;
+signed char player_trail_timer = 1;
 unsigned char player_invincible_timer = 0;
 unsigned char player_invincible_flash = 0;
 const unsigned char player_invincible_timeout = 120;
 unsigned char player_respawn_timer = 0;
 const unsigned char player_respawn_timeout = 120;
 unsigned char player_hit = 0;
+
+unsigned char player_ready;
+unsigned char player_ready_x;
+unsigned char player_ready_y;
+unsigned short player_x_target;
+unsigned short player_y_target;
+signed short player_x_diff;
+signed short player_y_diff;
+unsigned char player_target_divider = 6;
+unsigned char player_target_maxspeed = 28;
+
+void set_player_target(unsigned short x, unsigned short y, unsigned char divider, unsigned char maxspeed)
+{
+	player_ready = 0;
+	player_ready_x = 0;
+	player_ready_y = 0;
+	player_x_target = x;
+	player_y_target = y;
+	player_target_divider = divider;
+	player_target_maxspeed = maxspeed;
+}
+
+void move_player_to_target()
+{
+	if (player_y != player_y_target)
+	{
+		player_y_diff = (((signed short)player_y_target - (signed short)player_y)) / (signed char)player_target_divider;
+		if (player_y_diff == 0)
+		{
+			player_y = player_y_target;
+		}
+		else
+		{
+			if (player_y_diff > player_target_maxspeed)
+			{
+				player_y_diff = player_target_maxspeed;
+			}
+			else
+			{
+				if (player_y_diff < -player_target_maxspeed)
+				{
+					player_y_diff = -player_target_maxspeed;
+				}
+			}
+			player_y += player_y_diff;
+		}
+		unsigned short y = player_y / y_divisor;
+		spr_y_h[player_sprite] = y >> 8;
+		spr_y_l[player_sprite] = (unsigned char)y;
+	}
+	else
+	{
+		player_ready_y = 1;
+	}
+	if (player_x != player_x_target)
+	{
+		player_x_diff = (((signed short)player_x_target - (signed short)player_x)) / (signed short)player_target_divider;
+		if (player_x_diff == 0)
+		{
+			player_x = player_x_target;
+		}
+		else
+		{
+			if (player_x_diff > player_target_maxspeed)
+			{
+				player_x_diff = player_target_maxspeed;
+			}
+			else
+			{
+				if (player_x_diff < -player_target_maxspeed)
+				{
+					player_x_diff = -player_target_maxspeed;
+				}
+			}
+			player_x += player_x_diff;
+		}
+		spr_x[player_sprite] = player_x / x_divisor;
+	}
+	else
+	{
+		player_ready_x = 1;
+	}
+	player_ready = player_ready_x && player_ready_y;
+}
 
 // Player
 void setup_player(unsigned short x, unsigned short y)
@@ -77,7 +160,7 @@ void setup_player(unsigned short x, unsigned short y)
 
 	// Initialise player sprite
 	spr_index[player_sprite] = player_sprite_index_default;
-	enable_sprite(player_sprite, player_sprite_palette, false);
+	enable_sprite(player_sprite, player_sprite_palette, true);
 	spr_x[player_sprite] = player_x / x_divisor;
 
 	spr_y_h[player_sprite] = y >> 8;
@@ -86,15 +169,9 @@ void setup_player(unsigned short x, unsigned short y)
 	// Trails
 	player_trail_timer = player_trail_frequency;
 
-	// Score
-	player_score = 0;
-	player_score_timer = 0;
-
-	// Trigger invincibility
-	player_invincible_timer = player_invincible_timeout;
 }
 
-void handle_player()
+void handle_player(bool allow_control)
 {
 	if (player_respawn_timer > 0)
 	{
@@ -106,6 +183,9 @@ void handle_player()
 		if (player_respawn_timer == 0)
 		{
 			setup_player(player_spawn_x, player_spawn_y);
+			// Trigger invincibility
+			enable_sprite(player_sprite, player_sprite_palette, false);
+			player_invincible_timer = player_invincible_timeout;
 		}
 		return;
 	}
@@ -157,35 +237,38 @@ void handle_player()
 	{
 		player_ys++;
 	}
-	if (CHECK_BIT(joystick[0], 0) && player_xs < player_max_speed)
+	if (allow_control)
 	{
-		player_xs += player_accel;
-	}
-	if (CHECK_BIT(joystick[0], 1) && player_xs > -player_max_speed)
-	{
-		player_xs -= player_accel;
-	}
-	if (CHECK_BIT(joystick[0], 2) && player_ys < player_max_speed)
-	{
-		player_ys += player_accel;
-	}
-	if (CHECK_BIT(joystick[0], 3) && player_ys > -player_max_speed)
-	{
-		player_ys -= player_accel;
-	}
-
-	if (CHECK_BIT(joystick[0], 4))
-	{
-		if (player_speed < player_speed_max)
+		if (CHECK_BIT(joystick[0], 0) && player_xs < player_max_speed)
 		{
-			player_speed++;
+			player_xs += player_accel;
 		}
-	}
-	else
-	{
-		if (player_speed > player_speed_min)
+		if (CHECK_BIT(joystick[0], 1) && player_xs > -player_max_speed)
 		{
-			player_speed--;
+			player_xs -= player_accel;
+		}
+		if (CHECK_BIT(joystick[0], 2) && player_ys < player_max_speed)
+		{
+			player_ys += player_accel;
+		}
+		if (CHECK_BIT(joystick[0], 3) && player_ys > -player_max_speed)
+		{
+			player_ys -= player_accel;
+		}
+
+		if (CHECK_BIT(joystick[0], 4))
+		{
+			if (player_speed < player_speed_max)
+			{
+				player_speed++;
+			}
+		}
+		else
+		{
+			if (player_speed > player_speed_min)
+			{
+				player_speed--;
+			}
 		}
 	}
 
@@ -193,38 +276,42 @@ void handle_player()
 																						 : player_sprite_index_default;
 
 	player_x += player_xs;
-	if (player_x < player_x_min)
-	{
-		player_x = player_x_min;
-		if (player_xs < 0)
-		{
-			player_xs = 0;
-		}
-	}
-	else if (player_x > player_x_max)
-	{
-		player_x = player_x_max;
-		if (player_xs > 0)
-		{
-			player_xs = 0;
-		}
-	}
-
 	player_y += player_ys;
-	if (player_y < player_y_min)
+
+	if (allow_control) // Only enforce player position limits when player is in control
 	{
-		player_y = player_y_min;
-		if (player_ys < 0)
+		if (player_x < player_x_min)
 		{
-			player_ys = 0;
+			player_x = player_x_min;
+			if (player_xs < 0)
+			{
+				player_xs = 0;
+			}
 		}
-	}
-	else if (player_y > player_y_max)
-	{
-		player_y = player_y_max;
-		if (player_ys > 0)
+		else if (player_x > player_x_max)
 		{
-			player_ys = 0;
+			player_x = player_x_max;
+			if (player_xs > 0)
+			{
+				player_xs = 0;
+			}
+		}
+
+		if (player_y < player_y_min)
+		{
+			player_y = player_y_min;
+			if (player_ys < 0)
+			{
+				player_ys = 0;
+			}
+		}
+		else if (player_y > player_y_max)
+		{
+			player_y = player_y_max;
+			if (player_ys > 0)
+			{
+				player_ys = 0;
+			}
 		}
 	}
 	spr_x[player_sprite] = player_x / x_divisor;
@@ -237,19 +324,16 @@ void handle_player()
 	player_trail_timer--;
 	if (player_trail_timer <= 0)
 	{
-		player_trail_timer = player_trail_frequency - ((player_speed * 10) / 50);
+		unsigned char reduce = (player_speed / 8) + rand_uchar(0, 6);
+		// if (reduce > player_trail_frequency - 1)
+		// {
+		// 	reduce = player_trail_frequency - 1;
+		// }
+		player_trail_timer = player_trail_frequency - reduce;
 		if (player_trail_timer <= 0)
 		{
-			player_trail_timer = 1;
+			player_trail_timer = 0;
 		}
 		add_player_trail();
-	}
-
-	// Score
-	player_score_timer += player_speed;
-	if (player_score_timer >= 100)
-	{
-		player_score_timer -= 100;
-		player_score++;
 	}
 }

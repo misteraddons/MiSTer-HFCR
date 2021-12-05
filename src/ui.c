@@ -78,7 +78,7 @@ void write_stringfs(const char *format, char color, unsigned char x, unsigned ch
 }
 
 // Write formatted string to character RAM (unsigned char data)
-void write_stringf(const char *format, char color, unsigned char x, unsigned char y, char data)
+void write_stringf(const char *format, char color, unsigned char x, unsigned char y, unsigned char data)
 {
 	unsigned short p = (y * chram_cols) + x;
 	char temp[30];

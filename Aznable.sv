@@ -220,7 +220,7 @@ localparam CONF_STR = {
 	"F3,BIN,Load Sprite ROM;",
 	"F4,YM,Load Music (YM5/6);",
 	"-;",
-	"J,A,B,X,Y,L,R,Select,Start,C,Z;",
+	"J,A,B,X,Y,L,R,Select,Start;",
 	"V,v",`BUILD_DATE
 };
 
@@ -386,13 +386,8 @@ jtframe_resync jtframe_resync
   .vs_out(vs)
 );
 
-///////////////////   MAIN CORE   ////////////////////
-wire rom_download = ioctl_download && (ioctl_index < 8'd2);
-wire reset = (RESET | status[0] | buttons[1] | rom_download);
-assign LED_USER = rom_download;
-
+///////////////////  PAUSE SYSTEM ///////////////////
 wire m_pause   = joystick_0[8];
-// PAUSE SYSTEM
 wire				pause_cpu;
 wire [23:0]		rgb_out;
 pause #(8,8,8,24) pause (
@@ -401,6 +396,11 @@ pause #(8,8,8,24) pause (
 	.pause_request(),
 	.options(~status[26:25])
 );
+
+///////////////////   MAIN CORE   ////////////////////
+wire rom_download = ioctl_download && (ioctl_index < 8'd2);
+wire reset = (RESET | status[0] | buttons[1] | rom_download);
+assign LED_USER = rom_download;
 
 system system(
 	.clk_24(clk_sys),

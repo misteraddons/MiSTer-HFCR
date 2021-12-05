@@ -32,9 +32,9 @@ extern unsigned short x_h_max;
 extern unsigned char scroll_speed;
 
 // Sprite ROM image indexes
-#define meteor_sprite_index_first 0
-#define meteor_sprite_index_count 8
-#define player_sprite_index_default meteor_sprite_index_count
+#define asteroids_sprite_index_first 0
+#define asteroids_sprite_index_count 8
+#define player_sprite_index_default asteroids_sprite_index_count
 #define player_sprite_index_left player_sprite_index_default + 2
 #define player_sprite_index_right player_sprite_index_default + 3
 #define trail_sprite_index_first player_sprite_index_default + 4

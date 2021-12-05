@@ -39,16 +39,25 @@ extern unsigned short player_y_min;
 extern unsigned short player_y_max;
 extern const unsigned char player_speed_min;
 extern const unsigned char player_speed_max;
+extern const unsigned char player_speed_warp;
 extern unsigned char player_speed;
-extern unsigned long player_score;
-extern unsigned char player_score_timer;
-extern unsigned char player_trail_timer;
-extern unsigned char player_invincible_timer;
-extern unsigned char player_invincible_flash;
+extern signed char player_trail_timer;
 extern const unsigned char player_invincible_timeout;
 extern unsigned char player_respawn_timer;
 extern const unsigned char player_respawn_timeout;
 extern unsigned char player_hit;
 
+extern unsigned char player_ready;
+extern unsigned char player_ready_x;
+extern unsigned char player_ready_y;
+
+extern unsigned short player_x_target;
+extern unsigned short player_y_target;
+extern signed short player_x_diff;
+extern signed short player_y_diff;
+
+extern void set_player_target(unsigned short x, unsigned short y, unsigned char divider, unsigned char maxspeed);
+extern void move_player_to_target();
+
 extern void setup_player(unsigned short x, unsigned short y);
-extern void handle_player();
+extern void handle_player(bool allow_control);

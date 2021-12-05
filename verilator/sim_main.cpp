@@ -73,7 +73,7 @@ const int input_start = 11;
 #define VGA_SCALE_X vga_scale
 #define VGA_SCALE_Y vga_scale
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
-float vga_scale = 2.0;
+float vga_scale = 3.0;
 
 
 // Verilog module
@@ -334,7 +334,7 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
-		ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
+		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
 		float vol_l = ((top->AUDIO_L) / 256.0f) / 256.0f;
 		float vol_r = ((top->AUDIO_R) / 256.0f) / 256.0f;

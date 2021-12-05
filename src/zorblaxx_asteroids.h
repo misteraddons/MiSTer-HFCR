@@ -23,24 +23,21 @@
 #ifndef ZORBLAXX_ASTEROIDS_H
 #define ZORBLAXX_ASTEROIDS_H
 
-extern unsigned char meteor_max;
-extern unsigned char meteor_sprite_first;
-extern unsigned char meteor_sprite_palette;
-extern unsigned short meteor_x[];
-extern unsigned short meteor_y[];
-extern signed char meteor_xs[];
-extern signed char meteor_ys[];
-extern unsigned char meteor_timer[];
-extern unsigned short meteor_y_max;
-extern unsigned char meteor_active_max;
-extern unsigned char meteor_difficulty;
-extern unsigned short meteor_difficulty_timer;
-extern unsigned short meteor_difficulty_frequency;
+extern unsigned char asteroids_max;
+extern unsigned char asteroids_sprite_first;
+extern unsigned char asteroids_sprite_palette;
+extern unsigned short asteroids_x[];
+extern unsigned short asteroids_y[];
+extern signed char asteroids_xs[];
+extern signed char asteroids_ys[];
+extern unsigned char asteroids_timer[];
+extern unsigned short asteroids_y_max;
+extern unsigned char asteroids_active_max;
+extern unsigned char asteroids_active;
+extern unsigned char asteroids_difficulty;
 
-extern void update_meteordifficulty();
+extern void setup_asteroids();
 
-extern void setup_meteors();
-
-extern void handle_meteors();
+extern void handle_asteroids(unsigned char spawn_enabled);
 
 #endif
