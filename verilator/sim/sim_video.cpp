@@ -310,12 +310,12 @@ int SimVideo::Initialise(const char* windowTitle) {
 	{
 		D3D11_SAMPLER_DESC desc;
 		ZeroMemory(&desc, sizeof(desc));
-		desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 		desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 		desc.MipLODBias = 0.f;
-		desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+		desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		desc.MinLOD = 0.f;
 		desc.MaxLOD = 0.f;
 		g_pd3dDevice->CreateSamplerState(&desc, &g_pFontSampler);
