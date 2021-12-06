@@ -273,9 +273,9 @@ wire spritecollisionram_wr;
 // Casval - character map
 wire [11:0] chram_addr;
 wire [11:0] chrom_addr;
-wire [2:0]	charmap_r;
-wire [2:0]	charmap_g;
-wire [1:0]	charmap_b;
+wire [7:0]	charmap_r;
+wire [7:0]	charmap_g;
+wire [7:0]	charmap_b;
 wire		charmap_a;
 charmap casval
 (
@@ -467,20 +467,17 @@ end
 `endif
 
 // RGB mixer
-wire [7:0] bg_r = {{2{charmap_r}},2'b0};
-wire [7:0] bg_g = {{2{charmap_g}},2'b0};
-wire [7:0] bg_b = {{3{charmap_b}},2'b0};
 
 `ifdef DEBUG_SPRITE_COLLISION
-assign VGA_R = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
-assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
-assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
+assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
+assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
+assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
 `ifndef DEBUG_SPRITE_COLLISION
-assign VGA_R = spr_a ? spr_r : sf_on ? sf_star_colour : bg_r; 
-assign VGA_G = spr_a ? spr_g : sf_on ? sf_star_colour : bg_g;
-assign VGA_B = spr_a ? spr_b : sf_on ? sf_star_colour : bg_b;
+assign VGA_R = charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
+assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
+assign VGA_B = charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
 `ifndef DISABLE_MUSIC

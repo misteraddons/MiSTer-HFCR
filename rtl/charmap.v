@@ -31,10 +31,10 @@ module charmap (
 	input	[7:0] chmap_data_out,
     output	[11:0] chram_addr,
     output	[11:0] chrom_addr,
-	output	[2:0] r,
-	output	[2:0] g,
-	output	[1:0] b,
-	output a
+	output	[7:0] r,
+	output	[7:0] g,
+	output	[7:0] b,
+	output 		  a
 );
 
 // Character map
@@ -45,9 +45,13 @@ wire [5:0] chram_y = vcnt[8:3];
 assign chram_addr = {chram_y, chram_x};
 assign chrom_addr = {1'b0, chmap_data_out[7:0], chpos_y};
 assign a = chrom_data_out[chpos_x[2:0]];
-assign r = a ? fgcolram_data_out[2:0] : bgcolram_data_out[2:0];
-assign g = a ? fgcolram_data_out[5:3] : bgcolram_data_out[5:3];
-assign b = a ? fgcolram_data_out[7:6] : bgcolram_data_out[7:6];
 
+wire [2:0] r_temp = a ? fgcolram_data_out[2:0] : bgcolram_data_out[2:0];
+wire [2:0] g_temp = a ? fgcolram_data_out[5:3] : bgcolram_data_out[5:3];
+wire [1:0] b_temp = a ? fgcolram_data_out[7:6] : bgcolram_data_out[7:6];
+
+assign r = {{2{r_temp}},2'b0};
+assign g = {{2{g_temp}},2'b0};
+assign b = {{3{b_temp}},2'b0};
 
 endmodule
