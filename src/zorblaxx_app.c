@@ -80,6 +80,7 @@ const unsigned short game_state_danger_timeout = 120;
 
 unsigned long high_score = 5000;
 unsigned long player_score = 0;
+unsigned long player_score_last = 99999999;
 unsigned char player_score_timer = 0;
 unsigned char player_score_timer_frequency = 100;
 
@@ -238,6 +239,10 @@ void game_loop()
 	// Setup explosions
 	setup_explosions();
 
+	// Draw score titles
+	write_string("1UP", 0b00111111, 2, 0);
+	write_string("HIGH SCORE", 0b00111111, 15, 0);
+
 	while (1)
 	{
 		vblank = input0 & 0x10;
@@ -276,11 +281,14 @@ void game_loop()
 			handle_explosions();
 			handle_asteroids(game_state == 1);
 
-			level_time_timer++;
-			if (level_time_timer >= 60)
+			if (game_state == in_field || game_state == field_ending)
 			{
-				level_time++;
-				level_time_timer = 0;
+				level_time_timer++;
+				if (level_time_timer >= 60)
+				{
+					level_time++;
+					level_time_timer = 0;
+				}
 			}
 
 			// Game state machine
@@ -308,7 +316,6 @@ void game_loop()
 					asteroids_active_max = asteroids_max;
 				}
 
-				write_stringf("Field %d", 0xFF, 15, 0, level_number);
 				break;
 			case in_field:
 				// Level progress
@@ -357,8 +364,7 @@ void game_loop()
 					level_playercontrol = 0;
 					set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 
-					write_stringf_ushort("FIELD COMPLETED", 0xFF, 10, 11, level_number);
-					write_string("---------------", 0xFF, 10, 12);
+					write_stringf_ushort("-- FIELD %d COMPLETED --", 0xFF, 7, 11, level_number);
 
 					unsigned short par_time = level_progress_max / 60 / (player_speed_min + (player_speed_min / 2));
 					unsigned short bonus = 0;
@@ -368,17 +374,17 @@ void game_loop()
 					}
 					player_score += bonus;
 
-					write_stringf_ushort("Time: %6d", 0xFF, 12, 14, level_time);
-					write_stringf_ushort("Par: %6d", 0xFF, 13, 15, par_time);
+					write_stringf_ushort("Time: %6d", 0xFF, 12, 13, level_time);
+					write_stringf_ushort("Par: %6d", 0xFF, 13, 14, par_time);
 					if (bonus > 0)
 					{
-						write_stringf_ushort("Bonus: %6d", 0b00011000, 11, 17, bonus);
+						write_stringf_ushort("Bonus: %6d", 0b00011000, 11, 16, bonus);
 					}
 					else
 					{
-						write_string("No bonus :(", 0b01011011, 12, 17);
+						write_string("No bonus :(", 0b01011011, 12, 16);
 					}
-					write_stringf_ulong("Score: %6d", 0xFF, 11, 19, player_score);
+					write_stringf_ulong("Score: %6d", 0xFF, 11, 18, player_score);
 				}
 				break;
 			case field_complete: // Display field completed screen while bringing ship up to speed
@@ -395,15 +401,13 @@ void game_loop()
 			case in_warp: // Do a bit of warp speed
 				move_player_to_target();
 				game_state_timer--;
-
-				write_stringf_ushort("%6d", 0xFF, 0, 2, game_state_timer);
 				if (game_state_timer == 0)
 				{
-					clear_chars(0);
-					write_string("DANGER!", 0b00000011, 16, 14);
+					clear_char_area(0, 0, 2, 39, 20);
 					write_string("- Entering asteroid field -", 0xFF, 07, 16);
 					game_state = approaching_field;
 					game_state_timer = game_state_danger_timeout;
+					level_time = 0;
 				}
 				break;
 			case approaching_field: // Slow down again ready for start
@@ -413,17 +417,40 @@ void game_loop()
 					player_speed--;
 				}
 
+				level_time_timer++;
+				if (level_time_timer >= 15)
+				{
+					write_string("DANGER!", level_time ? 0b00000111 : 0b00111111, 16, 14);
+					level_time = !level_time;
+					level_time_timer = 0;
+				}
+
 				game_state_timer--;
 				if (game_state_timer == 0)
 				{
-					clear_chars(0);
+					clear_char_area(0, 0, 14, 39, 16);
 					game_state = enter_field;
 				}
 				break;
 			}
 
-			// Draw player score last
-			write_stringf_ulong("%10d", 0xFF, 30, 0, player_score);
+			// Only update scores if they have changed
+			if (player_score != player_score_last)
+			{
+				// Update high score
+				if (player_score > high_score)
+				{
+					high_score = player_score;
+				}
+
+				// Draw player score
+				write_stringf_ulong("%d", 0xFF, 0, 1, player_score);
+
+				// Draw highscore
+				write_stringf_ulong("%6d", 0xFF, 16, 1, high_score);
+
+				player_score_last = player_score;
+			}
 		}
 
 		vblank_last = vblank;

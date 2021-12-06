@@ -87,7 +87,7 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
-#define DEBUG_AUDIO
+//#define DEBUG_AUDIO
 
 #ifdef DEBUG_AUDIO
 // Audio
@@ -188,8 +188,10 @@ int main(int argc, char** argv, char** env) {
 	//bus.ioctl_din = &top->ioctl_din;
 	input.ps2_key = &top->ps2_key;
 
+#ifdef DEBUG_AUDIO
 	// Setup Audio output stream
 	audioFile.open("audio.wav", ios::binary);
+#endif
 
 	// Set up input module
 	input.Initialise();

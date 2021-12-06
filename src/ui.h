@@ -37,6 +37,9 @@ extern char asc_1;
 // Set all character RAM to specified character
 extern void clear_chars(char c);
 
+// Set area of character RAM to specified character
+extern void clear_char_area(char c, unsigned char tx, unsigned char ty, unsigned char bx, unsigned char by);
+
 // Set all character background colours to specified
 extern void clear_bgcolor(char color);
 

@@ -36,6 +36,14 @@ void clear_chars(char c)
 	}
 }
 
+void clear_char_area(char c, unsigned char tx, unsigned char ty, unsigned char bx, unsigned char by)
+{
+	for (char y = ty; y <= by; y++)
+	{
+		write_char_row(c, 0, tx, y, (bx - tx) + 1);
+	}
+}
+
 // Set all character background colours to specified
 void clear_bgcolor(char color)
 {
