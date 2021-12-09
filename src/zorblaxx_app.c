@@ -78,11 +78,14 @@ unsigned char level_playercontrol = 0;
 unsigned short level_progress = 0;
 unsigned char level_progress_timer = 0;
 unsigned short level_progress_max;
-const unsigned short level_progress_base = 30000;
-const unsigned short level_progress_per_level = 2500;
+const unsigned short level_progress_base = 20000;
+const unsigned short level_progress_per_level = 3000;
 const unsigned short game_state_warp_timeout_first = 120;
 const unsigned short game_state_warp_timeout = 240;
 const unsigned short game_state_danger_timeout = 120;
+
+const unsigned char asteroids_difficulty_base = 3;
+const unsigned char asteroids_difficulty_multiplier = 2;
 
 unsigned long high_score = 5000;
 unsigned char bonus_score_multiplier = 5;
@@ -335,7 +338,7 @@ void game_loop()
 				play_music(1);
 
 				// Update asteroid difficulty
-				asteroids_difficulty = 2 + (level_number * 2);
+				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
 				asteroids_difficulty_speedspread = 2 + (asteroids_difficulty / 4);
 				asteroids_active_max = 5 + asteroids_difficulty;
 				if (asteroids_active_max > asteroids_max)
@@ -404,7 +407,7 @@ void game_loop()
 					level_playercontrol = 0;
 					set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 
-					write_stringf_ushort("-- FIELD %d COMPLETED --", 0xFF, 7, 11, level_number);
+					write_stringf_ushort("-- FIELD %d COMPLETED --", 0xFF, 9, 11, level_number);
 
 					unsigned short par_time = level_progress_max / 60 / (player_speed_min + (player_speed_min / 2));
 					unsigned short bonus = 0;
@@ -414,17 +417,17 @@ void game_loop()
 					}
 					player_score += bonus;
 
-					write_stringf_ushort("Time: %6d", 0xFF, 12, 13, level_time);
-					write_stringf_ushort("Par: %6d", 0xFF, 13, 14, par_time);
+					write_stringf_ushort("Time: %6d", 0xFF, 14, 13, level_time);
+					write_stringf_ushort("Par: %6d", 0xFF, 15, 14, par_time);
 					if (bonus > 0)
 					{
-						write_stringf_ushort("Bonus: %6d", 0b00011000, 11, 16, bonus);
+						write_stringf_ushort("Bonus: %6d", 0b00011000, 13, 16, bonus);
 					}
 					else
 					{
-						write_string("No bonus :(", 0b01011011, 12, 16);
+						write_string("No bonus :(", 0b01011011, 14, 16);
 					}
-					write_stringf_ulong("Score: %6d", 0xFF, 11, 18, player_score);
+					write_stringf_ulong("Score: %6d", 0xFF, 13, 18, player_score);
 				}
 				break;
 			case field_complete: // Display field completed screen while bringing ship up to speed

@@ -209,8 +209,8 @@ localparam CONF_STR = {
 	"OKN,Analog Video V-Pos,0,-1,-2,-3,-4,-5,-6,-7,8,7,6,5,4,3,2,1;",
 	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"-;",
-	"O6,No Rotate,Off,On;",
-	"O7,Rotate CCW,Off,On;",
+	"O6,Rotate video,Off,On;",
+	"O7,Flip video,Off,On;",
 	"-;",	
 	"P1,Pause options;",
 	"P1OP,Pause when OSD is open,On,Off;",
@@ -356,6 +356,7 @@ wire [7:0] r, g, b;
 
 wire rotate_ccw = status[7];
 wire no_rotate = ~status[6];
+wire flip = status[7];
 screen_rotate screen_rotate (.*);
 
 arcade_video #(320,24) arcade_video
