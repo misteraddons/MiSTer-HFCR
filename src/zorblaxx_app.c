@@ -53,12 +53,18 @@ unsigned short player_spawn_y = 200;
 // Game states
 typedef enum
 {
+	game_start,
 	enter_field,
 	in_field,
 	field_ending,
 	field_complete,
 	in_warp,
-	approaching_field
+	approaching_field,
+	game_over,
+	game_over_waitforstats,
+	game_over_stats,
+	game_over_waitforscoreentry
+
 } game_state_enum;
 
 game_state_enum game_state = 0;
@@ -75,14 +81,19 @@ unsigned short level_progress_max;
 const unsigned short level_progress_base = 30000;
 const unsigned short level_progress_per_level = 2500;
 const unsigned short game_state_warp_timeout_first = 60;
-const unsigned short game_state_warp_timeout = 300;
+const unsigned short game_state_warp_timeout = 240;
 const unsigned short game_state_danger_timeout = 120;
 
 unsigned long high_score = 5000;
+unsigned char bonus_score_multiplier = 5;
 unsigned long player_score = 0;
-unsigned long player_score_last = 99999999;
+unsigned long player_score_last;
+unsigned char high_score_passed = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_score_timer_frequency = 100;
+
+unsigned char button_a;
+unsigned char button_a_last;
 
 void setup_area()
 {
@@ -122,20 +133,6 @@ void intro_loop()
 			title_sprite++;
 		}
 	}
-
-	// unsigned char smax = 32;
-	// unsigned char x = 16;
-	// signed short sy = 32;
-	// for (unsigned char s = 0; s < smax; s++)
-	// {
-	// 	enable_sprite(s, 0, false);
-	// 	spr_index[s] = asteroids_sprite_index_first;
-	// 	spr_x[s] = x;
-	// 	x += 8;
-	// 	spr_y_h[s] = sy >> 8;
-	// 	spr_y_l[s] = (unsigned char)sy;
-	// }
-
 	unsigned char show_instruction = 0;
 	unsigned char title_ready = 0;
 
@@ -145,8 +142,11 @@ void intro_loop()
 
 		if (VBLANK_RISING)
 		{
+
+			button_a_last = button_a;
+			button_a = CHECK_BIT(joystick[0], 4);
 			// If button pressed, leave intro and start game
-			if (CHECK_BIT(joystick[0], 4))
+			if (button_a && !button_a_last)
 			{
 				return;
 			}
@@ -219,29 +219,7 @@ unsigned char sf_speed1 = 4;
 void game_loop()
 {
 
-	// Reset progress
-	level_number = 0;
-	level_progress = 0;
-	level_playercontrol = 0;
-
-	game_state = 4; // Start in warp mode
-	game_state_timer = game_state_warp_timeout_first;
-
-	// Setup player
-	setup_player(player_spawn_x, 260);
-	player_speed = player_speed_warp;
-	player_score = 0;
-	player_score_timer = 0;
-
-	// Setup asteroids
-	setup_asteroids();
-
-	// Setup explosions
-	setup_explosions();
-
-	// Draw score titles
-	write_string("1UP", 0b00111111, 2, 0);
-	write_string("HIGH SCORE", 0b00111111, 15, 0);
+	game_state = game_start;
 
 	while (1)
 	{
@@ -271,15 +249,20 @@ void game_loop()
 				player_hit = true;
 				spritecollisionram[player_sprite] = 0;
 			}
+
+			button_a_last = button_a;
+			button_a = CHECK_BIT(joystick[0], 4);
 		}
 
 		if (VBLANK_FALLING)
 		{
-
-			handle_player(level_playercontrol);
+			if (player_lives > 0)
+			{
+				handle_player(level_playercontrol);
+			}
 			handle_trails();
 			handle_explosions();
-			handle_asteroids(game_state == 1);
+			handle_asteroids(game_state == in_field);
 
 			if (game_state == in_field || game_state == field_ending)
 			{
@@ -294,6 +277,43 @@ void game_loop()
 			// Game state machine
 			switch (game_state)
 			{
+			case game_start:
+
+				// Reset progress
+				level_number = 0;
+				level_progress = 0;
+				level_playercontrol = 0;
+
+				// Reset player
+				player_lives = 3;
+				player_lives_changed = true;
+
+				setup_player(player_spawn_x, 260);
+				player_speed = player_speed_warp; // Preset player to warp speed!
+
+				// Reset scores and stats
+				player_score = 0;
+				player_score_last = 999;
+				player_score_timer = 0;
+				high_score_passed = 0;
+				asteroids_passed = 0;
+
+				// Setup asteroids
+				setup_asteroids();
+
+				// Setup explosions
+				setup_explosions();
+
+				// Draw score titles
+				write_string("1UP", 0b00111111, 2, 0);
+				write_string("HIGH SCORE", 0b00111111, 15, 0);
+				write_string("SHIPS", 0b00111111, 35, 0);
+				write_stringf("%2d", 0xFF, 38, 1, player_lives);
+
+				game_state = in_warp;
+				game_state_timer = game_state_warp_timeout_first;
+
+				break;
 			case enter_field: // Player is entering a new field
 				game_state = in_field;
 				level_progress = 0;
@@ -309,12 +329,15 @@ void game_loop()
 				play_music(1);
 
 				// Update asteroid difficulty
-				asteroids_difficulty = level_number * 2;
+				asteroids_difficulty = 2 + (level_number * 2);
 				asteroids_active_max = 5 + asteroids_difficulty;
 				if (asteroids_active_max > asteroids_max)
 				{
 					asteroids_active_max = asteroids_max;
 				}
+
+				// Write 0% progress indicator
+				write_stringf("%3d%%", 0xFF, 18, 29, 0);
 
 				break;
 			case in_field:
@@ -339,6 +362,16 @@ void game_loop()
 				{
 					player_score_timer -= player_score_timer_frequency;
 					player_score++;
+				}
+
+				if (player_lives_changed)
+				{
+					write_stringf("%2d", 0xFF, 38, 1, player_lives);
+					player_lives_changed = false;
+					if (player_lives == 0)
+					{
+						game_state = game_over;
+					}
 				}
 
 				break;
@@ -370,7 +403,7 @@ void game_loop()
 					unsigned short bonus = 0;
 					if (level_time < par_time)
 					{
-						bonus = (par_time - level_time) * 2;
+						bonus = (par_time - level_time) * bonus_score_multiplier;
 					}
 					player_score += bonus;
 
@@ -430,6 +463,33 @@ void game_loop()
 				{
 					clear_char_area(0, 0, 14, 39, 16);
 					game_state = enter_field;
+					setup_asteroids();
+				}
+				break;
+			case game_over:
+				write_string("GAME OVER", 0b00000011, 16, 14);
+				game_state_timer = 120;
+				game_state = game_over_waitforstats;
+				break;
+			case game_over_waitforstats:
+				game_state_timer--;
+				if (game_state_timer == 0)
+				{
+					clear_char_area(0, 0, 14, 39, 14);
+
+					// Write stats
+					write_stringf_ulong("Final Score: %6d", 0xFF, 10, 14, player_score);
+					write_stringf_ulong("Asteroids passed: %6d", 0xFF, 5, 15, asteroids_passed);
+
+					write_string("Press A to continue", 0xFF, 10, 17);
+
+					game_state = game_over_waitforscoreentry;
+				}
+				break;
+			case game_over_waitforscoreentry:
+				if (button_a && !button_a_last)
+				{
+					return;
 				}
 				break;
 			}
@@ -459,16 +519,20 @@ void game_loop()
 
 void app_zorblaxx()
 {
-	setup_area();
-	setup_player(player_spawn_x, 256);
-	set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
-	setup_trails();
+	while (1)
+	{
+		clear_chars(0);
+		setup_area();
+		setup_player(player_spawn_x, 256);
+		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
+		setup_trails();
 
-	intro_loop();
+		intro_loop();
 
-	// Clear character map and title sprites
-	clear_chars(0);
-	clear_sprites_range(16, 32);
+		// Clear character map and title sprites
+		clear_chars(0);
+		clear_sprites_range(16, 32);
 
-	game_loop();
+		game_loop();
+	}
 }

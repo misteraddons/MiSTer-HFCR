@@ -283,7 +283,7 @@ int main(int argc, char** argv, char** env) {
 
 		// Memory debug
 		/*ImGui::Begin("PGROM Editor");
-		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 16384, 0);
+		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 32768, 0);
 		ImGui::End();
 		ImGui::Begin("CHROM Editor");
 		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);

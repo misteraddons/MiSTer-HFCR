@@ -38,6 +38,7 @@ unsigned short asteroids_y_max;
 unsigned char asteroids_active;
 unsigned char asteroids_active_max;
 unsigned char asteroids_difficulty;
+unsigned short asteroids_passed = 0;
 
 unsigned char get_asteroid_timer()
 {
@@ -49,7 +50,7 @@ unsigned char get_asteroid_timer()
 
 void setup_asteroids()
 {
-	asteroids_y_max = 256 * y_divisor;
+	asteroids_y_max = 250 * y_divisor;
 
 	for (unsigned char m = 0; m < asteroids_max; m++)
 	{
@@ -109,6 +110,7 @@ void handle_asteroids(unsigned char spawn_enabled)
 					asteroids_ys[m] = rand_uchar(4, 16 + asteroids_difficulty);
 					asteroids_timer[m] = get_asteroid_timer();
 					spr_on[sprite] = 0;
+					asteroids_passed++;
 				}
 				else
 				{

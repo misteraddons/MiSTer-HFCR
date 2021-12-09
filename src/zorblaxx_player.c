@@ -43,11 +43,14 @@ unsigned short player_x_min;
 unsigned short player_x_max;
 unsigned short player_y_min;
 unsigned short player_y_max;
-const unsigned char player_speed_min = 8;
+const unsigned char player_speed_min = 12;
 const unsigned char player_speed_max = 32;
 const unsigned char player_speed_warp = 64;
 unsigned char player_speed;
 signed char player_trail_timer = 1;
+
+unsigned char player_lives;
+unsigned char player_lives_changed;
 unsigned char player_invincible_timer = 0;
 unsigned char player_invincible_flash = 0;
 const unsigned char player_invincible_timeout = 120;
@@ -168,7 +171,19 @@ void setup_player(unsigned short x, unsigned short y)
 
 	// Trails
 	player_trail_timer = player_trail_frequency;
+}
 
+void player_destroyed()
+{
+	add_explosion(0, 1);
+	add_explosion(1, 3);
+	spr_on[player_sprite] = false;
+	player_lives_changed = true;
+	if (player_lives > 0)
+	{
+		player_lives--;
+		player_respawn_timer = player_respawn_timeout;
+	}
 }
 
 void handle_player(bool allow_control)
@@ -214,10 +229,7 @@ void handle_player(bool allow_control)
 		if (player_hit)
 		{
 			player_hit = false;
-			add_explosion(0, 1);
-			add_explosion(1, 3);
-			player_respawn_timer = player_respawn_timeout;
-			spr_on[player_sprite] = false;
+			player_destroyed();
 		}
 	}
 

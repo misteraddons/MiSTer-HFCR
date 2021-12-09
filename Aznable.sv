@@ -220,6 +220,7 @@ localparam CONF_STR = {
 	"F3,BIN,Load Sprite ROM;",
 	"F4,YM,Load Music (YM5/6);",
 	"-;",
+	"R0,Reset;",
 	"J,A,B,X,Y,L,R,Select,Start;",
 	"V,v",`BUILD_DATE
 };
@@ -354,7 +355,7 @@ wire hblank, vblank, hs, vs, hs_original, vs_original;
 wire [7:0] r, g, b;
 
 wire rotate_ccw = status[7];
-wire no_rotate = status[6];
+wire no_rotate = ~status[6];
 screen_rotate screen_rotate (.*);
 
 arcade_video #(320,24) arcade_video

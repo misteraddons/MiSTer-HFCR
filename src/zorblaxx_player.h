@@ -42,8 +42,10 @@ extern const unsigned char player_speed_max;
 extern const unsigned char player_speed_warp;
 extern unsigned char player_speed;
 extern signed char player_trail_timer;
+
+extern unsigned char player_lives;
+extern unsigned char player_lives_changed;
 extern const unsigned char player_invincible_timeout;
-extern unsigned char player_respawn_timer;
 extern const unsigned char player_respawn_timeout;
 extern unsigned char player_hit;
 

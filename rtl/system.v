@@ -474,6 +474,12 @@ assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 
 assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
+// `ifndef DEBUG_SPRITE_COLLISION
+// wire block = hcnt <= 9'd1 || hcnt >= 9'd318 || vcnt <= 9'd1 || vcnt >= 9'd238; 
+// assign VGA_R = block ? 8'hFF : charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
+// assign VGA_G = block ? 8'hFF : charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
+// assign VGA_B = block ? 8'hFF : charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
+// `endif
 `ifndef DEBUG_SPRITE_COLLISION
 assign VGA_R = charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
 assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
