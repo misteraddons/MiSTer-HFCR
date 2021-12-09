@@ -35,9 +35,11 @@ signed char asteroids_xs[const_asteroids_max];
 signed char asteroids_ys[const_asteroids_max];
 unsigned char asteroids_timer[const_asteroids_max];
 unsigned short asteroids_y_max;
+unsigned char asteroid_spawn_y = 0;
 unsigned char asteroids_active;
 unsigned char asteroids_active_max;
 unsigned char asteroids_difficulty;
+unsigned char asteroids_difficulty_speedspread;
 unsigned short asteroids_passed = 0;
 
 unsigned char get_asteroid_timer()
@@ -50,13 +52,13 @@ unsigned char get_asteroid_timer()
 
 void setup_asteroids()
 {
-	asteroids_y_max = 250 * y_divisor;
+	asteroids_y_max = 246 * y_divisor;
 
 	for (unsigned char m = 0; m < asteroids_max; m++)
 	{
 		asteroids_x[m] = rand_ushort(24, 296) * x_divisor;
-		asteroids_y[m] = 0;
-		asteroids_xs[m] = rand_schar(-(2 + (asteroids_difficulty / 4)), 2 + (asteroids_difficulty / 4));
+		asteroids_y[m] = asteroid_spawn_y;
+		asteroids_xs[m] = rand_schar(-asteroids_difficulty_speedspread, asteroids_difficulty_speedspread);
 		asteroids_ys[m] = rand_uchar(4, 16 + asteroids_difficulty);
 		asteroids_timer[m] = get_asteroid_timer();
 
@@ -85,8 +87,8 @@ void handle_asteroids(unsigned char spawn_enabled)
 					asteroids_timer[m]--;
 					if (asteroids_timer[m] == 0)
 					{
-						spr_on[sprite] = 1;
 						spr_index[sprite] = rand_uchar(asteroids_sprite_index_first, asteroids_sprite_index_first + asteroids_sprite_index_count - 1);
+						spr_on[sprite] = 1;
 					}
 				}
 			}
@@ -104,12 +106,15 @@ void handle_asteroids(unsigned char spawn_enabled)
 				}
 				if (asteroids_y[m] >= asteroids_y_max)
 				{
+					spr_on[sprite] = 0;
 					asteroids_x[m] = rand_ushort(24, 296) * x_divisor;
-					asteroids_y[m] = 0;
-					asteroids_xs[m] = rand_schar(-(2 + (asteroids_difficulty / 4)), 2 + (asteroids_difficulty / 4));
+					asteroids_y[m] = asteroid_spawn_y * y_divisor;
+					spr_x[sprite] = asteroids_x[m] / x_divisor;
+					spr_y_h[sprite] = 0;
+					spr_y_l[sprite] = asteroid_spawn_y;
+					asteroids_xs[m] = rand_schar(-asteroids_difficulty_speedspread, asteroids_difficulty_speedspread);
 					asteroids_ys[m] = rand_uchar(4, 16 + asteroids_difficulty);
 					asteroids_timer[m] = get_asteroid_timer();
-					spr_on[sprite] = 0;
 					asteroids_passed++;
 				}
 				else

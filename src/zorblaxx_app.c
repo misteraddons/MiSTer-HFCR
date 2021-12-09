@@ -80,7 +80,7 @@ unsigned char level_progress_timer = 0;
 unsigned short level_progress_max;
 const unsigned short level_progress_base = 30000;
 const unsigned short level_progress_per_level = 2500;
-const unsigned short game_state_warp_timeout_first = 60;
+const unsigned short game_state_warp_timeout_first = 120;
 const unsigned short game_state_warp_timeout = 240;
 const unsigned short game_state_danger_timeout = 120;
 
@@ -310,6 +310,12 @@ void game_loop()
 				write_string("SHIPS", 0b00111111, 35, 0);
 				write_stringf("%2d", 0xFF, 38, 1, player_lives);
 
+				// Draw instructions for first warp
+
+				write_string("Avoid the asteroids!", 0b00111111, 10, 12);
+
+				write_string("Use A to boost for more points", 0b00111000, 5, 15);
+
 				game_state = in_warp;
 				game_state_timer = game_state_warp_timeout_first;
 
@@ -330,6 +336,7 @@ void game_loop()
 
 				// Update asteroid difficulty
 				asteroids_difficulty = 2 + (level_number * 2);
+				asteroids_difficulty_speedspread = 2 + (asteroids_difficulty / 4);
 				asteroids_active_max = 5 + asteroids_difficulty;
 				if (asteroids_active_max > asteroids_max)
 				{

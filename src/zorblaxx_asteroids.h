@@ -35,6 +35,7 @@ extern unsigned short asteroids_y_max;
 extern unsigned char asteroids_active_max;
 extern unsigned char asteroids_active;
 extern unsigned char asteroids_difficulty;
+extern unsigned char asteroids_difficulty_speedspread;
 extern unsigned short asteroids_passed;
 
 extern void setup_asteroids();
