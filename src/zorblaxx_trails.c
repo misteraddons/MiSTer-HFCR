@@ -26,7 +26,7 @@
 #include "zorblaxx_asteroids.h"
 #include "zorblaxx_player.h"
 
-#define const_trail_max 11
+#define const_trail_max 10
 unsigned char trail_max = const_trail_max;
 unsigned char trail_sprite_first = 0;
 unsigned char trail_sprite_palette = 1;

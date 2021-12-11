@@ -28,7 +28,7 @@
 #include "zorblaxx_explosions.h"
 
 // Player
-const unsigned char player_sprite = 11;
+const unsigned char player_sprite = 10;
 const unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;

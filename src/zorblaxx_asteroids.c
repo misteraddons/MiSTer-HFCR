@@ -27,7 +27,7 @@
 
 #define const_asteroids_max 16
 unsigned char asteroids_max = const_asteroids_max;
-unsigned char asteroids_sprite_first = 12;
+unsigned char asteroids_sprite_first = 11;
 unsigned char asteroids_sprite_palette = 0;
 unsigned short asteroids_x[const_asteroids_max];
 unsigned short asteroids_y[const_asteroids_max];

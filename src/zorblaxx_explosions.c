@@ -28,7 +28,7 @@
 // Explosions
 #define const_explosion_max 4
 unsigned char explosion_max = const_explosion_max;
-unsigned char explosion_sprite_first = 28;
+unsigned char explosion_sprite_first = 27;
 unsigned char explosion_sprite_palette = 1;
 unsigned char explosion_timer[const_explosion_max];
 unsigned char explosion_frame[const_explosion_max];

@@ -21,10 +21,11 @@
 
 /*
 	Sprite indexes:
-	0-10	- Trails
-	11		- Player
-	12-27   - Asteroids
-	28-31	- Explosions
+	0-9	- Trails
+	10		- Player
+	11-26   - Asteroids
+	27-30	- Explosions
+	31-31	- Pickups
 */
 
 #include "sys.h"
@@ -35,6 +36,7 @@
 #include "zorblaxx_player.h"
 #include "zorblaxx_trails.h"
 #include "zorblaxx_explosions.h"
+#include "zorblaxx_pickups.h"
 #include "zorblaxx_asteroids.h"
 
 // Area and units
@@ -87,8 +89,11 @@ const unsigned short game_state_danger_timeout = 120;
 const unsigned char asteroids_difficulty_base = 3;
 const unsigned char asteroids_difficulty_multiplier = 2;
 
+unsigned char pickup_spawn_timer = 0;
+unsigned char pickup_spawn_timer_min = 120;
+
 unsigned long high_score = 5000;
-unsigned char bonus_score_multiplier = 5;
+unsigned char bonus_score_multiplier = 10;
 unsigned long player_score = 0;
 unsigned long player_score_last;
 unsigned char high_score_passed = 0;
@@ -136,6 +141,7 @@ void intro_loop()
 			title_sprite++;
 		}
 	}
+
 	unsigned char show_instruction = 0;
 	unsigned char title_ready = 0;
 
@@ -230,8 +236,50 @@ void game_loop()
 
 		if (VBLANK_RISING)
 		{
+
+			// Detect player collision
+			if (spritecollisionram[player_sprite])
+			{
+				if (spritecollisionram[pickup_sprite_first])
+				{
+					// Player collects pickup
+					if (pickup_state[0] == 1)
+					{
+						enable_sprite(pickup_sprite_first, pickup_sprite_palette, 0);
+						player_score += pickup_value[0];
+						pickup_state[0] = 2;
+						pickup_timer[0] = 60;
+						spr_index[pickup_sprite_first] += pickup_type_count;
+					}
+				}
+				else
+				{
+					for (unsigned char a = 0; a < asteroids_max; a++)
+					{
+						if (spritecollisionram[asteroids_sprite_first + a])
+						{
+							player_hit = true;
+							write_string("DEAD", 0b00000111, 15, 15);
+							for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+							{
+								write_char(spritecollisionram[sprite] ? 'O' : '.', 0b00000111, sprite + 1, 16);
+								spritecollisionram[sprite] = 0;
+							}
+							break;
+						}
+					}
+				}
+			}
+			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+			{
+				write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite + 1, 3);
+				spritecollisionram[sprite] = 0;
+			}
 			// Update sprite registers
 			update_sprites();
+
+			button_a_last = button_a;
+			button_a = CHECK_BIT(joystick[0], 4);
 
 			// Update starfield
 			scroll_speed = player_speed;
@@ -245,16 +293,6 @@ void game_loop()
 				s = s / 2;
 				starfield[4] = s;
 			}
-
-			// Detect player collision
-			if (spritecollisionram[player_sprite])
-			{
-				player_hit = true;
-				spritecollisionram[player_sprite] = 0;
-			}
-
-			button_a_last = button_a;
-			button_a = CHECK_BIT(joystick[0], 4);
 		}
 
 		if (VBLANK_FALLING)
@@ -266,6 +304,7 @@ void game_loop()
 			handle_trails();
 			handle_explosions();
 			handle_asteroids(game_state == in_field);
+			handle_pickups();
 
 			if (game_state == in_field || game_state == field_ending)
 			{
@@ -307,6 +346,10 @@ void game_loop()
 				// Setup explosions
 				setup_explosions();
 
+				// Setup pickups
+				setup_pickups();
+				pickup_spawn_timer = pickup_spawn_timer_min;
+
 				// Draw score titles
 				write_string("1UP", 0b00111111, 2, 0);
 				write_string("HIGH SCORE", 0b00111111, 15, 0);
@@ -315,9 +358,9 @@ void game_loop()
 
 				// Draw instructions for first warp
 
-				write_string("Avoid the asteroids!", 0b00111111, 10, 12);
-
-				write_string("Use A to boost for more points", 0b00111000, 5, 15);
+				write_string("Avoid the asteroids!", 0b00111111, 10, 11);
+				write_string("Use A to boost for time bonus", 0b00111000, 5, 14);
+				write_string("Collect gems for extra points", 0b00011111, 5, 17);
 
 				game_state = in_warp;
 				game_state_timer = game_state_warp_timeout_first;
@@ -364,6 +407,14 @@ void game_loop()
 				{
 					write_string("100%", 0xFF, 18, 29);
 					game_state = field_ending;
+				}
+
+				// Generate pickups
+				pickup_spawn_timer--;
+				if (pickup_spawn_timer == 0)
+				{
+					pickup_spawn_timer = pickup_spawn_timer_min;
+					spawn_pickup();
 				}
 
 				// Player score

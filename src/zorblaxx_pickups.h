@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Caval (sprite engine)
+	Aznable OS - Zorblaxx demo application - Pickup routines
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
@@ -18,26 +18,29 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
-#ifndef SPRITE_H
-#define SPRITE_H
 
-#include "sys.h"
+#ifndef ZORBLAXX_PICKUPS_H
+#define ZORBLAXX_PICKUPS_H
 
-extern unsigned char sprite_max;
-extern unsigned short spr_x[];
-extern unsigned char spr_y_l[];
-extern unsigned char spr_y_h[];
-extern bool spr_on[];
-extern bool spr_collide[];
-extern unsigned char spr_palette_index[];
-extern unsigned char spr_index[];
+// Pickups
+extern unsigned char pickup_max;
+extern unsigned char pickup_type_count;
+extern unsigned char pickup_sprite_first;
+extern unsigned char pickup_sprite_palette;
+extern unsigned short pickup_x[];
+extern unsigned short pickup_y[];
+extern signed char pickup_xs[];
+extern signed char pickup_ys[];
+extern unsigned char pickup_state[];
+extern unsigned char pickup_value[];
+extern unsigned char pickup_timer[];
+extern unsigned short pickup_y_max;
+extern unsigned char pickup_y_offset;
 
-extern void update_sprites();
+extern void spawn_pickup();
 
-extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char collide);
+extern void setup_pickups();
 
-extern void clear_sprites();
-
-extern void clear_sprites_range(unsigned char first, unsigned char last);
+extern void handle_pickups();
 
 #endif

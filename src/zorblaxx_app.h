@@ -38,10 +38,12 @@ extern unsigned char scroll_speed;
 #define player_sprite_index_left player_sprite_index_default + 2
 #define player_sprite_index_right player_sprite_index_default + 3
 #define trail_sprite_index_first player_sprite_index_default + 4
-#define trail_sprite_index_last trail_sprite_index_first + 3 
+#define trail_sprite_index_last trail_sprite_index_first + 3
 #define explosion_sprite_index_first trail_sprite_index_last + 1
 #define explosion_sprite_index_last explosion_sprite_index_first + 7
-#define title_sprite_index_first explosion_sprite_index_last + 1
+#define pickup_sprite_index_first 24
+#define pickup_sprite_index_last pickup_sprite_index_first + 3
+#define title_sprite_index_first pickup_sprite_index_last + 1
 
 // Game defaults
 extern unsigned short player_spawn_x;
