@@ -85,10 +85,6 @@ const unsigned short level_progress_per_level = 3000;
 const unsigned short game_state_warp_timeout_first = 120;
 const unsigned short game_state_warp_timeout = 240;
 const unsigned short game_state_danger_timeout = 120;
-// const unsigned short game_state_warp_timeout_first = 12;
-// const unsigned short game_state_warp_timeout = 24;
-// const unsigned short game_state_danger_timeout = 12;
-
 const unsigned char asteroids_difficulty_base = 3;
 const unsigned char asteroids_difficulty_multiplier = 2;
 
@@ -448,8 +444,7 @@ void game_loop()
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
 				asteroids_difficulty_speedspread = 2 + (asteroids_difficulty / 4);
 
-				asteroids_active_max = asteroids_max;
-				// asteroids_active_max = 5 + asteroids_difficulty;
+				asteroids_active_max = 5 + asteroids_difficulty;
 				if (asteroids_active_max > asteroids_max)
 				{
 					asteroids_active_max = asteroids_max;
