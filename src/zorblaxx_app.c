@@ -340,11 +340,10 @@ void game_loop()
 				spritecollisionram[sprite] = 0;
 			}
 
-			timer[0] = 0;
 			// Update sprite registers
 			update_sprites();
-			write_stringf_ushort("%5d", 0xFF, 0, 13, GET_TIMER);
 
+			// 
 			button_a_last = button_a;
 			button_a = CHECK_BIT(joystick[0], 4);
 
