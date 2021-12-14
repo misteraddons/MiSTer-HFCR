@@ -357,7 +357,6 @@ wire rotate_ccw = status[7];
 wire no_rotate = ~status[6];
 wire flip = status[7];
 screen_rotate screen_rotate (.*);
-
 arcade_video #(320,24) arcade_video
 (
 	.*,

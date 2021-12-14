@@ -24,7 +24,8 @@
 
 #define const_sprite_max 32
 unsigned char sprite_max = const_sprite_max;
-unsigned short spr_x[const_sprite_max];
+unsigned char spr_x_l[const_sprite_max];
+unsigned char spr_x_h[const_sprite_max];
 unsigned char spr_y_l[const_sprite_max];
 unsigned char spr_y_h[const_sprite_max];
 bool spr_on[const_sprite_max];
@@ -34,6 +35,19 @@ unsigned char spr_index[const_sprite_max];
 
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
 
+void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y)
+{
+	spr_x_h[sprite] = x >> 8;
+	spr_x_l[sprite] = (unsigned char)x;
+	spr_y_h[sprite] = y >> 8;
+	spr_y_l[sprite] = (unsigned char)y;
+}
+void set_sprite_position_x(unsigned char sprite, unsigned short x)
+{
+	spr_x_h[sprite] = x >> 8;
+	spr_x_l[sprite] = (unsigned char)x;
+}
+
 void update_sprites()
 {
 	unsigned char s = 0;
@@ -41,12 +55,11 @@ void update_sprites()
 	{
 		if (spr_on[sprite])
 		{
-			unsigned short x = spr_x[sprite];
 			// Set sprite properties
-			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];	// Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Position Y (upper 2 bits)
-			spriteram[s++] = spr_y_l[sprite];							// Position Y (lower 8 bits)
-			spriteram[s++] = spr_index[sprite] << 2 | x >> 8;			// Sprite Index (6 bits) + Position X (upper 2 bits)
-			spriteram[s++] = (unsigned char)x;							// Position X (lower 8 bits)
+			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];   // Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Position Y (upper 2 bits)
+			spriteram[s++] = spr_y_l[sprite];						   // Position Y (lower 8 bits)
+			spriteram[s++] = spr_index[sprite] << 2 | spr_x_h[sprite]; // Sprite Index (6 bits) + Position X (upper 2 bits)
+			spriteram[s++] = spr_x_l[sprite];						   // Position X (lower 8 bits)
 		}
 		else
 		{

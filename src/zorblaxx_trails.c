@@ -99,11 +99,8 @@ void handle_trails()
 				}
 			}
 			trail_x[t] += trail_xs[t];
-			spr_x[sprite] = trail_x[t] / x_divisor;
-
-			unsigned short y = trail_y[t] / y_divisor;
-			spr_y_h[sprite] = y >> 8;
-			spr_y_l[sprite] = (unsigned char)y;
+			
+			set_sprite_position(sprite, trail_x[t] / x_divisor, trail_y[t] / y_divisor);
 		}
 	}
 }

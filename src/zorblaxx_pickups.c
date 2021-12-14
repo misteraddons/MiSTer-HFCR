@@ -30,9 +30,10 @@
 #define const_type_count 2
 unsigned char pickup_max = const_pickup_max;
 unsigned char pickup_type_count = const_type_count;
-unsigned char pickup_sprite_first = 31;
+unsigned char pickup_sprite_first = 10;
 unsigned char pickup_sprite_palette = 1;
 unsigned char pickup_spawn_y = 0;
+unsigned char pickup_spawn_interval = 10;
 unsigned short pickup_x[const_pickup_max];
 unsigned short pickup_y[const_pickup_max];
 unsigned char pickup_state[const_pickup_max];
@@ -55,9 +56,7 @@ void spawn_pickup()
 			pickup_value[t] = 50 * (type + 1);
 			enable_sprite(sprite, pickup_sprite_palette, 1);
 			spr_index[sprite] = pickup_sprite_index_first + type;
-			spr_x[sprite] = pickup_x[t] / x_divisor;
-			spr_y_h[sprite] = 0; // Y is never that high
-			spr_y_l[sprite] = (unsigned char)pickup_spawn_y;
+			set_sprite_position(sprite, pickup_x[t] / x_divisor, pickup_spawn_y);
 			return;
 		}
 	}
@@ -96,14 +95,11 @@ void handle_pickups()
 				{
 					spr_on[sprite] = false;
 					pickup_state[t] = 0;
+					pickup_timer[t] = pickup_spawn_interval;
 					continue;
 				}
 			}
-
-			spr_x[sprite] = pickup_x[t] / x_divisor;
-			unsigned short y = pickup_y[t] / y_divisor;
-			spr_y_h[sprite] = y >> 8;
-			spr_y_l[sprite] = (unsigned char)y;
+			set_sprite_position(sprite, pickup_x[t] / x_divisor, pickup_y[t] / y_divisor);
 		}
 	}
 }

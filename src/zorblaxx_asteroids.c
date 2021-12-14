@@ -27,7 +27,7 @@
 
 #define const_asteroids_max 16
 unsigned char asteroids_max = const_asteroids_max;
-unsigned char asteroids_sprite_first = 11;
+unsigned char asteroids_sprite_first = 12;
 unsigned char asteroids_sprite_palette = 0;
 unsigned short asteroids_x[const_asteroids_max];
 unsigned short asteroids_y[const_asteroids_max];
@@ -52,7 +52,7 @@ unsigned char get_asteroid_timer()
 
 void setup_asteroids()
 {
-	asteroids_y_max = 246 * y_divisor;
+	asteroids_y_max = 256 * y_divisor;
 
 	for (unsigned char m = 0; m < asteroids_max; m++)
 	{
@@ -66,9 +66,7 @@ void setup_asteroids()
 		spr_index[sprite] = asteroids_sprite_index_first + rand_uchar(0, asteroids_sprite_index_count - 1);
 		enable_sprite(sprite, asteroids_sprite_palette, true);
 		spr_on[sprite] = false;
-		spr_x[sprite] = asteroids_x[m] / x_divisor;
-		spr_y_h[sprite] = 0;
-		spr_y_l[sprite] = 0;
+		set_sprite_position(sprite, asteroids_x[m] / x_divisor, 0);
 	}
 }
 
@@ -109,9 +107,7 @@ void handle_asteroids(unsigned char spawn_enabled)
 					spr_on[sprite] = 0;
 					asteroids_x[m] = rand_ushort(24, 296) * x_divisor;
 					asteroids_y[m] = asteroid_spawn_y * y_divisor;
-					spr_x[sprite] = asteroids_x[m] / x_divisor;
-					spr_y_h[sprite] = 0;
-					spr_y_l[sprite] = asteroid_spawn_y;
+					set_sprite_position(sprite, asteroids_x[m] / x_divisor, asteroid_spawn_y);
 					asteroids_xs[m] = rand_schar(-asteroids_difficulty_speedspread, asteroids_difficulty_speedspread);
 					asteroids_ys[m] = rand_uchar(4, 16 + asteroids_difficulty);
 					asteroids_timer[m] = get_asteroid_timer();
@@ -120,10 +116,7 @@ void handle_asteroids(unsigned char spawn_enabled)
 				else
 				{
 					asteroids_y[m] += asteroids_ys[m] + scroll_speed;
-					spr_x[sprite] = asteroids_x[m] / x_divisor;
-					unsigned short y = asteroids_y[m] / y_divisor;
-					spr_y_h[sprite] = y >> 8;
-					spr_y_l[sprite] = (unsigned char)y;
+					set_sprite_position(sprite, asteroids_x[m] / x_divisor, asteroids_y[m] / y_divisor);
 				}
 			}
 		}

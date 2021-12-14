@@ -28,7 +28,7 @@
 // Explosions
 #define const_explosion_max 4
 unsigned char explosion_max = const_explosion_max;
-unsigned char explosion_sprite_first = 27;
+unsigned char explosion_sprite_first = 28;
 unsigned char explosion_sprite_palette = 1;
 unsigned char explosion_timer[const_explosion_max];
 unsigned char explosion_frame[const_explosion_max];
@@ -58,10 +58,7 @@ void add_explosion(unsigned type, unsigned char count)
 			unsigned char sprite = explosion_sprite_first + e;
 			spr_on[sprite] = true;
 			spr_index[sprite] = explosion_sprite_index_first + (type * explosion_frame_count);
-			spr_x[sprite] = (player_x + (signed short)rand_schar(-32, 64)) / x_divisor;
-			unsigned short y = (player_y + (signed short)rand_schar(-32, 64)) / y_divisor;
-			spr_y_h[sprite] = y >> 8;
-			spr_y_l[sprite] = (unsigned char)y;
+			set_sprite_position(sprite, (player_x + (signed short)rand_schar(-32, 64)) / x_divisor, (player_y + (signed short)rand_schar(-32, 64)) / y_divisor);
 			count--;
 			if (count == 0)
 			{

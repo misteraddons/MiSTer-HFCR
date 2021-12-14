@@ -28,7 +28,7 @@
 #include "zorblaxx_explosions.h"
 
 // Player
-const unsigned char player_sprite = 10;
+const unsigned char player_sprite = 11;
 const unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
@@ -133,7 +133,7 @@ void move_player_to_target()
 			}
 			player_x += player_x_diff;
 		}
-		spr_x[player_sprite] = player_x / x_divisor;
+		set_sprite_position_x(player_sprite, player_x / x_divisor);
 	}
 	else
 	{
@@ -164,10 +164,8 @@ void setup_player(unsigned short x, unsigned short y)
 	// Initialise player sprite
 	spr_index[player_sprite] = player_sprite_index_default;
 	enable_sprite(player_sprite, player_sprite_palette, true);
-	spr_x[player_sprite] = player_x / x_divisor;
 
-	spr_y_h[player_sprite] = y >> 8;
-	spr_y_l[player_sprite] = (unsigned char)y;
+	set_sprite_position(player_sprite, x, y);
 
 	// Trails
 	player_trail_timer = player_trail_frequency;
@@ -326,11 +324,8 @@ void handle_player(bool allow_control)
 			}
 		}
 	}
-	spr_x[player_sprite] = player_x / x_divisor;
 
-	unsigned short y = player_y / y_divisor;
-	spr_y_h[player_sprite] = y >> 8;
-	spr_y_l[player_sprite] = (unsigned char)y;
+	set_sprite_position(player_sprite, player_x / x_divisor, player_y / y_divisor);
 
 	// Trail
 	player_trail_timer--;

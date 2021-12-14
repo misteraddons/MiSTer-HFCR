@@ -121,7 +121,7 @@ tv80s #(
 ) T80x  (
 	.reset_n   ( !reset ),
 	.clk       ( clk_24 ),
-	.wait_n    ( !pause ),
+	.wait_n    ( !pause_system ),
 	.int_n     ( 1'b1 ),
 	.nmi_n     ( 1'b1 ),
 	.busrq_n   ( 1'b1 ),
@@ -168,6 +168,7 @@ wire timer_cs = memory_map_addr == 8'b10001001;
 wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
 wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
 wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
+wire system_pause_cs = cpu_addr[15:4] == 12'b100010100011;
 wire snd_cs = cpu_addr[15:4] == 12'b100010110000;
 wire music_cs = cpu_addr[15:4] == 12'b100010110001;
 
@@ -181,6 +182,15 @@ wire spritecollisionram_cs = memory_map_addr == 8'b10110100;
 // -  (starfield)
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
+
+
+// System pause trigger
+reg pause_trigger = 0;
+wire pause_system = pause || pause_trigger;
+always @(posedge clk_24) begin
+	if(system_pause_cs && !cpu_wr_n) pause_trigger <= 1'b1;
+	if(pause) pause_trigger<=1'b0;
+end
 
 
 reg [15:0] cycle_timer;
@@ -319,6 +329,7 @@ sprite_engine comet
 (
 	.clk(clk_24),
 	.reset(reset),
+	.pause(pause_system),
 	.hsync(VGA_HS),
 	.vsync(VGA_VS),
 	.vblank(VGA_VB),
@@ -368,7 +379,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),
 	.en(ce_6),
-	.pause(pause),
+	.pause(pause_system),
 	.data_in(cpu_dout),
 	.write(starfield1_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on1),
@@ -389,7 +400,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),	
 	.en(ce_6),
-	.pause(pause),
+	.pause(pause_system),
 	.data_in(cpu_dout),
 	.write(starfield2_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on2),
@@ -410,7 +421,7 @@ starfield #(
 	.rst(reset),
 	.vblank(VGA_VB),	
 	.en(ce_6),
-	.pause(pause),
+	.pause(pause_system),
 	.data_in(cpu_dout),
 	.write(starfield3_cs == 1'b1 && cpu_wr_n == 1'b0),
 	.sf_on(sf_on3),
@@ -433,9 +444,13 @@ begin
 		begin
 			spritedebugram_wr_a <= 1'b0;
 			spritedebugram_addr_a <= (({8'b0,vcnt} + 17'd16) * 17'd320) + {8'b0,hcnt} + 17'd19;
-			if(VGA_VB && !vblank_last)
+
+			if(!pause_system)
 			begin
-				sd_state <= SD_CLEAR_BEGIN;
+					if(VGA_VB && !vblank_last)
+					begin
+						sd_state <= SD_CLEAR_BEGIN;
+					end
 			end
 		end
 
@@ -450,16 +465,24 @@ begin
 
 		SD_CLEAR:
 		begin
-			if(spritedebugram_addr_a > 17'd78000)
+			
+			if(pause_system)
 			begin
-				spritedebugram_addr_a <= 17'b0;
 				sd_state <= SD_WAIT;
-				//$display("SD_CLEAR_END: %d %d", hcnt, vcnt);
-				spritedebugram_wr_a <= 1'b0;
 			end
 			else
 			begin
-				spritedebugram_addr_a <= spritedebugram_addr_a + 17'b1;
+				if(spritedebugram_addr_a > 17'd79000)
+				begin
+					spritedebugram_addr_a <= 17'b0;
+					sd_state <= SD_WAIT;
+					//$display("SD_CLEAR_END: %d %d", hcnt, vcnt);
+					spritedebugram_wr_a <= 1'b0;
+				end
+				else
+				begin
+					spritedebugram_addr_a <= spritedebugram_addr_a + 17'b1;
+				end
 			end
 		end
 	endcase
@@ -469,6 +492,9 @@ end
 // RGB mixer
 
 `ifdef DEBUG_SPRITE_COLLISION
+// assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? 8'hFF : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0; 
+// assign VGA_G = charmap_a ? charmap_g : spritedebugram_data_out_a > 8'b0 ? 8'h00 : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0;
+// assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? 8'h00 : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0;
 assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
 assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
 assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;

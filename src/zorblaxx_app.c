@@ -22,10 +22,10 @@
 /*
 	Sprite indexes:
 	0-9	- Trails
-	10		- Player
-	11-26   - Asteroids
-	27-30	- Explosions
-	31-31	- Pickups
+	10	- Pickup
+	11		- Player
+	12-27   - Asteroids
+	28-31	- Explosions
 */
 
 #include "sys.h"
@@ -85,6 +85,9 @@ const unsigned short level_progress_per_level = 3000;
 const unsigned short game_state_warp_timeout_first = 120;
 const unsigned short game_state_warp_timeout = 240;
 const unsigned short game_state_danger_timeout = 120;
+// const unsigned short game_state_warp_timeout_first = 12;
+// const unsigned short game_state_warp_timeout = 24;
+// const unsigned short game_state_danger_timeout = 12;
 
 const unsigned char asteroids_difficulty_base = 3;
 const unsigned char asteroids_difficulty_multiplier = 2;
@@ -107,6 +110,76 @@ void setup_area()
 {
 	x_h_min = (unsigned short)(x_min * x_divisor);
 	x_h_max = (unsigned short)(x_max * x_divisor);
+}
+
+void test_loop()
+{
+	clear_bgcolor(0);
+
+	clear_sprites();
+
+	// Setup title sprites
+	unsigned char title_sprite = 0;
+	unsigned short title_x = 115;
+	signed short title_y = 100;
+	unsigned char si = 0;
+	for (unsigned char y = 0; y < 1; y++)
+	{
+		for (unsigned char x = 0; x < 4; x++)
+		{
+			enable_sprite(title_sprite, 0, 1);
+			spr_index[title_sprite] = 8;
+			set_sprite_position(title_sprite, title_x + (x * 18), title_y + (y * 18));
+			si++;
+			title_sprite++;
+		}
+	}
+
+	set_sprite_position(0, 64, 160);
+	set_sprite_position(1, 77, 164);
+	set_sprite_position(2, 90, 168);
+
+	set_sprite_position(3, 200, 100);
+
+	// set_sprite_position(2, 164, 164);
+	// set_sprite_position(3, 179, 167);
+
+	update_sprites();
+
+	while (1)
+	{
+		vblank = input0 & 0x10;
+
+		if (VBLANK_RISING)
+		{
+			//  for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+			//  {
+			//  	write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite + 1, 5);
+			//  	spr_y_l[sprite]++;
+			//  	spritecollisionram[sprite] = 0;
+			//  }
+
+			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
+			{
+				write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite, 3);
+			}
+			for (unsigned char sprite = 0; sprite < 2; sprite++)
+			{
+				if (spritecollisionram[sprite] > 0)
+				{
+					system_pause[0] = 1;
+					update_sprites();
+				}
+				spritecollisionram[sprite] = 0;
+			}
+		}
+
+		if (VBLANK_FALLING)
+		{
+		}
+
+		vblank_last = vblank;
+	}
 }
 
 void intro_loop()
@@ -133,10 +206,7 @@ void intro_loop()
 		{
 			enable_sprite(title_sprite, 2, 0);
 			spr_index[title_sprite] = title_sprite_index_first + si;
-			spr_x[title_sprite] = title_x + (x * 16);
-			signed short sy = -32 + (y * 16);
-			spr_y_h[title_sprite] = sy >> 8;
-			spr_y_l[title_sprite] = (unsigned char)sy;
+			set_sprite_position(title_sprite, title_x + (x * 16), -32 + (y * 16));
 			si++;
 			title_sprite++;
 		}
@@ -236,6 +306,7 @@ void game_loop()
 
 		if (VBLANK_RISING)
 		{
+			// timer[0] = 1;
 
 			// Detect player collision
 			if (spritecollisionram[player_sprite])
@@ -248,7 +319,7 @@ void game_loop()
 						enable_sprite(pickup_sprite_first, pickup_sprite_palette, 0);
 						player_score += pickup_value[0];
 						pickup_state[0] = 2;
-						pickup_timer[0] = 60;
+						pickup_timer[0] = 40;
 						spr_index[pickup_sprite_first] += pickup_type_count;
 					}
 				}
@@ -259,12 +330,6 @@ void game_loop()
 						if (spritecollisionram[asteroids_sprite_first + a])
 						{
 							player_hit = true;
-							write_string("DEAD", 0b00000111, 15, 15);
-							for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-							{
-								write_char(spritecollisionram[sprite] ? 'O' : '.', 0b00000111, sprite + 1, 16);
-								spritecollisionram[sprite] = 0;
-							}
 							break;
 						}
 					}
@@ -272,11 +337,13 @@ void game_loop()
 			}
 			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 			{
-				write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite + 1, 3);
 				spritecollisionram[sprite] = 0;
 			}
+
+			timer[0] = 0;
 			// Update sprite registers
 			update_sprites();
+			write_stringf_ushort("%5d", 0xFF, 0, 13, GET_TIMER);
 
 			button_a_last = button_a;
 			button_a = CHECK_BIT(joystick[0], 4);
@@ -286,12 +353,10 @@ void game_loop()
 			if (scroll_speed != scroll_speed_last)
 			{
 				scroll_speed_last = scroll_speed;
-				unsigned char s = scroll_speed / sf_speed1;
+				unsigned char s = scroll_speed >> 2;
 				starfield[0] = s;
-				s = s / 2;
-				starfield[2] = s;
-				s = s / 2;
-				starfield[4] = s;
+				starfield[2] = s >> 1;
+				starfield[4] = s >> 1;
 			}
 		}
 
@@ -383,7 +448,9 @@ void game_loop()
 				// Update asteroid difficulty
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
 				asteroids_difficulty_speedspread = 2 + (asteroids_difficulty / 4);
-				asteroids_active_max = 5 + asteroids_difficulty;
+
+				asteroids_active_max = asteroids_max;
+				// asteroids_active_max = 5 + asteroids_difficulty;
 				if (asteroids_active_max > asteroids_max)
 				{
 					asteroids_active_max = asteroids_max;
@@ -479,6 +546,7 @@ void game_loop()
 						write_string("No bonus :(", 0b01011011, 14, 16);
 					}
 					write_stringf_ulong("Score: %6d", 0xFF, 13, 18, player_score);
+					clear_char_area(0, 10, 29, 30, 29);
 				}
 				break;
 			case field_complete: // Display field completed screen while bringing ship up to speed
@@ -587,6 +655,8 @@ void app_zorblaxx()
 		setup_player(player_spawn_x, 256);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 		setup_trails();
+
+		//test_loop();
 
 		intro_loop();
 

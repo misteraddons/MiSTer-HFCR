@@ -24,13 +24,18 @@
 #include "sys.h"
 
 extern unsigned char sprite_max;
-extern unsigned short spr_x[];
+extern unsigned char spr_x_l[];
+extern unsigned char spr_x_h[];
 extern unsigned char spr_y_l[];
 extern unsigned char spr_y_h[];
 extern bool spr_on[];
 extern bool spr_collide[];
 extern unsigned char spr_palette_index[];
 extern unsigned char spr_index[];
+
+extern void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y);
+
+extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
 
 extern void update_sprites();
 
