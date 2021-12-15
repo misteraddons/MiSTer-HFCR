@@ -186,44 +186,56 @@ void player_destroyed()
 
 void handle_player(bool allow_control)
 {
+	// If player is currently dead and a respawn is scheduled
 	if (player_respawn_timer > 0)
 	{
+		// Decelerate player speed to minimum
 		if (player_speed > player_speed_min)
 		{
 			player_speed--;
 		}
+		// Decrement respawn timer
 		player_respawn_timer--;
+		// Respawn the player when timer reaches 0
 		if (player_respawn_timer == 0)
 		{
+			// Set player to spawn position
 			setup_player(player_spawn_x, player_spawn_y);
-			// Trigger invincibility
+			// Enable invincibility and set timer
 			enable_sprite(player_sprite, player_sprite_palette, false);
 			player_invincible_timer = player_invincible_timeout;
 		}
 		return;
 	}
 
+	// If player is currently invincible
 	if (player_invincible_timer > 0)
 	{
+		// Ignore any collisions
 		player_hit = false;
+		// Decrement invincibility timer
 		player_invincible_timer--;
-		player_invincible_flash++;
-
+		// Wait for invincibility timer to expire
 		if (player_invincible_timer == 0)
 		{
+			// Re-enable collision when invincibility runs out
 			enable_sprite(player_sprite, player_sprite_palette, true);
 		}
 		else
 		{
+			// Wait for invincibility flash timer to roll over
 			if (player_invincible_flash == 4)
 			{
+				// Reset timer
 				player_invincible_flash = 0;
+				// Flip player sprite visibility
 				spr_on[player_sprite] = !spr_on[player_sprite];
 			}
 		}
 	}
 	else
 	{
+		// If player is hit then destroy player
 		if (player_hit)
 		{
 			player_hit = false;
@@ -231,6 +243,7 @@ void handle_player(bool allow_control)
 		}
 	}
 
+	// Gradually reduce player move speed to zero
 	if (player_xs > 0)
 	{
 		player_xs--;
@@ -247,8 +260,11 @@ void handle_player(bool allow_control)
 	{
 		player_ys++;
 	}
+
+	// Is player control activated?
 	if (allow_control)
 	{
+		// Use player directional inputs to increase/decrease velocity, enforcing max speed limits
 		if (CHECK_BIT(joystick[0], 0) && player_xs < player_max_speed)
 		{
 			player_xs += player_accel;
@@ -266,6 +282,7 @@ void handle_player(bool allow_control)
 			player_ys -= player_accel;
 		}
 
+		// Use player boost input to increase/decrease player flight speed, enforcing max speed limits
 		if (CHECK_BIT(joystick[0], 4))
 		{
 			if (player_speed < player_speed_max)
@@ -282,14 +299,18 @@ void handle_player(bool allow_control)
 		}
 	}
 
-	spr_index[player_sprite] = player_xs < -2 ? player_sprite_index_left : player_xs > 2 ? player_sprite_index_right
-																						 : player_sprite_index_default;
+	// Set player sprite image
+	spr_index[player_sprite] = (player_xs < -2 ? player_sprite_index_left : player_xs > 2 ? player_sprite_index_right
+																						 : player_sprite_index_default);
 
+	// Integrate player move velocity
 	player_x += player_xs;
 	player_y += player_ys;
 
-	if (allow_control) // Only enforce player position limits when player is in control
+	// Enforce player position limits when player is in control (disabled when not to allow ship to animate off screen)
+	if (allow_control) 
 	{
+		// Enforce X minimum (left)
 		if (player_x < player_x_min)
 		{
 			player_x = player_x_min;
@@ -298,6 +319,7 @@ void handle_player(bool allow_control)
 				player_xs = 0;
 			}
 		}
+		// Enforce X maximum (right)
 		else if (player_x > player_x_max)
 		{
 			player_x = player_x_max;
@@ -307,6 +329,7 @@ void handle_player(bool allow_control)
 			}
 		}
 
+		// Enforce Y minimum (top)
 		if (player_y < player_y_min)
 		{
 			player_y = player_y_min;
@@ -315,6 +338,7 @@ void handle_player(bool allow_control)
 				player_ys = 0;
 			}
 		}
+		// Enforce Y maximum (bottom)
 		else if (player_y > player_y_max)
 		{
 			player_y = player_y_max;
@@ -325,22 +349,22 @@ void handle_player(bool allow_control)
 		}
 	}
 
+	// Set sprite position with low res coordinates
 	set_sprite_position(player_sprite, player_x / x_divisor, player_y / y_divisor);
 
-	// Trail
+	// Decrease player trail timer
 	player_trail_timer--;
+	// Spawn player trail when timer expires
 	if (player_trail_timer <= 0)
 	{
+		// Generate next particle timer (emission rate)
 		unsigned char reduce = (player_speed / 8) + rand_uchar(0, 6);
-		// if (reduce > player_trail_frequency - 1)
-		// {
-		// 	reduce = player_trail_frequency - 1;
-		// }
 		player_trail_timer = player_trail_frequency - reduce;
 		if (player_trail_timer <= 0)
 		{
 			player_trail_timer = 0;
 		}
+		// Spawn a player trail entity
 		add_player_trail();
 	}
 }

@@ -42,7 +42,7 @@ extern unsigned char scroll_speed;
 #define explosion_sprite_index_first trail_sprite_index_last + 1
 #define explosion_sprite_index_last explosion_sprite_index_first + 7
 #define pickup_sprite_index_first 24
-#define pickup_sprite_index_last pickup_sprite_index_first + 3
+#define pickup_sprite_index_last pickup_sprite_index_first + 5
 #define title_sprite_index_first pickup_sprite_index_last + 1
 
 // Game defaults

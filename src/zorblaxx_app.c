@@ -521,7 +521,7 @@ void game_loop()
 
 					write_stringf_ushort("-- FIELD %d COMPLETED --", 0xFF, 9, 11, level_number);
 
-					unsigned short par_time = level_progress_max / 60 / (player_speed_min + (player_speed_min / 2));
+					unsigned short par_time = level_progress_max / 60 / player_speed_min;
 					unsigned short bonus = 0;
 					if (level_time < par_time)
 					{

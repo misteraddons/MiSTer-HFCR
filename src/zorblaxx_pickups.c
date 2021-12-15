@@ -27,7 +27,7 @@
 #include "zorblaxx_player.h"
 
 #define const_pickup_max 1
-#define const_type_count 2
+#define const_type_count 3
 unsigned char pickup_max = const_pickup_max;
 unsigned char pickup_type_count = const_type_count;
 unsigned char pickup_sprite_first = 10;
@@ -36,6 +36,7 @@ unsigned char pickup_spawn_y = 0;
 unsigned char pickup_spawn_interval = 10;
 unsigned short pickup_x[const_pickup_max];
 unsigned short pickup_y[const_pickup_max];
+signed char pickup_ys[const_pickup_max];
 unsigned char pickup_state[const_pickup_max];
 unsigned char pickup_value[const_pickup_max];
 unsigned char pickup_timer[const_pickup_max];
@@ -49,10 +50,12 @@ void spawn_pickup()
 		if (pickup_state[t] == 0)
 		{
 			unsigned char sprite = pickup_sprite_first + t;
+			unsigned char type = rand_uchar(0, const_type_count - 1);
+
 			pickup_x[t] = rand_ushort(48, 272) * x_divisor;
 			pickup_y[t] = pickup_spawn_y * y_divisor;
+			pickup_ys[t] = rand_uchar(0, type * 12);
 			pickup_state[t] = 1;
-			unsigned char type = rand_uchar(0, const_type_count - 1);
 			pickup_value[t] = 50 * (type + 1);
 			enable_sprite(sprite, pickup_sprite_palette, 1);
 			spr_index[sprite] = pickup_sprite_index_first + type;
@@ -80,7 +83,7 @@ void handle_pickups()
 		if (pickup_state[t] > 0)
 		{
 			unsigned char sprite = pickup_sprite_first + t;
-			pickup_y[t] += player_speed;
+			pickup_y[t] += (pickup_ys[t] + scroll_speed);
 			if ((pickup_y[t] > pickup_y_max) > 0)
 			{
 				spr_on[sprite] = false;

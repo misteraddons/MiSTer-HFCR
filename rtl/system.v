@@ -192,7 +192,6 @@ always @(posedge clk_24) begin
 	if(pause) pause_trigger<=1'b0;
 end
 
-
 reg [15:0] cycle_timer;
 reg vblank_last;
 reg [15:0] vblank_start;

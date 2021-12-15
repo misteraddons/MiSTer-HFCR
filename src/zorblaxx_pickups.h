@@ -27,15 +27,9 @@ extern unsigned char pickup_max;
 extern unsigned char pickup_type_count;
 extern unsigned char pickup_sprite_first;
 extern unsigned char pickup_sprite_palette;
-extern unsigned short pickup_x[];
-extern unsigned short pickup_y[];
-extern signed char pickup_xs[];
-extern signed char pickup_ys[];
 extern unsigned char pickup_state[];
 extern unsigned char pickup_value[];
 extern unsigned char pickup_timer[];
-extern unsigned short pickup_y_max;
-extern unsigned char pickup_y_offset;
 
 extern void spawn_pickup();
 
