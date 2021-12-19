@@ -143,7 +143,7 @@ void move_player_to_target()
 }
 
 // Player
-void setup_player(unsigned short x, unsigned short y)
+void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 {
 	// Player bounds
 	player_x_min = 16 * x_divisor;
@@ -158,6 +158,9 @@ void setup_player(unsigned short x, unsigned short y)
 	player_xs = 0;
 	player_ys = 0;
 
+	player_lives = lives;
+	player_lives_changed = true;
+	player_respawn_timer = 0;
 	player_invincible_timer = 0;
 	player_invincible_flash = 0;
 
@@ -200,7 +203,7 @@ void handle_player(bool allow_control)
 		if (player_respawn_timer == 0)
 		{
 			// Set player to spawn position
-			setup_player(player_spawn_x, player_spawn_y);
+			setup_player(player_spawn_x, player_spawn_y, player_lives);
 			// Enable invincibility and set timer
 			enable_sprite(player_sprite, player_sprite_palette, false);
 			player_invincible_timer = player_invincible_timeout;
@@ -223,6 +226,8 @@ void handle_player(bool allow_control)
 		}
 		else
 		{
+			// Increment flash timer
+			player_invincible_flash++;
 			// Wait for invincibility flash timer to roll over
 			if (player_invincible_flash == 4)
 			{
@@ -301,14 +306,14 @@ void handle_player(bool allow_control)
 
 	// Set player sprite image
 	spr_index[player_sprite] = (player_xs < -2 ? player_sprite_index_left : player_xs > 2 ? player_sprite_index_right
-																						 : player_sprite_index_default);
+																						  : player_sprite_index_default);
 
 	// Integrate player move velocity
 	player_x += player_xs;
 	player_y += player_ys;
 
 	// Enforce player position limits when player is in control (disabled when not to allow ship to animate off screen)
-	if (allow_control) 
+	if (allow_control)
 	{
 		// Enforce X minimum (left)
 		if (player_x < player_x_min)

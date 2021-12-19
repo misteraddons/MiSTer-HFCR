@@ -40,7 +40,7 @@ unsigned char asteroids_active;
 unsigned char asteroids_active_max;
 unsigned char asteroids_difficulty;
 unsigned char asteroids_difficulty_speedspread;
-unsigned short asteroids_passed = 0;
+unsigned short asteroids_evaded = 0;
 
 unsigned char get_asteroid_timer()
 {
@@ -111,7 +111,7 @@ void handle_asteroids(unsigned char spawn_enabled)
 					asteroids_xs[m] = rand_schar(-asteroids_difficulty_speedspread, asteroids_difficulty_speedspread);
 					asteroids_ys[m] = rand_uchar(4, 16 + asteroids_difficulty);
 					asteroids_timer[m] = get_asteroid_timer();
-					asteroids_passed++;
+					asteroids_evaded++;
 				}
 				else
 				{

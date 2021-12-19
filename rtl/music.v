@@ -34,8 +34,7 @@ module music #(
 
 	input		[7:0]	musicrom_data_out,
 	output reg [ROM_WIDTH-1:0]	musicrom_addr,
-	output		[15:0]	audio_l,
-	output		[15:0]	audio_r
+	output		[9:0]	sound
 	);
 
 	// Music system state machine (ym player)
@@ -53,7 +52,6 @@ module music #(
 	// YM2149 sound generator
 	reg  [7:0] snd_data_in;
 	reg        snd_wr;
-	wire [9:0] audio_out;
 
 	jt49 jt49_music(
 		.clk(clk),
@@ -62,7 +60,7 @@ module music #(
 		.addr(ymp_register),
 		.din(snd_data_in),
 		.dout(),
-		.sound(audio_out),
+		.sound(sound),
 		.sample(),
 		.A(),
 		.B(),
@@ -75,9 +73,6 @@ module music #(
 		.IOB_in(),
 		.IOB_out()
 	);
-
-	assign audio_l =  { 1'b0, audio_out[9:0],5'd0};
-	assign audio_r = audio_l;
 	
 	localparam YM_INIT = 0;
 	localparam YM_WAIT = 1;

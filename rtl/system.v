@@ -139,7 +139,12 @@ tv80s #(
   );
 
 // Hardware inputs
-wire [7:0] in0_data_out = {VGA_HS, VGA_VS,VGA_HB, VGA_VB, 4'b1000};
+`ifdef DEBUG_SIMULATION
+	wire debug = 1'b1;
+`else
+	wire debug = 1'b0;
+`endif
+wire [7:0] in0_data_out = {VGA_HS, VGA_VS,VGA_HB, VGA_VB, 3'b100, debug};
 wire [7:0] joystick_data_out = joystick[{cpu_addr[4:0],3'd0} +: 8];
 wire [7:0] analog_l_data_out = analog_l[{cpu_addr[3:0],3'd0} +: 8];
 wire [7:0] analog_r_data_out = analog_r[{cpu_addr[3:0],3'd0} +: 8];
@@ -169,8 +174,9 @@ wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
 wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
 wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
 wire system_pause_cs = cpu_addr[15:4] == 12'b100010100011;
-wire snd_cs = cpu_addr[15:4] == 12'b100010110000;
+wire sound_cs = cpu_addr[15:4] == 12'b100010110000;
 wire music_cs = cpu_addr[15:4] == 12'b100010110001;
+
 
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
@@ -270,6 +276,7 @@ wire chrom_wr = dn_wr && dn_index == 8'd1;
 wire palrom_wr = dn_wr && dn_index == 8'd2;
 wire spriterom_wr = dn_wr && dn_index == 8'd3;
 wire musicrom_wr = dn_wr && dn_index == 8'd4;
+wire soundrom_wr = dn_wr && dn_index == 8'd5;
 
 // Ram write enables
 wire wkram_wr = !cpu_wr_n && wkram_cs;
@@ -511,14 +518,15 @@ assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 
 assign VGA_B = charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
+
+wire [9:0] music_out;
 `ifndef DISABLE_MUSIC
 // Music player
 localparam MUSIC_ROM_WIDTH = 17;
 wire [MUSIC_ROM_WIDTH-1:0] musicrom_addr;
 wire  [7:0] musicrom_data_out;
-music #(
-	.ROM_WIDTH(MUSIC_ROM_WIDTH)
-) music (
+
+music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 	.clk(clk_24),
 	.ce_2(ce_2),
 	.reset(reset),
@@ -528,45 +536,103 @@ music #(
 	.vblank(VGA_VB),
 	.musicrom_addr(musicrom_addr),
 	.musicrom_data_out(musicrom_data_out),
-	.audio_l(AUDIO_L),
-	.audio_r(AUDIO_R)
+	.sound(music_out)
 );
 `endif
 
-// // YM2149 sound generator
-// wire [3:0] snd_addr = cpu_addr[3:0];
-// reg  [7:0] snd_data_in;
-// wire [7:0] snd_data_out;
-// reg        snd_wr;
-// wire [9:0] audio_out;
-// wire [7:0] audio_out_a;
-// wire [7:0] audio_out_b;
-// wire 	   snd_cpu_cs = (snd_cs && ~cpu_wr_n);
-// jt49 jt49 (
-// 	.clk(clk_24),
-// 	.clk_en(ce_2),
-// 	.rst_n(~(reset),
-// 	.addr(snd_cpu_cs ? snd_addr : ymp_register),
-// 	.din(snd_cpu_cs ? cpu_dout : snd_data_in),
-// 	.dout(snd_data_out),
-// 	.sound(audio_out),
-// 	.sample(),
-// 	.A(audio_out_a),
-// 	.B(audio_out_b),
-// 	.C(),
-// 	.sel(1'b1),
-// 	.cs_n(1'b0),
-// 	.wr_n(~(snd_wr || snd_cpu_cs)),
-// 	.IOA_in(),
-// 	.IOA_out(),
-// 	.IOB_in(),
-// 	.IOB_out()
-// );
 
-// assign AUDIO_L =  { 1'b0, audio_out[9:0],5'd0};
-// assign AUDIO_R = AUDIO_L;
-// assign AUDIO_L =  { 3'b0, audio_out_a[7:0],5'd0};
-// assign AUDIO_R = { 3'b0, audio_out_b[7:0],5'd0};
+wire signed [11:0] snd_audio_out;
+`ifndef DISABLE_SOUND
+// // M5205 sound player
+wire [3:0] snd_addr = cpu_addr[3:0];
+reg  [3:0] snd_data_in;
+reg [15:0] soundrom_addr;
+wire [7:0] soundrom_data_out;
+wire snd_sample;
+
+reg [15:0] soundrom_addr_target;
+
+reg ce_m5205;
+reg  snd_cnt;
+reg [13:0] ce_m5205_counter;
+
+reg [7:0] snd_reset_count;
+wire snd_reset = snd_reset_count > 8'b0;
+
+
+always @(posedge clk_24) 
+begin
+	if(reset)
+	begin
+		snd_reset_count <= 8'hFF;
+	end
+
+	if(snd_reset_count>8'b0)
+	begin
+		ce_m5205_counter <= 14'd0;
+		soundrom_addr <= 16'd0;
+		soundrom_addr_target <= 16'd32768;
+		snd_data_in <= 4'd0;
+		snd_reset_count <= snd_reset_count - 8'd1;
+	end
+	else
+	begin
+		ce_m5205 <= (ce_m5205_counter == 14'd0);
+		if(ce_m5205_counter == 14'd31)
+		begin
+			ce_m5205_counter <= 14'd0;
+		end
+		else
+		begin
+			ce_m5205_counter <= ce_m5205_counter + 14'd1;
+		end
+
+		if(snd_sample)
+		begin
+			snd_cnt <= snd_cnt + 1'd1;
+			if(snd_cnt == 1'b1)
+			begin
+				soundrom_addr <= soundrom_addr + 16'd1;
+				snd_data_in <= soundrom_data_out[3:0];
+				if(soundrom_addr_target == soundrom_addr)
+				begin
+					//snd_reset_count <= 8'hFF;
+				end
+			end
+			else
+			begin
+				snd_data_in <= soundrom_data_out[7:4];
+			end
+		end
+
+		if(ce_m5205)
+		begin
+			//$display("addr: %x  smp: %b do: %x di: %x  so: %x  au: %x  b: %x", soundrom_addr, snd_sample, soundrom_data_out, snd_data_in, snd_audio_out, audio_unsigned, snd_cnt);
+		end
+	end
+end
+
+jt5205 #(.INTERPOL(0)) m5205(
+    .rst(snd_reset),
+	.clk(clk_24),
+    .cen(ce_m5205),
+	.sel(2'b10),
+    .din(snd_reset ? 4'b1111 : snd_data_in),
+    .sound(snd_audio_out),
+    .sample(snd_sample),
+	.irq(),
+	.vclk_o()
+);
+`endif 
+
+wire signed [15:0] music_signed = { 1'b0, music_out, 5'b0 };
+wire signed [12:0] audio_signed = { snd_audio_out, 1'b0};
+
+wire signed [15:0] audio_out = {audio_signed, 3'b0 };
+
+assign AUDIO_L =  audio_out + music_signed;
+assign AUDIO_R = AUDIO_L;
+
 
 // MEMORY
 // ------
@@ -778,6 +844,24 @@ dpram #(17,8, "music.hex") musicrom
 	.clock_b(clk_24),
 	.address_b(dn_addr[16:0]),
 	.wren_b(musicrom_wr),
+	.data_b(dn_data),
+	.q_b()
+);
+`endif
+
+`ifndef DISABLE_SOUND
+// Sound ROM - 64kB
+dpram #(16,8, "sound.hex") soundrom
+(
+	.clock_a(clk_24),
+	.address_a(soundrom_addr),
+	.wren_a(1'b0),
+	.data_a(),
+	.q_a(soundrom_data_out),
+
+	.clock_b(clk_24),
+	.address_b(dn_addr[15:0]),
+	.wren_b(soundrom_wr),
 	.data_b(dn_data),
 	.q_b()
 );

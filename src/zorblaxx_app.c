@@ -82,11 +82,13 @@ unsigned char level_progress_timer = 0;
 unsigned short level_progress_max;
 const unsigned short level_progress_base = 20000;
 const unsigned short level_progress_per_level = 3000;
-const unsigned short game_state_warp_timeout_first = 120;
-const unsigned short game_state_warp_timeout = 240;
-const unsigned short game_state_danger_timeout = 120;
+unsigned short game_state_warp_timeout_first = 120;
+unsigned short game_state_warp_timeout = 240;
+unsigned short game_state_danger_timeout = 120;
+unsigned short game_state_gameover_timeout = 120;
 const unsigned char asteroids_difficulty_base = 3;
 const unsigned char asteroids_difficulty_multiplier = 2;
+unsigned char player_lives_default = 3;
 
 unsigned char pickup_spawn_timer = 0;
 unsigned char pickup_spawn_timer_min = 120;
@@ -95,6 +97,8 @@ unsigned long high_score = 5000;
 unsigned char bonus_score_multiplier = 10;
 unsigned long player_score = 0;
 unsigned long player_score_last;
+unsigned long time_bonuses_collected;
+unsigned long pickup_bonuses_collected;
 unsigned char high_score_passed = 0;
 unsigned char player_score_timer = 0;
 unsigned char player_score_timer_frequency = 100;
@@ -102,10 +106,20 @@ unsigned char player_score_timer_frequency = 100;
 unsigned char button_a;
 unsigned char button_a_last;
 
-void setup_area()
+void setup_variables()
 {
 	x_h_min = (unsigned short)(x_min * x_divisor);
 	x_h_max = (unsigned short)(x_max * x_divisor);
+
+	unsigned char debug = CHECK_BIT(input0, 0);
+	if (debug)
+	{
+		game_state_warp_timeout_first /= 10;
+		game_state_warp_timeout /= 10;
+		game_state_danger_timeout /= 10;
+		game_state_gameover_timeout /= 10;
+		player_lives_default = 1;
+	}
 }
 
 void test_loop()
@@ -144,7 +158,7 @@ void test_loop()
 
 	while (1)
 	{
-		vblank = input0 & 0x10;
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
 
 		if (VBLANK_RISING)
 		{
@@ -213,7 +227,7 @@ void intro_loop()
 
 	while (1)
 	{
-		vblank = input0 & 0x10;
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
 
 		if (VBLANK_RISING)
 		{
@@ -298,7 +312,7 @@ void game_loop()
 
 	while (1)
 	{
-		vblank = input0 & 0x10;
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
 
 		if (VBLANK_RISING)
 		{
@@ -314,6 +328,7 @@ void game_loop()
 					{
 						enable_sprite(pickup_sprite_first, pickup_sprite_palette, 0);
 						player_score += pickup_value[0];
+						pickup_bonuses_collected += pickup_value[0];
 						pickup_state[0] = 2;
 						pickup_timer[0] = 40;
 						spr_index[pickup_sprite_first] += pickup_type_count;
@@ -339,7 +354,7 @@ void game_loop()
 			// Update sprite registers
 			update_sprites();
 
-			// 
+			//
 			button_a_last = button_a;
 			button_a = CHECK_BIT(joystick[0], 4);
 
@@ -374,6 +389,15 @@ void game_loop()
 					level_time++;
 					level_time_timer = 0;
 				}
+				if (player_lives_changed)
+				{
+					write_stringf("%2d", 0xFF, 38, 1, player_lives);
+					player_lives_changed = false;
+					if (player_lives == 0)
+					{
+						game_state = game_over;
+					}
+				}
 			}
 
 			// Game state machine
@@ -387,10 +411,7 @@ void game_loop()
 				level_playercontrol = 0;
 
 				// Reset player
-				player_lives = 3;
-				player_lives_changed = true;
-
-				setup_player(player_spawn_x, 260);
+				setup_player(player_spawn_x, 260, player_lives_default);
 				player_speed = player_speed_warp; // Preset player to warp speed!
 
 				// Reset scores and stats
@@ -398,7 +419,7 @@ void game_loop()
 				player_score_last = 999;
 				player_score_timer = 0;
 				high_score_passed = 0;
-				asteroids_passed = 0;
+				asteroids_evaded = 0;
 
 				// Setup asteroids
 				setup_asteroids();
@@ -417,7 +438,6 @@ void game_loop()
 				write_stringf("%2d", 0xFF, 38, 1, player_lives);
 
 				// Draw instructions for first warp
-
 				write_string("Avoid the asteroids!", 0b00111111, 10, 11);
 				write_string("Use A to boost for time bonus", 0b00111000, 5, 14);
 				write_string("Collect gems for extra points", 0b00011111, 5, 17);
@@ -485,17 +505,6 @@ void game_loop()
 					player_score_timer -= player_score_timer_frequency;
 					player_score++;
 				}
-
-				if (player_lives_changed)
-				{
-					write_stringf("%2d", 0xFF, 38, 1, player_lives);
-					player_lives_changed = false;
-					if (player_lives == 0)
-					{
-						game_state = game_over;
-					}
-				}
-
 				break;
 			case field_ending:
 				// Level ended - wait for all asteroids to clear
@@ -526,6 +535,7 @@ void game_loop()
 					if (level_time < par_time)
 					{
 						bonus = (par_time - level_time) * bonus_score_multiplier;
+						time_bonuses_collected += bonus;
 					}
 					player_score += bonus;
 
@@ -591,7 +601,7 @@ void game_loop()
 				break;
 			case game_over:
 				write_string("GAME OVER", 0b00000011, 16, 14);
-				game_state_timer = 120;
+				game_state_timer = game_state_gameover_timeout;
 				game_state = game_over_waitforstats;
 				break;
 			case game_over_waitforstats:
@@ -601,10 +611,13 @@ void game_loop()
 					clear_char_area(0, 0, 14, 39, 14);
 
 					// Write stats
-					write_stringf_ulong("Final Score: %6d", 0xFF, 10, 14, player_score);
-					write_stringf_ulong("Asteroids passed: %6d", 0xFF, 5, 15, asteroids_passed);
+					write_stringf_ulong("Final Score: %6d", 0xFF, 10, 11, player_score);
 
-					write_string("Press A to continue", 0xFF, 10, 17);
+					write_stringf_ulong("Asteroids evaded: %6d", 0b00111111, 5, 14, asteroids_evaded);
+					write_stringf_ulong("Time bonuses: %6d", 0b00111000, 9, 16, time_bonuses_collected);
+					write_stringf_ulong("Pickup bonuses: %6d", 0b00011111, 7, 18, pickup_bonuses_collected);
+
+					write_string("Press A to continue", 0xFF, 10, 21);
 
 					game_state = game_over_waitforscoreentry;
 				}
@@ -642,15 +655,16 @@ void game_loop()
 
 void app_zorblaxx()
 {
+	setup_variables();
 	while (1)
 	{
 		clear_chars(0);
-		setup_area();
-		setup_player(player_spawn_x, 256);
+		clear_sprites();
+		setup_player(player_spawn_x, 256, player_lives_default);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 		setup_trails();
 
-		//test_loop();
+		// test_loop();
 
 		intro_loop();
 

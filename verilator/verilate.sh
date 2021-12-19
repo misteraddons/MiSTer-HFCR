@@ -12,6 +12,7 @@ verilator \
 -I../rtl \
 -I../rtl/JTFRAME \
 -I../rtl/jt49 \
+-I../rtl/jt5205 \
 -I../rtl/tv80
 else
 	echo "not running on windows"

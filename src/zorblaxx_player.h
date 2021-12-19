@@ -61,5 +61,5 @@ extern signed short player_y_diff;
 extern void set_player_target(unsigned short x, unsigned short y, unsigned char divider, unsigned char maxspeed);
 extern void move_player_to_target();
 
-extern void setup_player(unsigned short x, unsigned short y);
+extern void setup_player(unsigned short x, unsigned short y, unsigned char lives);
 extern void handle_player(bool allow_control);

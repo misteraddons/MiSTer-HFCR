@@ -49,8 +49,6 @@ extern unsigned char scroll_speed;
 extern unsigned short player_spawn_x;
 extern unsigned short player_spawn_y;
 
-extern void setup_area();
-
 extern void intro_loop();
 
 extern void game_loop();

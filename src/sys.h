@@ -66,6 +66,9 @@ extern bool hblank_last;
 extern bool vblank;
 extern bool vblank_last;
 
+// INPUT 0 bits
+#define INPUT_VBLANK 4
+
 // Macros
 #define CHECK_BIT(var, pos) ((var) & (1 << (pos)))
 #define SET_BIT(var, pos) ((var) |= (1 << (pos)))

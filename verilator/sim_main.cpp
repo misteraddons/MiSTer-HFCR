@@ -41,10 +41,7 @@ const char* windowTitle_DebugLog = "Debug log";
 const char* windowTitle_Video = "VGA output";
 bool showDebugLog = true;
 DebugConsole console;
-MemoryEditor mem_edit_1;
-MemoryEditor mem_edit_2;
-MemoryEditor mem_edit_3;
-MemoryEditor mem_edit_4;
+MemoryEditor mem_edit;
 // HPS emulator
 // ------------
 SimBus bus(console);
@@ -87,11 +84,11 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
-//#define DEBUG_AUDIO
+#define DEBUG_AUDIO
 
 #ifdef DEBUG_AUDIO
 // Audio
-SimClock clk_audio(1000);
+SimClock clk_audio(2205);
 ofstream audioFile;
 #endif
 
@@ -136,9 +133,13 @@ int verilate() {
 		if (clk_audio.IsRising()) {
 			// Output audio
 			unsigned short audio_l = top->AUDIO_L;
-			//unsigned short audio_r = top->AUDIO_R;
+			unsigned char audio_8 = audio_l;
+			if (audio_l > 0) {
+				audio_8 = audio_l >> 8;
+				//console.AddLog("%d %d",audio_l, audio_8);
+			}
+			//audioFile.write((const char*)&audio_8, 1);
 			audioFile.write((const char*)&audio_l, 2);
-			//	audioFile.write((const char*)&audio_r, 2);
 		}
 #endif
 
@@ -283,49 +284,53 @@ int main(int argc, char** argv, char** env) {
 
 		// Memory debug
 		/*ImGui::Begin("PGROM Editor");
-		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 32768, 0);
+		mem_edit.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 32768, 0);
 		ImGui::End();
 		ImGui::Begin("CHROM Editor");
-		mem_edit_1.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
+		mem_edit.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
 		ImGui::End();*/
 		/*ImGui::Begin("WKRAM Editor");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
+		mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
 		ImGui::End();
 		*///ImGui::Begin("CHRAM Editor");
-		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		//ImGui::Begin("FGCOLRAM Editor");
-		//mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__fgcolram__DOT__mem, 2048, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__fgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		//ImGui::Begin("BGCOLRAM Editor");
-		//mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		ImGui::Begin("Sprite RAM");
-		mem_edit_1.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
-		ImGui::End();
+		//ImGui::Begin("Sprite RAM");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
+		//ImGui::End();
 
 		//ImGui::Begin("Sprite Linebuffer RAM");
-		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
 		//ImGui::End();
 
 		//ImGui::Begin("Sprite Collision Buffer RAM A");
-		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
 		//ImGui::End();
 		//ImGui::Begin("Sprite Collision Buffer RAM B");
-		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_b__DOT__mem, 512, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_b__DOT__mem, 512, 0);
 		//ImGui::End();
-		ImGui::Begin("Sprite Collision RAM ");
-		mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritecollisionram__DOT__mem, 32, 0);
-		ImGui::End();
+		//ImGui::Begin("Sprite Collision RAM ");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritecollisionram__DOT__mem, 32, 0);
+		//ImGui::End();
 		//ImGui::Begin("Sprite Debug RAM");
-		//mem_edit_2.DrawContents(&top->emu__DOT__system__DOT__spritedebugram__DOT__mem, 128000, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritedebugram__DOT__mem, 128000, 0);
 		//ImGui::End();
 		/*ImGui::Begin("Palette ROM");
-		mem_edit_3.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
+		mem_edit.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
 		ImGui::End();
+
 		ImGui::Begin("Sprite ROM");---
-		mem_edit_4.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
+		mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
 		ImGui::End();*/
+		//ImGui::Begin("Sound ROM");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__soundrom__DOT__mem, 64000, 0);
+		//ImGui::End();
 
 		// Video window
 		ImGui::Begin(windowTitle_Video);
@@ -338,10 +343,10 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
-		float vol_l = ((top->AUDIO_L) / 256.0f) / 256.0f;
-		float vol_r = ((top->AUDIO_R) / 256.0f) / 256.0f;
-		ImGui::ProgressBar(vol_l, ImVec2(200, 16), 0); ImGui::SameLine();
-		ImGui::ProgressBar(vol_r, ImVec2(200, 16), 0);
+		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
+		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
+		ImGui::ProgressBar(vol_l+0.5, ImVec2(200, 16), 0); ImGui::SameLine();
+		ImGui::ProgressBar(vol_r+0.5, ImVec2(200, 16), 0);
 
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));
