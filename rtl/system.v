@@ -198,22 +198,11 @@ always @(posedge clk_24) begin
 	if(pause) pause_trigger<=1'b0;
 end
 
-reg [15:0] cycle_timer;
 reg vblank_last;
 reg [15:0] vblank_start;
 
 always @(posedge clk_24) begin
 	vblank_last <= VGA_VB;
-	// cycle_timer <= cycle_timer + 16'd1;
-	// if(VGA_VB && !vblank_last)
-	// begin
-	// 	vblank_start <= cycle_timer;
-	// 	$display("VBL START %d", cycle_timer);
-	// end
-	// if(!VGA_VB && vblank_last)
-	// begin
-	// 	$display("VBL END %d - LEN %d", cycle_timer, cycle_timer-vblank_start);
-	// end
 	// if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 	// if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 	// if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -225,17 +214,13 @@ always @(posedge clk_24) begin
 	// if(paddle_cs) $display("paddle %b", paddle_data_out);
 	// if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
  	// $display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
-	// if(timer_cs) $display("timer %d - %b", cycle_timer, timer_data_out);
-	// if(spriteram_cs) $display("spriteram %d - %d %b %b %b", cycle_timer, cpu_addr[7:2], cpu_addr, cpu_dout, ~cpu_wr_n);
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 	//if(!cpu_wr_n) $display("cpu_write %x %b",cpu_addr, cpu_dout);
 	//if(spritecollisionram_cs && !cpu_wr_n) $display("spritecollisionram %b %b %b", cpu_wr_n, cpu_addr, cpu_dout);
-	//if(snd_cs && !cpu_wr_n) $display("snd_cs %b %b", cpu_addr, cpu_dout);
+	if(sound_cs && !cpu_wr_n) $display("sound_cs %b %b", cpu_addr, cpu_dout);
 	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
-	//if(snd_cpu_cs) $display("snd_cpu_cs %b %b", snd_addr, cpu_dout);
-
 end
 
 // CPU data mux
@@ -553,40 +538,63 @@ wire snd_sample;
 reg [15:0] soundrom_addr_target;
 
 reg ce_m5205;
-reg  snd_cnt;
+reg snd_cnt;
+reg snd_play;
 reg [13:0] ce_m5205_counter;
 
-reg [7:0] snd_reset_count;
-wire snd_reset = snd_reset_count > 8'b0;
 
 
 always @(posedge clk_24) 
 begin
 	if(reset)
 	begin
-		snd_reset_count <= 8'hFF;
-	end
-
-	if(snd_reset_count>8'b0)
-	begin
 		ce_m5205_counter <= 14'd0;
 		soundrom_addr <= 16'd0;
-		soundrom_addr_target <= 16'd32768;
-		snd_data_in <= 4'd0;
-		snd_reset_count <= snd_reset_count - 8'd1;
+		soundrom_addr_target <= 16'd0;
+		snd_play <= 1'b0;
+	end
+
+	ce_m5205 <= (ce_m5205_counter == 14'd0);
+	if(ce_m5205_counter == 14'd31)
+	begin
+		ce_m5205_counter <= 14'd0;
 	end
 	else
 	begin
-		ce_m5205 <= (ce_m5205_counter == 14'd0);
-		if(ce_m5205_counter == 14'd31)
-		begin
-			ce_m5205_counter <= 14'd0;
-		end
-		else
-		begin
-			ce_m5205_counter <= ce_m5205_counter + 14'd1;
-		end
+		ce_m5205_counter <= ce_m5205_counter + 14'd1;
+	end
 
+	if(sound_cs && !cpu_wr_n)
+	begin
+		// Disable playback when CPU is sending commands
+		snd_play <= 1'b0;
+		case (cpu_addr[3:2])
+		2'd0:
+		begin
+			// Set initial address (sample beginning)
+			soundrom_addr[{cpu_addr[0],3'd0} +: 8] <= cpu_dout;
+		end
+		2'd1:
+		begin
+			// Set target address (sample end)
+			soundrom_addr_target[{cpu_addr[0],3'd0} +: 8] <= cpu_dout;
+		end
+		2'd2:
+		begin
+			// Trigger play
+			$display("snd_play write: start=%d  end=%d", soundrom_addr, soundrom_addr_target);
+			ce_m5205_counter <= 14'd0;
+			snd_play <= 1'b1;
+		end
+		default:
+		begin
+			
+		end
+		endcase
+	end
+	
+	if(snd_play)
+	begin
 		if(snd_sample)
 		begin
 			snd_cnt <= snd_cnt + 1'd1;
@@ -596,7 +604,8 @@ begin
 				snd_data_in <= soundrom_data_out[3:0];
 				if(soundrom_addr_target == soundrom_addr)
 				begin
-					//snd_reset_count <= 8'hFF;
+					$display("snd_play complete: %d", soundrom_addr);
+					snd_play <= 1'b0;
 				end
 			end
 			else
@@ -604,20 +613,20 @@ begin
 				snd_data_in <= soundrom_data_out[7:4];
 			end
 		end
-
-		if(ce_m5205)
-		begin
-			//$display("addr: %x  smp: %b do: %x di: %x  so: %x  au: %x  b: %x", soundrom_addr, snd_sample, soundrom_data_out, snd_data_in, snd_audio_out, audio_unsigned, snd_cnt);
-		end
 	end
+	else
+	begin
+		snd_data_in <= 4'd0;
+	end
+
 end
 
 jt5205 #(.INTERPOL(0)) m5205(
-    .rst(snd_reset),
+    .rst(~snd_play),
 	.clk(clk_24),
     .cen(ce_m5205),
 	.sel(2'b10),
-    .din(snd_reset ? 4'b1111 : snd_data_in),
+    .din(snd_data_in),
     .sound(snd_audio_out),
     .sample(snd_sample),
 	.irq(),
@@ -625,12 +634,10 @@ jt5205 #(.INTERPOL(0)) m5205(
 );
 `endif 
 
-wire signed [15:0] music_signed = { 1'b0, music_out, 5'b0 };
-wire signed [12:0] audio_signed = { snd_audio_out, 1'b0};
+wire signed [15:0] music_signed = { 2'b0, music_out, 4'b0 };
+wire signed [15:0] audio_signed = { snd_audio_out[11], snd_audio_out[10:0], 4'b0 };
 
-wire signed [15:0] audio_out = {audio_signed, 3'b0 };
-
-assign AUDIO_L =  audio_out + music_signed;
+assign AUDIO_L =  audio_signed + music_signed;
 assign AUDIO_R = AUDIO_L;
 
 

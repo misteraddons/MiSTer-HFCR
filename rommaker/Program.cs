@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -12,16 +13,21 @@ namespace rommaker
     {
         static readonly string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
         static readonly string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
+
         static readonly string musicPath = @"C:\repos\Aznable\music\";
         static readonly string musicTrackListPath = @"C:\repos\Aznable\music\tracks.txt";
         static readonly string musicRomPath = @"C:\repos\Aznable\music\music.bin";
         static readonly string musicSourcePath = @"C:\repos\Aznable\src\music_tracks";
 
+        static readonly string soundPath = @"C:\repos\Aznable\sound\";
+        static readonly string soundListPath = @"C:\repos\Aznable\sound\samples.txt";
+        static readonly string soundRomPath = @"C:\repos\Aznable\sound\sound.bin";
+        static readonly string soundSourcePath = @"C:\repos\Aznable\src\sound_samples";
+
         static readonly int PaletteMax = 4;
         static readonly int PaletteIndexMax = 32;
 
         static readonly List<List<Color>> Palettes = new();
-
 
         static void CreateMusicRom()
         {
@@ -52,7 +58,7 @@ namespace rommaker
             builder.AppendLine("extern unsigned long music_track_address[const_music_track_max];");
 
             builder.AppendLine("#endif");
-            File.WriteAllText(musicSourcePath+".h", builder.ToString());
+            File.WriteAllText(musicSourcePath + ".h", builder.ToString());
 
             builder = new StringBuilder();
             builder.AppendLine("#ifndef MUSIC_TRACKS_C");
@@ -63,6 +69,62 @@ namespace rommaker
             File.WriteAllText(musicSourcePath + ".c", builder.ToString());
 
             File.WriteAllBytes(musicRomPath, trackData.ToArray());
+
+        }
+
+
+        static void CreateSoundRom()
+        {
+            if (File.Exists(soundRomPath)) { File.Delete(soundRomPath); }
+
+            // Read sample list
+            string[] samples = File.ReadAllLines(soundListPath);
+
+            List<byte> soundData = new List<byte>();
+            string[] soundPos = new string[samples.Length];
+            string[] soundLen = new string[samples.Length];
+            string command = $@"C:\Program Files (x86)\sox-14-4-2\sox.exe";
+            int t = 0;
+            uint p = 0;
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("#ifndef SOUND_SAMPLES_H");
+            builder.AppendLine("#define SOUND_SAMPLES_H");
+            builder.AppendLine("#define const_sound_sample_max 32");
+            builder.AppendLine("extern unsigned long sound_sample_address[const_sound_sample_max];");
+            builder.AppendLine("extern unsigned long sound_sample_length[const_sound_sample_max];");
+
+            foreach (string sample in samples)
+            {
+                string file = sample.Split("#")[0];
+                string name = sample.Split("#")[1];
+
+                string args = $"{soundPath}{file}.wav {soundPath}{file}.vox rate 8k";
+                Process.Start(command,args).WaitForExit();
+                byte[] data = File.ReadAllBytes($"{soundPath}{file}.vox");
+                soundData.AddRange(data);
+                soundPos[t] = p + "u";
+                uint l = (uint)data.Length;
+                soundLen[t] = l + "u";
+                builder.AppendLine($"#define const_sound_{name} {t}");
+                p += l;
+                t++;
+            }
+            
+
+            builder.AppendLine("#endif");
+            File.WriteAllText(soundSourcePath + ".h", builder.ToString());
+
+            builder = new StringBuilder();
+            builder.AppendLine("#ifndef SOUND_SAMPLES_C");
+            builder.AppendLine("#define SOUND_SAMPLES_C");
+            builder.AppendLine("#include \"sound_samples.h\"");
+            builder.AppendLine("unsigned long sound_sample_address[] = {" + string.Join(",", soundPos) + "};");
+            builder.AppendLine("unsigned long sound_sample_length[] = {" + string.Join(",", soundLen) + "};");
+            builder.AppendLine("#endif");
+            File.WriteAllText(soundSourcePath + ".c", builder.ToString());
+
+            File.WriteAllBytes(soundRomPath, soundData.ToArray());
 
         }
 
@@ -146,13 +208,14 @@ namespace rommaker
                                     if (pi == PaletteIndexMax)
                                     {
                                         //   throw new Exception("too many colours");
-                                        Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
+                                      
+                                       Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
                                         pi = 0;
                                     }
                                     else
                                     {
                                         Palettes[paletteIndex].Add(c);
-                                        Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                       // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
                                     }
                                 }
 
@@ -198,7 +261,7 @@ namespace rommaker
                             byte high = (byte)(color >> 8);
                             byte low = (byte)color;
 
-                            Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
+                           // Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
                             paletteWriter.Write(high);
                             paletteWriter.Write(low);
 
@@ -214,6 +277,7 @@ namespace rommaker
         {
             CreateSpriteRom();
             CreateMusicRom();
+            CreateSoundRom();
         }
 
     }

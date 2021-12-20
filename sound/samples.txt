@@ -1,0 +1,2 @@
+explosion#player_explode
+pickup#pickup_collect

@@ -25,10 +25,6 @@ od -An -t x1 -v gfx/palette.bin > verilator/x64/Release/palette.hex
 od -An -t x1 -v music/music.bin > verilator/music.hex
 od -An -t x1 -v music/music.bin > rtl/music.hex
 od -An -t x1 -v music/music.bin > verilator/x64/Release/music.hex
-
-#od -An -t x1 -v sound/explosion.vox > verilator/sound.hex
-#od -An -t x1 -v sound/explosion.vox > verilator/x64/Release/sound.hex
-#od -An -t x1 -v sound/explosion.vox > rtl/sound.hex
-od -An -t x1 -v sound/sounds_a.vox > verilator/sound.hex
-od -An -t x1 -v sound/sounds_a.vox > verilator/x64/Release/sound.hex
-od -An -t x1 -v sound/sounds_a.vox > rtl/sound.hex
+od -An -t x1 -v sound/sound.bin > verilator/sound.hex
+od -An -t x1 -v sound/sound.bin > verilator/x64/Release/sound.hex
+od -An -t x1 -v sound/sound.bin > rtl/sound.hex

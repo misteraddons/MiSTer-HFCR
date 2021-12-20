@@ -21,6 +21,8 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sound.h"
+#include "sound_samples.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_player.h"
 #include "zorblaxx_trails.h"
@@ -158,6 +160,7 @@ void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 	player_xs = 0;
 	player_ys = 0;
 
+	player_hit = false;
 	player_lives = lives;
 	player_lives_changed = true;
 	player_respawn_timer = 0;
@@ -176,6 +179,7 @@ void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 
 void player_destroyed()
 {
+	play_sound(const_sound_player_explode);
 	add_explosion(0, 1);
 	add_explosion(1, 3);
 	spr_on[player_sprite] = false;
@@ -192,6 +196,8 @@ void handle_player(bool allow_control)
 	// If player is currently dead and a respawn is scheduled
 	if (player_respawn_timer > 0)
 	{
+		player_hit = false;
+		
 		// Decelerate player speed to minimum
 		if (player_speed > player_speed_min)
 		{

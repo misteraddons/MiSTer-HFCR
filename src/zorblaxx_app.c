@@ -32,6 +32,8 @@
 #include "sprite.h"
 #include "ui.h"
 #include "music.h"
+#include "sound.h"
+#include "sound_samples.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_player.h"
 #include "zorblaxx_trails.h"
@@ -119,76 +121,6 @@ void setup_variables()
 		game_state_danger_timeout /= 10;
 		game_state_gameover_timeout /= 10;
 		player_lives_default = 1;
-	}
-}
-
-void test_loop()
-{
-	clear_bgcolor(0);
-
-	clear_sprites();
-
-	// Setup title sprites
-	unsigned char title_sprite = 0;
-	unsigned short title_x = 115;
-	signed short title_y = 100;
-	unsigned char si = 0;
-	for (unsigned char y = 0; y < 1; y++)
-	{
-		for (unsigned char x = 0; x < 4; x++)
-		{
-			enable_sprite(title_sprite, 0, 1);
-			spr_index[title_sprite] = 8;
-			set_sprite_position(title_sprite, title_x + (x * 18), title_y + (y * 18));
-			si++;
-			title_sprite++;
-		}
-	}
-
-	set_sprite_position(0, 64, 160);
-	set_sprite_position(1, 77, 164);
-	set_sprite_position(2, 90, 168);
-
-	set_sprite_position(3, 200, 100);
-
-	// set_sprite_position(2, 164, 164);
-	// set_sprite_position(3, 179, 167);
-
-	update_sprites();
-
-	while (1)
-	{
-		vblank = CHECK_BIT(input0, INPUT_VBLANK);
-
-		if (VBLANK_RISING)
-		{
-			//  for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-			//  {
-			//  	write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite + 1, 5);
-			//  	spr_y_l[sprite]++;
-			//  	spritecollisionram[sprite] = 0;
-			//  }
-
-			for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
-			{
-				write_char(spritecollisionram[sprite] ? 'O' : '.', 0xFF, sprite, 3);
-			}
-			for (unsigned char sprite = 0; sprite < 2; sprite++)
-			{
-				if (spritecollisionram[sprite] > 0)
-				{
-					system_pause[0] = 1;
-					update_sprites();
-				}
-				spritecollisionram[sprite] = 0;
-			}
-		}
-
-		if (VBLANK_FALLING)
-		{
-		}
-
-		vblank_last = vblank;
 	}
 }
 
@@ -303,7 +235,6 @@ void intro_loop()
 // Starfield variables
 unsigned char scroll_speed_last = 0;
 unsigned char sf_speed1 = 4;
-// unsigned char sound_timer = 0;
 
 void game_loop()
 {
@@ -316,7 +247,6 @@ void game_loop()
 
 		if (VBLANK_RISING)
 		{
-			// timer[0] = 1;
 
 			// Detect player collision
 			if (spritecollisionram[player_sprite])
@@ -332,6 +262,7 @@ void game_loop()
 						pickup_state[0] = 2;
 						pickup_timer[0] = 40;
 						spr_index[pickup_sprite_first] += pickup_type_count;
+						play_sound(const_sound_pickup_collect);
 					}
 				}
 				else
@@ -663,8 +594,6 @@ void app_zorblaxx()
 		setup_player(player_spawn_x, 256, player_lives_default);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 		setup_trails();
-
-		// test_loop();
 
 		intro_loop();
 
