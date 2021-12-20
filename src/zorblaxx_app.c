@@ -517,6 +517,7 @@ void game_loop()
 				level_time_timer++;
 				if (level_time_timer >= 15)
 				{
+					play_sound(const_sound_alarm);
 					write_string("DANGER!", level_time ? 0b00000111 : 0b00111111, 16, 14);
 					level_time = !level_time;
 					level_time_timer = 0;

@@ -5,4 +5,5 @@ extern unsigned long sound_sample_address[const_sound_sample_max];
 extern unsigned long sound_sample_length[const_sound_sample_max];
 #define const_sound_player_explode 0
 #define const_sound_pickup_collect 1
+#define const_sound_alarm 2
 #endif
