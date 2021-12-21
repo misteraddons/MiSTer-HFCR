@@ -34,15 +34,16 @@ module starfield #(
     parameter SEED=25'b1111111111111110000000000,
     parameter MASK=25'b1111111111111111111111111
     ) (
-    input  wire clk,
-    input  wire en,
-    input  wire pause,
-    input  wire rst,
-    input  wire vblank,
-    input  wire [7:0] data_in,
-    input  wire write,
-    output wire sf_on,         // star on (alpha)
-    output wire [7:0] sf_star  // star brightness
+    input  wire         clk,
+    input  wire         en,
+    input  wire         pause,
+    input  wire         rst,
+    input  wire         vblank,
+    input  wire         addr,   // Write address - 0 = speed, 1 = enable
+    input  wire [7:0]   data_in,
+    input  wire         write,
+    output wire         sf_on,  // star on (alpha)
+    output wire [7:0]   sf_star // star brightness
     );
 
     reg  [LEN-1:0] RST_CNT;  // counter starts at zero, so sub 1
@@ -52,7 +53,7 @@ module starfield #(
     reg   [7:0]    timer;
     wire [LEN-1:0] sf_reg;
     reg  [LEN-1:0] sf_cnt;
-
+    reg            enabled;
     wire [7:0]     speed_actual = pause ? 8'b0 : speed_set;
 
     always @(posedge clk) 
@@ -67,7 +68,16 @@ module starfield #(
         // CPU write
         if(write)
         begin
-            speed_set <= data_in[7:0];
+            case(addr)
+                1'b0:
+                begin
+                    speed_set <= data_in[7:0];
+                end
+                1'b1:
+                begin
+                    enabled <= data_in[0];
+                end
+            endcase
         end
 
         if (en)
@@ -105,12 +115,10 @@ module starfield #(
             end
             /* verilator lint_on WIDTH */
         end
-
         if (rst) sf_cnt <= 0;
-
     end
 
-    assign sf_on = &{sf_reg | MASK};
+    assign sf_on = &{sf_reg | MASK} & enabled;
     assign sf_star = sf_reg[7:0];
 
     lfsr #(

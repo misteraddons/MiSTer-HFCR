@@ -102,7 +102,7 @@ wire  [15:0]	timer;
 generic_timer #(16,15,24) ms_timer
 (
 	.clk(clk_24),
-	.reset(reset || (timer_cs == 1'b1 && cpu_wr_n == 1'b0)),
+	.reset(reset || (timer_cs && !cpu_wr_n)),
 	.counter(timer)
 );
 
@@ -366,8 +366,9 @@ starfield #(
 	.vblank(VGA_VB),
 	.en(ce_6),
 	.pause(pause_system),
+	.addr(cpu_addr[0]),
 	.data_in(cpu_dout),
-	.write(starfield1_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.write(starfield1_cs && !cpu_wr_n),
 	.sf_on(sf_on1),
 	.sf_star(sf_star1)
 );
@@ -387,8 +388,9 @@ starfield #(
 	.vblank(VGA_VB),	
 	.en(ce_6),
 	.pause(pause_system),
+	.addr(cpu_addr[0]),
 	.data_in(cpu_dout),
-	.write(starfield2_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.write(starfield2_cs && !cpu_wr_n),
 	.sf_on(sf_on2),
 	.sf_star(sf_star2)
 );
@@ -408,8 +410,9 @@ starfield #(
 	.vblank(VGA_VB),	
 	.en(ce_6),
 	.pause(pause_system),
+	.addr(cpu_addr[0]),
 	.data_in(cpu_dout),
-	.write(starfield3_cs == 1'b1 && cpu_wr_n == 1'b0),
+	.write(starfield3_cs && !cpu_wr_n),
 	.sf_on(sf_on3),
 	.sf_star(sf_star3)
 );

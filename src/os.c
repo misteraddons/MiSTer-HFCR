@@ -21,27 +21,92 @@
 
 #include "sys.h"
 #include "ui.h"
-#include "audio.h"
+#include "sprite.h"
 
 #include "zorblaxx_app.h"
+
+void startup()
+{
+	// Set charmap area
+	chram_size = chram_cols * chram_rows;
+	// Clear charmap
+	clear_bgcolor(0);
+	clear_chars(0);
+	// Reset sprites
+	clear_sprites();
+	// Reset starfields
+	for (unsigned char s = 0; s < 6; s++)
+	{
+		starfield[s];
+	}
+
+	// Intro sequence
+	unsigned char text_timer = 0;
+	unsigned char text_length = 0;
+	unsigned char text_timer_max = 10;
+	unsigned char text_flash = 0;
+	unsigned char text_flash_timer = 0;
+	unsigned char text_flash_max = 2;
+
+	unsigned char text_char[] = {
+		'A',
+		'Z',
+		'N',
+		'A',
+		'B',
+		'L',
+		'E'};
+
+	// OS Intro
+	while (1)
+	{
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
+
+		if (VBLANK_RISING)
+		{
+			text_timer++;
+			if (text_timer == text_timer_max)
+			{
+				write_char(text_char[text_length - 1], 0xFF, text_length * 2, 2);
+				text_length++;
+				if (text_length > sizeof(text_char))
+				{
+					break;
+				}
+				text_timer = 0;
+			}
+			text_flash_timer++;
+			if (text_flash_timer == text_flash_max)
+			{
+				text_flash++;
+				if (text_flash == 2)
+				{
+					text_flash = 0;
+				}
+				if (text_flash == 1)
+				{
+					clear_char_area(0, text_length * 2, 2, text_length * 2, 2);
+				}
+				else
+				{
+					write_char(text_char[text_length - 1], 0xFF, text_length * 2, 2);
+				}
+				text_flash_timer = 0;
+			}
+		}
+		vblank_last = vblank;
+	}
+
+	// Clear title characters
+	clear_char_area(0, sizeof(text_char), 2, sizeof(text_char), 2);
+}
 
 // Main entry
 void main()
 {
-	// Setup charmap
-	chram_size = chram_cols * chram_rows;
-	clear_bgcolor(0);
-	clear_chars(0);
+	// Run startup routine
+	startup();
 
-	// init_audio();
-
-	channel_on[0] = 0;
-	// ay_write(0x08, 0x00);
-	// ay_set_ch(0, channel_pos[0]);
-
-	channel_on[1] = 0;
-	// ay_write(0x09, 0x00);
-	// ay_set_ch(1, channel_pos[1]);
-
+	// Launch Zorblaxx!
 	app_zorblaxx();
 }

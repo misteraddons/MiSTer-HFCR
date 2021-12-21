@@ -133,8 +133,11 @@ void intro_loop()
 
 	// Setup starfield layer speeds
 	starfield[0] = 8;
-	starfield[1] = 16;
-	starfield[2] = 32;
+	starfield[1] = 1;
+	starfield[2] = 16;
+	starfield[3] = 1;
+	starfield[4] = 32;
+	starfield[5] = 1;
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
