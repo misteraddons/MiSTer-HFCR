@@ -34,10 +34,11 @@ void startup()
 	clear_chars(0);
 	// Reset sprites
 	clear_sprites();
+	update_sprites();
 	// Reset starfields
 	for (unsigned char s = 0; s < 6; s++)
 	{
-		starfield[s];
+		starfield[s] = 0;
 	}
 
 	// Intro sequence
