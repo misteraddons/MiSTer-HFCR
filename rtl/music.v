@@ -34,7 +34,7 @@ module music #(
 
 	input		[7:0]	musicrom_data_out,
 	output reg [ROM_WIDTH-1:0]	musicrom_addr,
-	output		[9:0]	sound
+	output		[9:0]	audio_out
 	);
 
 	// Music system state machine (ym player)
@@ -49,7 +49,7 @@ module music #(
 	// 0 - If set to greater than zero, start playing YM track at address in following 3 bytes
 	// 1-3 - Start address of music to play in ROM
 	
-	// YM2149 sound generator
+	// YM2149 audio_out generator
 	reg  [7:0] snd_data_in;
 	reg        snd_wr;
 
@@ -60,7 +60,7 @@ module music #(
 		.addr(ymp_register),
 		.din(snd_data_in),
 		.dout(),
-		.sound(sound),
+		.sound(audio_out),
 		.sample(),
 		.A(),
 		.B(),

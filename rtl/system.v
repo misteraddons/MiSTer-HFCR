@@ -110,14 +110,12 @@ generic_timer #(16,15,24) ms_timer
 wire [15:0] cpu_addr;
 wire [7:0] cpu_din;
 wire [7:0] cpu_dout;
-wire cpu_rd_n;
 wire cpu_wr_n;
-wire cpu_mreq_n;
 
 // include Z80 CPU
 tv80s #(
-	.Mode(1), // Fast Z80
-	.IOWait(0) // Fast Z80
+	.Mode(1),
+	.IOWait(0)
 ) T80x  (
 	.reset_n   ( !reset ),
 	.clk       ( clk_24 ),
@@ -125,8 +123,8 @@ tv80s #(
 	.int_n     ( 1'b1 ),
 	.nmi_n     ( 1'b1 ),
 	.busrq_n   ( 1'b1 ),
-	.mreq_n    ( cpu_mreq_n ),
-	.rd_n      ( cpu_rd_n ), 
+	.mreq_n    (),
+	.rd_n      (),
 	.wr_n      ( cpu_wr_n ),
 	.A         ( cpu_addr ),
 	.di        ( cpu_din ),
@@ -177,7 +175,6 @@ wire system_pause_cs = cpu_addr[15:4] == 12'b100010100011;
 wire sound_cs = cpu_addr[15:4] == 12'b100010110000;
 wire music_cs = cpu_addr[15:4] == 12'b100010110001;
 
-
 // - Casval (character map)
 wire chram_cs = cpu_addr[15:11] == 5'b10011;
 wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
@@ -185,10 +182,8 @@ wire bgcolram_cs = cpu_addr[15:11] == 5'b10101;
 // - Comet (sprite engine)
 wire spriteram_cs = cpu_addr[15:11] == 5'b10110 && !spritecollisionram_cs;
 wire spritecollisionram_cs = memory_map_addr == 8'b10110100;
-// -  (starfield)
 // - CPU working RAM
 wire wkram_cs = cpu_addr[15:14] == 2'b11;
-
 
 // System pause trigger
 reg pause_trigger = 0;
@@ -203,23 +198,23 @@ reg [15:0] vblank_start;
 
 always @(posedge clk_24) begin
 	vblank_last <= VGA_VB;
-	// if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
-	// if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
-	// if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
-	// if(fgcolram_cs) $display("%x fgcolram i %x o %x w %b", cpu_addr, cpu_dout, fgcolram_data_out, fgcolram_wr);
-	// if(in0_cs) $display("%x in0 i %x o %x", cpu_addr, cpu_dout, in0_data_out);
- 	// if(joystick_cs) $display("joystick %b  %b", joystick_bit, joystick_data_out);
- 	// if(analog_l_cs) $display("analog_l %b  %b", analog_l_bit, analog_l_data_out);
- 	// if(analog_r_cs) $display("analog_r %b  %b", analog_r_bit, analog_r_data_out);
-	// if(paddle_cs) $display("paddle %b", paddle_data_out);
-	// if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
- 	// $display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
+	//if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
+	//if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
+	//if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
+	//if(fgcolram_cs) $display("%x fgcolram i %x o %x w %b", cpu_addr, cpu_dout, fgcolram_data_out, fgcolram_wr);
+	//if(in0_cs) $display("%x in0 i %x o %x", cpu_addr, cpu_dout, in0_data_out);
+ 	//if(joystick_cs) $display("joystick %b  %b", joystick_bit, joystick_data_out);
+ 	//if(analog_l_cs) $display("analog_l %b  %b", analog_l_bit, analog_l_data_out);
+ 	//if(analog_r_cs) $display("analog_r %b  %b", analog_r_bit, analog_r_data_out);
+	//if(paddle_cs) $display("paddle %b", paddle_data_out);
+	//if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
+ 	//$display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 	//if(!cpu_wr_n) $display("cpu_write %x %b",cpu_addr, cpu_dout);
 	//if(spritecollisionram_cs && !cpu_wr_n) $display("spritecollisionram %b %b %b", cpu_wr_n, cpu_addr, cpu_dout);
-	if(sound_cs && !cpu_wr_n) $display("sound_cs %b %b", cpu_addr, cpu_dout);
+	//if(sound_cs && !cpu_wr_n) $display("sound_cs %b %b", cpu_addr, cpu_dout);
 	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 end
 
@@ -422,8 +417,8 @@ starfield #(
 wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
-`ifdef DEBUG_SPRITE_COLLISION
 // Sprite collision debug
+`ifdef DEBUG_SPRITE_COLLISION
 localparam SD_WAIT = 0;
 localparam SD_CLEAR_BEGIN = 1;
 localparam SD_CLEAR = 2;
@@ -481,32 +476,20 @@ end
 `endif
 
 // RGB mixer
-
 `ifdef DEBUG_SPRITE_COLLISION
-// assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? 8'hFF : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0; 
-// assign VGA_G = charmap_a ? charmap_g : spritedebugram_data_out_a > 8'b0 ? 8'h00 : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0;
-// assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? 8'h00 : spr_a ? 8'hFF : sf_on ? sf_star_colour : 8'b0;
 assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
 assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
 assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
-
-// `ifndef DEBUG_SPRITE_COLLISION
-// wire block = hcnt <= 9'd1 || hcnt >= 9'd318 || vcnt <= 9'd1 || vcnt >= 9'd238; 
-// assign VGA_R = block ? 8'hFF : charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
-// assign VGA_G = block ? 8'hFF : charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
-// assign VGA_B = block ? 8'hFF : charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
-// `endif
 `ifndef DEBUG_SPRITE_COLLISION
 assign VGA_R = charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
 assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
 assign VGA_B = charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
-
-wire [9:0] music_out;
-`ifndef DISABLE_MUSIC
 // Music player
+wire [9:0] music_audio_out;
+`ifndef DISABLE_MUSIC
 localparam MUSIC_ROM_WIDTH = 17;
 wire [MUSIC_ROM_WIDTH-1:0] musicrom_addr;
 wire  [7:0] musicrom_data_out;
@@ -521,120 +504,32 @@ music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 	.vblank(VGA_VB),
 	.musicrom_addr(musicrom_addr),
 	.musicrom_data_out(musicrom_data_out),
-	.sound(music_out)
+	.audio_out(music_audio_out)
 );
 `endif
 
 
+// M5205 sound player
 wire signed [11:0] snd_audio_out;
 `ifndef DISABLE_SOUND
-// // M5205 sound player
-wire [3:0] snd_addr = cpu_addr[3:0];
-reg  [3:0] snd_data_in;
-reg [15:0] soundrom_addr;
+localparam SOUND_ROM_WIDTH = 16;
+reg [SOUND_ROM_WIDTH-1:0] soundrom_addr;
 wire [7:0] soundrom_data_out;
-wire snd_sample;
 
-reg [15:0] soundrom_addr_target;
-
-reg ce_m5205;
-reg snd_cnt;
-reg snd_play;
-reg [13:0] ce_m5205_counter;
-
-
-
-always @(posedge clk_24) 
-begin
-	if(reset)
-	begin
-		ce_m5205_counter <= 14'd0;
-		soundrom_addr <= 16'd0;
-		soundrom_addr_target <= 16'd0;
-		snd_play <= 1'b0;
-	end
-
-	ce_m5205 <= (ce_m5205_counter == 14'd0);
-	if(ce_m5205_counter == 14'd31)
-	begin
-		ce_m5205_counter <= 14'd0;
-	end
-	else
-	begin
-		ce_m5205_counter <= ce_m5205_counter + 14'd1;
-	end
-
-	if(sound_cs && !cpu_wr_n)
-	begin
-		// Disable playback when CPU is sending commands
-		snd_play <= 1'b0;
-		case (cpu_addr[3:2])
-		2'd0:
-		begin
-			// Set initial address (sample beginning)
-			soundrom_addr[{cpu_addr[0],3'd0} +: 8] <= cpu_dout;
-		end
-		2'd1:
-		begin
-			// Set target address (sample end)
-			soundrom_addr_target[{cpu_addr[0],3'd0} +: 8] <= cpu_dout;
-		end
-		2'd2:
-		begin
-			// Trigger play
-			$display("snd_play write: start=%d  end=%d", soundrom_addr, soundrom_addr_target);
-			ce_m5205_counter <= 14'd0;
-			snd_play <= 1'b1;
-		end
-		default:
-		begin
-			
-		end
-		endcase
-	end
-	
-	if(snd_play)
-	begin
-		if(snd_sample)
-		begin
-			snd_cnt <= snd_cnt + 1'd1;
-			if(snd_cnt == 1'b1)
-			begin
-				soundrom_addr <= soundrom_addr + 16'd1;
-				snd_data_in <= soundrom_data_out[3:0];
-				if(soundrom_addr_target == soundrom_addr)
-				begin
-					$display("snd_play complete: %d", soundrom_addr);
-					snd_play <= 1'b0;
-				end
-			end
-			else
-			begin
-				snd_data_in <= soundrom_data_out[7:4];
-			end
-		end
-	end
-	else
-	begin
-		snd_data_in <= 4'd0;
-	end
-
-end
-
-jt5205 #(.INTERPOL(0)) m5205(
-    .rst(~snd_play),
+sound #(.ROM_WIDTH(SOUND_ROM_WIDTH)) sound (
 	.clk(clk_24),
-    .cen(ce_m5205),
-	.sel(2'b10),
-    .din(snd_data_in),
-    .sound(snd_audio_out),
-    .sample(snd_sample),
-	.irq(),
-	.vclk_o()
+	.reset(reset),
+	.addr(cpu_addr[3:0]),
+	.data_in(cpu_dout),
+	.write(sound_cs && ~cpu_wr_n),
+	.soundrom_addr(soundrom_addr),
+	.soundrom_data_out(soundrom_data_out),
+	.audio_out(snd_audio_out)
 );
 `endif 
 
-wire signed [15:0] music_signed = { 2'b0, music_out, 4'b0 };
+// Mix audio (badly)
+wire signed [15:0] music_signed = { 2'b0, music_audio_out, 4'b0 };
 wire signed [15:0] audio_signed = { snd_audio_out[11], snd_audio_out[10:0], 4'b0 };
 
 assign AUDIO_L =  audio_signed + music_signed;
@@ -840,7 +735,7 @@ dpram #(14,8, "sprite.hex") spriterom
 
 `ifndef DISABLE_MUSIC
 // Music ROM - 128kB
-dpram #(17,8, "music.hex") musicrom
+dpram #(MUSIC_ROM_WIDTH,8, "music.hex") musicrom
 (
 	.clock_a(clk_24),
 	.address_a(musicrom_addr),
@@ -849,7 +744,7 @@ dpram #(17,8, "music.hex") musicrom
 	.q_a(musicrom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[16:0]),
+	.address_b(dn_addr[MUSIC_ROM_WIDTH-1:0]),
 	.wren_b(musicrom_wr),
 	.data_b(dn_data),
 	.q_b()
@@ -858,7 +753,7 @@ dpram #(17,8, "music.hex") musicrom
 
 `ifndef DISABLE_SOUND
 // Sound ROM - 64kB
-dpram #(16,8, "sound.hex") soundrom
+dpram #(SOUND_ROM_WIDTH,8, "sound.hex") soundrom
 (
 	.clock_a(clk_24),
 	.address_a(soundrom_addr),
@@ -867,7 +762,7 @@ dpram #(16,8, "sound.hex") soundrom
 	.q_a(soundrom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[15:0]),
+	.address_b(dn_addr[SOUND_ROM_WIDTH-1:0]),
 	.wren_b(soundrom_wr),
 	.data_b(dn_data),
 	.q_b()
