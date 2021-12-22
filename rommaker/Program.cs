@@ -2,27 +2,25 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace rommaker
 {
     class Program
     {
-        static readonly string spriteRomPath = @"C:\repos\Aznable\gfx\sprite.bin";
-        static readonly string palettePath = @"C:\repos\Aznable\gfx\palette.bin";
+        static readonly string spriteRomPath = @"..\..\..\..\gfx\sprite.bin";
+        static readonly string palettePath = @"..\..\..\..\gfx\palette.bin";
 
-        static readonly string musicPath = @"C:\repos\Aznable\music\";
-        static readonly string musicTrackListPath = @"C:\repos\Aznable\music\tracks.txt";
-        static readonly string musicRomPath = @"C:\repos\Aznable\music\music.bin";
-        static readonly string musicSourcePath = @"C:\repos\Aznable\src\music_tracks";
+        static readonly string musicPath = @"..\..\..\..\music\";
+        static readonly string musicTrackListPath = @"..\..\..\..\music\tracks.txt";
+        static readonly string musicRomPath = @"..\..\..\..\music\music.bin";
+        static readonly string musicSourcePath = @"..\..\..\..\src\music_tracks";
 
-        static readonly string soundPath = @"C:\repos\Aznable\sound\";
-        static readonly string soundListPath = @"C:\repos\Aznable\sound\samples.txt";
-        static readonly string soundRomPath = @"C:\repos\Aznable\sound\sound.bin";
-        static readonly string soundSourcePath = @"C:\repos\Aznable\src\sound_samples";
+        static readonly string soundPath = @"..\..\..\..\sound\";
+        static readonly string soundListPath = @"..\..\..\..\sound\samples.txt";
+        static readonly string soundRomPath = @"..\..\..\..\sound\sound.bin";
+        static readonly string soundSourcePath = @"..\..\..\..\src\sound_samples";
 
         static readonly int PaletteMax = 4;
         static readonly int PaletteIndexMax = 32;
@@ -36,7 +34,7 @@ namespace rommaker
             // Read track list
             string[] tracks = File.ReadAllLines(musicTrackListPath);
 
-            List<byte> trackData = new List<byte>();
+            List<byte> trackData = new();
             string[] trackPos = new string[tracks.Length];
 
             int t = 0;
@@ -51,7 +49,7 @@ namespace rommaker
                 t++;
             }
 
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
             builder.AppendLine("#ifndef MUSIC_TRACKS_H");
             builder.AppendLine("#define MUSIC_TRACKS_H");
             builder.AppendLine("#define const_music_track_max 32");
@@ -80,14 +78,14 @@ namespace rommaker
             // Read sample list
             string[] samples = File.ReadAllLines(soundListPath);
 
-            List<byte> soundData = new List<byte>();
+            List<byte> soundData = new();
             string[] soundPos = new string[samples.Length];
             string[] soundLen = new string[samples.Length];
             string command = $@"C:\Program Files (x86)\sox-14-4-2\sox.exe";
             int t = 0;
             uint p = 0;
 
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
             builder.AppendLine("#ifndef SOUND_SAMPLES_H");
             builder.AppendLine("#define SOUND_SAMPLES_H");
             builder.AppendLine("#define const_sound_sample_max 32");
@@ -153,10 +151,10 @@ namespace rommaker
                 int slicesY = 1;
 
                 // Remove extension
-                string name = image.Substring(0, image.Length - 4);
+                string name = image[0..^4];
 
                 // Detect palette
-                if (!name.Contains("#"))
+                if (!name.Contains('#'))
                 {
                     throw new Exception("No palette data");
                 }
@@ -165,7 +163,7 @@ namespace rommaker
                 int paletteIndex = int.Parse(paletteParts[1]) -1;
 
                 // Detect slices
-                if (!name.Contains("-"))
+                if (!name.Contains('-'))
                 {
                     throw new Exception("No slicing data");
                 }

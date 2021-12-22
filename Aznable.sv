@@ -2,8 +2,8 @@
 	Aznable (custom 8-bit computer system) - emu module
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.0
-	Date: 2021-07-03
+	Version: 1.1
+	Date: 2021-12-22
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
