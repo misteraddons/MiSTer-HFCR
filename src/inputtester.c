@@ -271,6 +271,9 @@ void start_inputtester_advanced()
     // Setup mouse pointer
     enable_sprite(MOUSE_POINTER_SPRITE, 2, 0);
     spr_index[MOUSE_POINTER_SPRITE] = 46;
+    spr_on[MOUSE_POINTER_SPRITE] = 0;
+    mse_x_acc = 336;
+    mse_y_acc = 256;
 
     // Reset last states for inputs
     reset_inputstates();
@@ -334,9 +337,8 @@ void handle_codes()
     // Check for SNEK code
     if (history[0] == 1 && history[1] == 1 && history[2] == 2 && history[3] == 2 && history[4] == 3 && history[5] == 4 && history[6] == 5)
     {
-        nextstate = STATE_START_ATTRACT;
         pushhistory(0);
-        start_fadeout();
+        state = STATE_START_ATTRACT;
         return;
     }
     // Check for Zorblax code
@@ -641,11 +643,15 @@ void inputtester_advanced()
             {
                 mse_y_acc = 511;
             }
-
-            unsigned short mx = (mse_x_acc / 2);
-            unsigned short my = (mse_y_acc / 2);
-            set_sprite_position(MOUSE_POINTER_SPRITE, mx, my);
-
+            unsigned short mx = 0;
+            unsigned short my = 0;
+            if (mse_x != 0 || mse_y != 0)
+            {
+                mx = (mse_x_acc / 2);
+                my = (mse_y_acc / 2);
+                spr_on[MOUSE_POINTER_SPRITE] = 1;
+                set_sprite_position(MOUSE_POINTER_SPRITE, mx, my);
+            }
             write_stringf_ushort("%3d", 0xFF, 8, 23, mx - 16);
             write_stringf_ushort("%3d", 0xFF, 12, 23, my - 16);
             write_stringf("%3d", 0xFF, 20, 23, mse_w_acc);

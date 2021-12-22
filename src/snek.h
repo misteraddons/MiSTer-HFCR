@@ -42,10 +42,10 @@ extern unsigned int length;
 extern unsigned char attractstate;
 
 // Initialise attract state and draw static elements
-extern void start_attract();
+extern void start_snek_attract();
 
 // Initialise attract state and draw static elements
-extern void start_gameplay();
+extern void start_snek_gameplay();
 
 // SNEK - gameplay state
 extern void snek_gameplay();

@@ -41,7 +41,7 @@ unsigned int length = 0;
 unsigned char attractstate = 0;
 
 // Initialise attract state and draw static elements
-void start_attract()
+void start_snek_attract()
 {
     state = STATE_ATTRACT;
     attractstate = 0;
@@ -53,7 +53,7 @@ void start_attract()
 }
 
 // Initialise attract state and draw static elements
-void start_gameplay()
+void start_snek_gameplay()
 {
     state = STATE_GAME_SNEK;
     length = 0;
@@ -155,7 +155,7 @@ void snek_attract()
     {
         if (CHECK_BIT(joystick[1], 3)) // start to start
         {
-            start_gameplay();
+            start_snek_gameplay();
             return;
         }
         if (CHECK_BIT(joystick[1], 2)) // select to quit

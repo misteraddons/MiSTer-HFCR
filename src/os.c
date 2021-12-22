@@ -181,14 +181,16 @@ void app_main()
 			break;
 
 		case STATE_START_ATTRACT:
-			start_attract();
+			state = 0;
+			loader("SNEK.AZN");
+			start_snek_attract();
 			break;
 		case STATE_ATTRACT:
 			snek_attract();
 			break;
 
 		case STATE_START_GAME_SNEK:
-			start_gameplay();
+			start_snek_gameplay();
 			break;
 		case STATE_GAME_SNEK:
 			snek_gameplay();
@@ -202,7 +204,7 @@ void app_main()
 		default:
 			// Start default state
 			loader("INPUTTESTER.AZN");
-			//start_inputtester_digital();
+			// start_inputtester_digital();
 			start_inputtester_advanced();
 			// start_inputtester_analog();
 			// start_btntest();

@@ -375,8 +375,6 @@ int main(int argc, char** argv, char** env) {
 		//	if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
 		//}
 		
-
-
 		mouse_buttons =0;
 		mouse_x = 0;
 		mouse_y = 0;
