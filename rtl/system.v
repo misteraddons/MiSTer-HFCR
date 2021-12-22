@@ -480,14 +480,15 @@ end
 
 // RGB mixer
 `ifdef DEBUG_SPRITE_COLLISION
-assign VGA_R = charmap_a ? charmap_r : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
-assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
-assign VGA_B = charmap_a ? charmap_b : spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
+// highlight collisions
+assign VGA_R = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_r : charmap_a ? charmap_r : sf_on ? sf_star_colour : 8'b0; 
+assign VGA_G = spr_a ? spr_g : charmap_a ? charmap_g : sf_on ? sf_star_colour : 8'b0;
+assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : charmap_a ? charmap_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 `ifndef DEBUG_SPRITE_COLLISION
-assign VGA_R = charmap_a ? charmap_r : spr_a ? spr_r : sf_on ? sf_star_colour : 8'b0; 
-assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : sf_on ? sf_star_colour : 8'b0;
-assign VGA_B = charmap_a ? charmap_b : spr_a ? spr_b : sf_on ? sf_star_colour : 8'b0;
+assign VGA_R = spr_a ? spr_r : charmap_a ? charmap_r : sf_on ? sf_star_colour : 8'b0; 
+assign VGA_G = spr_a ? spr_g : charmap_a ? charmap_g : sf_on ? sf_star_colour : 8'b0;
+assign VGA_B = spr_a ? spr_b : charmap_a ? charmap_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 
 // Music player

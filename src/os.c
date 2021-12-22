@@ -37,6 +37,14 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 	unsigned char text_flash = 0;
 	unsigned char text_flash_timer = 0;
 	unsigned char text_char_count = strlen(text);
+
+	// Speed things up in debug mode
+	if (CHECK_BIT(input0, 0))
+	{
+		speed = 1;
+		flash_speed = 1;
+	}
+
 	while (1)
 	{
 		vblank = CHECK_BIT(input0, INPUT_VBLANK);
@@ -103,16 +111,16 @@ void loader(const char *title)
 
 	// OS Intro
 	write_char('>', 0xFF, 0, 1);
-	intro_text(system_title, 2, 1, 2, 8, 2);
+	intro_text(system_title, 2, 1, 2, 8, 1);
 	write_char(' ', 0xFF, 0, 1);
 
 	write_char('>', 0xFF, 0, 3);
-	intro_text("LOAD ", 2, 3, 1, 4, 2);
-	intro_text(title, 7, 3, 1, 4, 2);
+	intro_text("LOAD ", 2, 3, 1, 4, 1);
+	intro_text(title, 7, 3, 1, 4, 1);
 	write_char(' ', 0xFF, 0, 3);
 
 	write_char('>', 0xFF, 0, 5);
-	intro_text("...", 2, 5, 1, 8, 2);
+	intro_text("...", 2, 5, 1, 8, 1);
 
 	// Clear characters
 	clear_char_area(0, 1, 1, 40, 3);
@@ -194,8 +202,8 @@ void app_main()
 		default:
 			// Start default state
 			loader("INPUTTESTER.AZN");
-			start_inputtester_digital();
-			// start_inputtester_advanced();
+			//start_inputtester_digital();
+			start_inputtester_advanced();
 			// start_inputtester_analog();
 			// start_btntest();
 			break;

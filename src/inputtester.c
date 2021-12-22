@@ -1,22 +1,22 @@
 /*============================================================================
-	Input Test - Input test state handlers
+    Input Test - Input test state handlers
 
-	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.0
-	Date: 2021-07-13
+    Author: Jim Gregory - https://github.com/JimmyStones/
+    Version: 1.0
+    Date: 2021-07-13
 
-	This program is free software; you can redistribute it and/or modify it
-	under the terms of the GNU General Public License as published by the Free
-	Software Foundation; either version 3 of the License, or (at your option)
-	any later version.
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your option)
+    any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License along
-	with this program. If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License along
+    with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
 #include "sys.h"
@@ -24,9 +24,11 @@
 #include "menu.h"
 #include "ui.h"
 #include "ps2.h"
+#include "sprite.h"
 #include "inputtester.h"
 #include "inputtester_sys.h"
 #include "inputtester_ui.h"
+#include "inputtester_pings.h"
 
 // Input tester variables
 unsigned char joystick_last[12];
@@ -45,9 +47,11 @@ unsigned char mse_button2_last = 255;
 signed char mse_x_last = 1;
 signed char mse_y_last = 1;
 signed char mse_w_last = 1;
-unsigned char mse_x_acc;
-unsigned char mse_y_acc;
-unsigned char mse_w_acc;
+signed short mse_x_acc;
+signed short mse_y_acc;
+signed short mse_w_acc;
+
+#define MOUSE_POINTER_SPRITE 9
 
 // Mode switcher variables
 char modeswitchtimer_select = 0;
@@ -263,6 +267,10 @@ void start_inputtester_advanced()
 
     // Draw page
     page_inputtester_advanced();
+
+    // Setup mouse pointer
+    enable_sprite(MOUSE_POINTER_SPRITE, 2, 0);
+    spr_index[MOUSE_POINTER_SPRITE] = 46;
 
     // Reset last states for inputs
     reset_inputstates();
@@ -507,14 +515,16 @@ void inputtester_advanced()
         // Handle test mode switch
         if (modeswitcher())
         {
+            clear_sprites();
+            update_sprites();
             return;
         }
 
         // Draw joystick inputs (only update each byte if value has changed)
         for (char inputindex = 0; inputindex < 6; inputindex++)
         {
-            char m = 0b00000001;
-            char x = 6;
+            char mask = 0b00000001;
+            char cx = 6;
             char y = 6 + inputindex;
             char inputoffset = (inputindex * 4);
             char lastoffset = (inputindex * 2);
@@ -525,18 +535,18 @@ void inputtester_advanced()
                 char joy = joystick[index];
                 if (joy != joystick_last[lastindex])
                 {
-                    m = 0b00000001;
+                    mask = 0b00000001;
                     char bytes = (b == 0 ? 8 : 4);
                     for (char i = 0; i < bytes; i++)
                     {
-                        x++;
-                        write_char((joy & m) ? asc_1 : asc_0, 0xFF, x, y);
-                        m <<= 1;
+                        cx++;
+                        write_char((joy & mask) ? asc_1 : asc_0, 0xFF, cx, y);
+                        mask <<= 1;
                     }
                 }
                 else
                 {
-                    x += 8;
+                    cx += 8;
                 }
                 joystick_last[lastindex] = joy;
             }
@@ -609,12 +619,35 @@ void inputtester_advanced()
 
         if (mse_changed)
         {
+            // Mouse position accumulator
             mse_x_acc += mse_x;
-            mse_y_acc += mse_y;
+            mse_y_acc -= mse_y;
             mse_w_acc += mse_w;
 
-            write_stringf("%3d", 0xFF, 8, 23, mse_x_acc);
-            write_stringf("%3d", 0xFF, 12, 23, mse_y_acc);
+            // Enforce mouse pointer limit
+            if (mse_x_acc < 32)
+            {
+                mse_x_acc = 32;
+            }
+            else if (mse_x_acc >= 671)
+            {
+                mse_x_acc = 671;
+            }
+            if (mse_y_acc < 32)
+            {
+                mse_y_acc = 32;
+            }
+            else if (mse_y_acc >= 511)
+            {
+                mse_y_acc = 511;
+            }
+
+            unsigned short mx = (mse_x_acc / 2);
+            unsigned short my = (mse_y_acc / 2);
+            set_sprite_position(MOUSE_POINTER_SPRITE, mx, my);
+
+            write_stringf_ushort("%3d", 0xFF, 8, 23, mx - 16);
+            write_stringf_ushort("%3d", 0xFF, 12, 23, my - 16);
             write_stringf("%3d", 0xFF, 20, 23, mse_w_acc);
 
             if (mse_button1_last != mse_button1)
@@ -627,8 +660,10 @@ void inputtester_advanced()
                     write_char((mse_button1 & m) ? asc_1 : asc_0, 0xFF, x, 23);
                     m <<= 1;
                 }
-                mse_button1_last = mse_button1;
+                input_mouse_left = CHECK_BIT(mse_button1, 0);
+                input_mouse_right = CHECK_BIT(mse_button1, 1);
             }
+            mse_button1_last = mse_button1;
             if (mse_button2_last != mse_button2)
             {
                 char x = 31;
@@ -639,10 +674,22 @@ void inputtester_advanced()
                     write_char((mse_button2 & m) ? asc_1 : asc_0, 0xFF, x, 23);
                     m <<= 1;
                 }
-                mse_button2_last = mse_button2;
             }
+            mse_button2_last = mse_button2;
             mse_changed = 0;
+
+            if (input_mouse_left && !input_mouse_left_last)
+            {
+                add_ping(0, mx - 8, my - 8);
+            }
+            if (input_mouse_right && !input_mouse_right_last)
+            {
+                add_ping(1, mx - 8, my - 8);
+            }
         }
+
+        handle_pings();
+        update_sprites();
     }
 }
 

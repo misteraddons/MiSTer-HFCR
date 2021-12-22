@@ -161,6 +161,7 @@ int verilate() {
 }
 
 unsigned char mouse_clock = 0;
+unsigned char mouse_clock_reduce = 0;
 unsigned char mouse_buttons = 0;
 unsigned char mouse_x = 0;
 unsigned char mouse_y = 0;
@@ -373,16 +374,28 @@ int main(int argc, char** argv, char** env) {
 		//	}
 		//	if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
 		//}
-		/*mouse_buttons += 1;
-		mouse_x += 1;
-		mouse_y -= 1;
+		
+
+
+		mouse_buttons =0;
+		mouse_x = 0;
+		mouse_y = 0;
+		if (input.inputs[input_left]) { mouse_x = -2; }
+		if (input.inputs[input_right]) { mouse_x = 2; }
+		if (input.inputs[input_up]) { mouse_y = 2; }
+		if (input.inputs[input_down]) { mouse_y = -2; }
+
+		if (input.inputs[input_a]) { mouse_buttons |= (1UL << 0); }
+		if (input.inputs[input_b]) { mouse_buttons |= (1UL << 1); }
+
 		unsigned long mouse_temp = mouse_buttons;
 		mouse_temp += (mouse_x << 8);
 		mouse_temp += (mouse_y << 16);
 		if (mouse_clock) { mouse_temp |= (1UL << 24); }
-		mouse_clock = !mouse_clock;*/
-		//top->ps2_mouse = mouse_temp;
-		//top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
+		mouse_clock = !mouse_clock;
+		
+		top->ps2_mouse = mouse_temp;
+		top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
 
 		// Run simulation
 		if (run_enable) {

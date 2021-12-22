@@ -41,6 +41,12 @@ bool input_a_last = 0;
 bool input_b;
 bool input_b_last = 0;
 
+// Mouse tracker
+bool input_mouse_left;
+bool input_mouse_left_last;
+bool input_mouse_right;
+bool input_mouse_right_last;
+
 // Input tester application state
 char state = 0;
 char nextstate = 0;
@@ -56,12 +62,14 @@ void basic_input()
 	input_select_last = input_select;
 	input_a_last = input_a;
 	input_b_last = input_b;
+	input_mouse_left_last = input_mouse_left;
+	input_mouse_right_last = input_mouse_right;
 	input_up = CHECK_BIT(joystick[0], 3) || kbd_down[KEY_UP];
 	input_down = CHECK_BIT(joystick[0], 2) || kbd_down[KEY_DOWN];
 	input_left = CHECK_BIT(joystick[0], 1) || kbd_down[KEY_LEFT];
 	input_right = CHECK_BIT(joystick[0], 0) || kbd_down[KEY_RIGHT];
-	input_start = CHECK_BIT(joystick[1], 3) || kbd_down[KEY_1];
-	input_select = CHECK_BIT(joystick[1], 2) || kbd_down[KEY_ESC];
+	input_start = CHECK_BIT(joystick[1], 3) || kbd_down[KEY_1]|| mse_button1;
+	input_select = CHECK_BIT(joystick[1], 2) || kbd_down[KEY_ESC] || mse_button2;
 	input_a = CHECK_BIT(joystick[0], 4) || kbd_down[KEY_ENTER];
 	input_b = CHECK_BIT(joystick[0], 5) || kbd_down[KEY_SPACE];
 }

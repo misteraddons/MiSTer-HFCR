@@ -70,6 +70,12 @@ extern bool input_a_last;
 extern bool input_b;
 extern bool input_b_last;
 
+// Mouse tracker
+extern bool input_mouse_left;
+extern bool input_mouse_left_last;
+extern bool input_mouse_right;
+extern bool input_mouse_right_last;
+
 // Input tester application state
 extern char state;
 extern char nextstate;

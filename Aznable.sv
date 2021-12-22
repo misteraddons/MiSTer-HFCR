@@ -374,16 +374,16 @@ wire [3:0]  voffset = status[23:20];
 wire [3:0]  hoffset = status[19:16];
 jtframe_resync jtframe_resync
 (
-  .clk(clk_sys),
-  .pxl_cen(ce_pix),
-  .hs_in(hs_original),
-  .vs_in(vs_original),
-  .LVBL(~vblank),
-  .LHBL(~hblank),
-  .hoffset(hoffset),
-  .voffset(voffset),
-  .hs_out(hs),
-  .vs_out(vs)
+	.clk(clk_sys),
+	.pxl_cen(ce_pix),
+	.hs_in(hs_original),
+	.vs_in(vs_original),
+	.LVBL(~vblank),
+	.LHBL(~hblank),
+	.hoffset(hoffset),
+	.voffset(voffset),
+	.hs_out(hs),
+	.vs_out(vs)
 );
 
 ///////////////////  PAUSE SYSTEM ///////////////////

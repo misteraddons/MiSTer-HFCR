@@ -143,6 +143,7 @@ namespace rommaker
 
             uint pos = 0;
 
+            int index = 0;
             foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly))
             {
                 Bitmap img = new(image);
@@ -174,12 +175,11 @@ namespace rommaker
                 int sizeX = img.Width / slicesX;
                 int sizeY = img.Height / slicesY;
 
-
                 for (int ys = 0; ys < slicesY; ys++)
                 {
                     for (int xs = 0; xs < slicesX; xs++)
                     {
-                        Console.WriteLine($"Starting image: {image} - {xs},{ys} --> {pos}");
+                        Console.WriteLine($"{index}: {image} - {xs},{ys} --> {pos}");
                         int ymin = ys * sizeY;
                         int ymax = ymin + sizeY;
                         int xmin = xs * sizeX;
@@ -220,9 +220,9 @@ namespace rommaker
                                 // Write palette index to sprite rom
                                 spriteStream.WriteByte(Convert.ToByte(pi));
                                 pos += 1;
-
                             }
                         }
+                        index++;
                     }
                 }
             }
