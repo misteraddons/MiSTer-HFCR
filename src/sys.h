@@ -19,7 +19,7 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 #ifndef SYS_H
-	#define SYS_H
+#define SYS_H
 
 #include <stdio.h>
 #include <stdbool.h>

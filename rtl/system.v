@@ -516,7 +516,7 @@ music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 wire signed [11:0] snd_audio_out;
 `ifndef DISABLE_SOUND
 localparam SOUND_ROM_WIDTH = 16;
-reg [SOUND_ROM_WIDTH-1:0] soundrom_addr;
+wire [SOUND_ROM_WIDTH-1:0] soundrom_addr;
 wire [7:0] soundrom_data_out;
 
 sound #(.ROM_WIDTH(SOUND_ROM_WIDTH)) sound (

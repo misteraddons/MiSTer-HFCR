@@ -24,8 +24,66 @@
 #include "sprite.h"
 
 #include "zorblaxx_app.h"
+#include "inputtester.h"
+#include "inputtester_sys.h"
+#include "snek.h"
+#include "fader.h"
+#include "menu.h"
 
-void startup()
+void intro_text(const char *text, unsigned char start_x, unsigned char start_y, unsigned char space_x, unsigned char speed, unsigned char flash_speed)
+{
+	unsigned char text_timer = 0;
+	unsigned char text_length = 1;
+	unsigned char text_flash = 0;
+	unsigned char text_flash_timer = 0;
+	unsigned char text_char_count = strlen(text);
+	while (1)
+	{
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
+
+		// Aznable title intro
+		if (VBLANK_RISING)
+		{
+			unsigned char xpos = start_x + ((text_length - 1) * space_x);
+			text_timer++;
+			if (text_timer == speed)
+			{
+				write_char(text[text_length - 1], 0xFF, xpos, start_y);
+				text_length++;
+				if (text_length > text_char_count)
+				{
+					break;
+				}
+				text_timer = 0;
+				text_flash_timer = 0;
+			}
+			else
+			{
+				text_flash_timer++;
+				if (text_flash_timer == flash_speed)
+				{
+					text_flash++;
+					if (text_flash == 2)
+					{
+						text_flash = 0;
+					}
+					if (text_flash == 1)
+					{
+						write_char(0, 0, xpos, start_y);
+					}
+					else
+					{
+						write_char(text[text_length - 1], 0xFF, xpos, start_y);
+					}
+					text_flash_timer = 0;
+				}
+			}
+		}
+		vblank_last = vblank;
+	}
+}
+
+void loader(const char *title)
 {
 	// Set charmap area
 	chram_size = chram_cols * chram_rows;
@@ -41,73 +99,117 @@ void startup()
 		starfield[s] = 0;
 	}
 
-	// Intro sequence
-	unsigned char text_timer = 0;
-	unsigned char text_length = 0;
-	unsigned char text_timer_max = 10;
-	unsigned char text_flash = 0;
-	unsigned char text_flash_timer = 0;
-	unsigned char text_flash_max = 2;
-
-	unsigned char text_char[] = {
-		'A',
-		'Z',
-		'N',
-		'A',
-		'B',
-		'L',
-		'E'};
+	const char *system_title = "AZNABLE";
 
 	// OS Intro
+	write_char('>', 0xFF, 0, 1);
+	intro_text(system_title, 2, 1, 2, 8, 2);
+	write_char(' ', 0xFF, 0, 1);
+
+	write_char('>', 0xFF, 0, 3);
+	intro_text("LOAD ", 2, 3, 1, 4, 2);
+	intro_text(title, 7, 3, 1, 4, 2);
+	write_char(' ', 0xFF, 0, 3);
+
+	write_char('>', 0xFF, 0, 5);
+	intro_text("...", 2, 5, 1, 8, 2);
+
+	// Clear characters
+	clear_char_area(0, 1, 1, 40, 3);
+}
+
+// Main entry and state machine
+void app_main()
+{
+	chram_size = chram_cols * chram_rows;
 	while (1)
 	{
+		hsync = input0 & 0x80;
+		vsync = input0 & 0x40;
+		hblank = input0 & 0x20;
 		vblank = CHECK_BIT(input0, INPUT_VBLANK);
-
-		if (VBLANK_RISING)
+		switch (state)
 		{
-			text_timer++;
-			if (text_timer == text_timer_max)
-			{
-				write_char(text_char[text_length - 1], 0xFF, text_length * 2, 2);
-				text_length++;
-				if (text_length > sizeof(text_char))
-				{
-					break;
-				}
-				text_timer = 0;
-			}
-			text_flash_timer++;
-			if (text_flash_timer == text_flash_max)
-			{
-				text_flash++;
-				if (text_flash == 2)
-				{
-					text_flash = 0;
-				}
-				if (text_flash == 1)
-				{
-					clear_char_area(0, text_length * 2, 2, text_length * 2, 2);
-				}
-				else
-				{
-					write_char(text_char[text_length - 1], 0xFF, text_length * 2, 2);
-				}
-				text_flash_timer = 0;
-			}
+		case STATE_START_INPUTTESTER:
+			start_inputtester_digital();
+			break;
+		case STATE_INPUTTESTER:
+			inputtester_digital();
+			break;
+
+		case STATE_START_INPUTTESTERADVANCED:
+			start_inputtester_advanced();
+			break;
+		case STATE_INPUTTESTERADVANCED:
+			inputtester_advanced();
+			break;
+
+		case STATE_START_INPUTTESTERANALOG:
+			start_inputtester_analog();
+			break;
+		case STATE_INPUTTESTERANALOG:
+			inputtester_analog();
+			break;
+
+		case STATE_START_BTNTEST:
+			start_btntest();
+			break;
+		case STATE_BTNTEST:
+			btntest();
+			break;
+
+		case STATE_START_MENU:
+			start_menu();
+			break;
+		case STATE_MENU:
+			menu();
+			break;
+
+		case STATE_FADEOUT:
+			fadeout();
+			break;
+		case STATE_FADEIN:
+			fadein();
+			break;
+
+		case STATE_START_ATTRACT:
+			start_attract();
+			break;
+		case STATE_ATTRACT:
+			snek_attract();
+			break;
+
+		case STATE_START_GAME_SNEK:
+			start_gameplay();
+			break;
+		case STATE_GAME_SNEK:
+			snek_gameplay();
+			break;
+		case STATE_START_ZORBLAXX:
+			state = 0;
+			loader("ZORBLAXX.AZN");
+			app_zorblaxx();
+			break;
+
+		default:
+			// Start default state
+			loader("INPUTTESTER.AZN");
+			start_inputtester_digital();
+			// start_inputtester_advanced();
+			// start_inputtester_analog();
+			// start_btntest();
+			break;
 		}
+
+		hsync_last = hsync;
+		vsync_last = vsync;
+		hblank_last = hblank;
 		vblank_last = vblank;
 	}
-
-	// Clear title characters
-	clear_char_area(0, sizeof(text_char), 2, sizeof(text_char), 2);
 }
 
 // Main entry
 void main()
 {
-	// Run startup routine
-	startup();
-
-	// Launch Zorblaxx!
-	app_zorblaxx();
+	app_main();
 }

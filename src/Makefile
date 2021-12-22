@@ -7,6 +7,7 @@ BIN=os.bin
 all: $(BIN)
 
 os.ihx: os.c sys.rel ui.rel ps2.rel sprite.rel audio.rel music.rel music_tracks.rel sound.rel sound_samples.rel ui.rel \
+			fader.rel menu.rel snek.rel inputtester.rel inputtester_sys.rel inputtester_ui.rel \
 			zorblaxx_app.rel zorblaxx_asteroids.rel zorblaxx_explosions.rel zorblaxx_player.rel zorblaxx_trails.rel zorblaxx_pickups.rel
 	$(SDCC) -m$(CPU) --data-loc $(DATALOC) $^
 

@@ -1,9 +1,9 @@
 /*============================================================================
-	Aznable OS - System interface functions
+	Input Test - Snek mini-game
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.2
-	Date: 2021-11-27
+	Version: 1.0
+	Date: 2021-07-12
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -19,39 +19,38 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#ifndef SNEK_H
+#define SNEK_H
 
-#include "sys.h"
+// SNEK constants
+#define movefreqinit 14
+#define movefreqdecfreq 200
+#define playerchar 83
+// SNEK variables
+extern unsigned char movefreqdectimer;
+extern unsigned char movefreq;
+extern unsigned char movetimer;
+extern signed int x;
+extern signed int y;
+extern signed char xd;
+extern signed char yd;
+extern signed char nxd;
+extern signed char nyd;
+extern unsigned int length;
 
-// Character map
-const unsigned char chram_cols = 64;
-const unsigned char chram_rows = 32;
-unsigned short chram_size;
+// Attract mode variables
+extern unsigned char attractstate;
 
-// Hardware inputs
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+// Initialise attract state and draw static elements
+extern void start_attract();
 
-// Helper functions
-unsigned char rand_uchar(unsigned char lower, unsigned char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+// Initialise attract state and draw static elements
+extern void start_gameplay();
 
-unsigned short rand_ushort(unsigned short lower, unsigned short upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+// SNEK - gameplay state
+extern void snek_gameplay();
 
-signed char rand_schar(signed char lower, signed char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+// SNEK - attract state
+extern void snek_attract();
+
+#endif

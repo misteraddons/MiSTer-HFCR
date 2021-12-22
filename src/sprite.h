@@ -21,8 +21,6 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#include "sys.h"
-
 extern unsigned char sprite_max;
 extern unsigned char spr_x_l[];
 extern unsigned char spr_x_h[];
