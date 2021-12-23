@@ -21,6 +21,7 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_trails.h"
 #include "zorblaxx_asteroids.h"
@@ -29,7 +30,6 @@
 #define const_trail_max 10
 unsigned char trail_max = const_trail_max;
 unsigned char trail_sprite_first = 0;
-unsigned char trail_sprite_palette = 1;
 unsigned short trail_x[const_trail_max];
 unsigned short trail_y[const_trail_max];
 signed char trail_xs[const_trail_max];
@@ -44,7 +44,7 @@ void setup_trails()
 	trail_y_offset = (8 * y_divisor);
 	for (int t = trail_sprite_first; t < trail_sprite_first + trail_max; t++)
 	{
-		enable_sprite(t, trail_sprite_palette, false);
+		enable_sprite(t, sprite_palette_trails, false);
 		spr_on[t] = false;
 	}
 }
@@ -64,8 +64,8 @@ void add_player_trail()
 
 			trail_timer[t] = player_trail_lifespan;
 			unsigned char sprite = trail_sprite_first + t;
-			enable_sprite(sprite, trail_sprite_palette, 0);
-			spr_index[sprite] = trail_sprite_index_first;
+			enable_sprite(sprite, sprite_palette_trails, 0);
+			spr_index[sprite] = sprite_index_trails_first;
 			return;
 		}
 	}
@@ -89,7 +89,7 @@ void handle_trails()
 			if (trail_timer[t] == 0)
 			{
 				spr_index[sprite]++;
-				if (spr_index[sprite] > trail_sprite_index_last)
+				if (spr_index[sprite] > sprite_index_trails_last)
 				{
 					spr_on[sprite] = false;
 				}

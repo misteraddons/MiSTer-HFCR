@@ -25,7 +25,6 @@
 
 extern unsigned char asteroids_max;
 extern unsigned char asteroids_sprite_first;
-extern unsigned char asteroids_sprite_palette;
 extern unsigned short asteroids_x[];
 extern unsigned short asteroids_y[];
 extern signed char asteroids_xs[];

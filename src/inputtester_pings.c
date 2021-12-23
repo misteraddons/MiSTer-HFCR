@@ -21,13 +21,12 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "inputtester_pings.h"
 
 #define const_ping_max 8
 unsigned char ping_max = const_ping_max;
 unsigned char ping_sprite_first = 0;
-unsigned char ping_sprite_index_first = 47;
-unsigned char ping_sprite_palette = 2;
 unsigned char ping_timer[const_ping_max];
 unsigned char ping_frame[const_ping_max];
 unsigned char ping_type[const_ping_max];
@@ -39,7 +38,7 @@ void setup_pings()
 {
 	for (int e = ping_sprite_first; e < ping_sprite_first + ping_max; e++)
 	{
-		enable_sprite(e, ping_sprite_palette, false);
+		enable_sprite(e, sprite_palette_pings, false);
 		spr_on[e] = false;
 	}
 }
@@ -55,8 +54,8 @@ void add_ping(unsigned type, unsigned short x, unsigned short y)
 			type = 0;
 			// ping_type[e] = type;
 			unsigned char sprite = ping_sprite_first + e;
-			enable_sprite(sprite, ping_sprite_palette, 0);
-			spr_index[sprite] = ping_sprite_index_first + (type * ping_frame_count);
+			enable_sprite(sprite, sprite_palette_pings, 0);
+			spr_index[sprite] = sprite_index_pings_first + (type * ping_frame_count);
 			set_sprite_position(sprite, x, y);
 			return;
 		}

@@ -30,6 +30,7 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "ui.h"
 #include "music.h"
 #include "sound.h"
@@ -82,7 +83,7 @@ unsigned char level_playercontrol = 0;
 unsigned short level_progress = 0;
 unsigned char level_progress_timer = 0;
 unsigned short level_progress_max;
-const unsigned short level_progress_base = 20000;
+unsigned short level_progress_base = 20000;
 const unsigned short level_progress_per_level = 3000;
 unsigned short game_state_warp_timeout_first = 120;
 unsigned short game_state_warp_timeout = 240;
@@ -121,6 +122,7 @@ void setup_variables()
 		game_state_danger_timeout /= 10;
 		game_state_gameover_timeout /= 10;
 		player_lives_default = 1;
+		level_progress_base = 2000;
 	}
 }
 
@@ -150,7 +152,7 @@ void intro_loop()
 		for (unsigned char x = 0; x < 8; x++)
 		{
 			enable_sprite(title_sprite, 2, 0);
-			spr_index[title_sprite] = title_sprite_index_first + si;
+			spr_index[title_sprite] = sprite_index_title_first + si;
 			set_sprite_position(title_sprite, title_x + (x * 16), -32 + (y * 16));
 			si++;
 			title_sprite++;
@@ -259,7 +261,7 @@ void game_loop()
 					// Player collects pickup
 					if (pickup_state[0] == 1)
 					{
-						enable_sprite(pickup_sprite_first, pickup_sprite_palette, 0);
+						enable_sprite(pickup_sprite_first, sprite_palette_pickups, 0);
 						player_score += pickup_value[0];
 						pickup_bonuses_collected += pickup_value[0];
 						pickup_state[0] = 2;
@@ -464,12 +466,20 @@ void game_loop()
 
 					write_stringf_ushort("-- FIELD %d COMPLETED --", 0xFF, 9, 11, level_number);
 
-					unsigned short par_time = level_progress_max / 60 / player_speed_min;
-					unsigned short bonus = 0;
-					if (level_time < par_time)
+					unsigned char par_speed = ((player_speed_max - player_speed_min) / 2);
+					unsigned short par_time = level_progress_max / 60 / par_speed;
+					signed short bonus = 0;
+					//					if (level_time < par_time)
+					//					{
+					bonus = (par_time - level_time) * bonus_score_multiplier;
+					time_bonuses_collected += bonus;
+					//					}
+					if (bonus < 0)
 					{
-						bonus = (par_time - level_time) * bonus_score_multiplier;
-						time_bonuses_collected += bonus;
+						if ((-bonus) > player_score)
+						{
+							bonus = -player_score;
+						}
 					}
 					player_score += bonus;
 

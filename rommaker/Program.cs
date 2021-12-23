@@ -11,6 +11,7 @@ namespace rommaker
     {
         static readonly string spriteRomPath = @"..\..\..\..\gfx\sprite.bin";
         static readonly string palettePath = @"..\..\..\..\gfx\palette.bin";
+        static readonly string spriteSourcePath = @"..\..\..\..\src\sprite_images";
 
         static readonly string musicPath = @"..\..\..\..\music\";
         static readonly string musicTrackListPath = @"..\..\..\..\music\tracks.txt";
@@ -98,7 +99,7 @@ namespace rommaker
                 string name = sample.Split("#")[1];
 
                 string args = $"{soundPath}{file}.wav {soundPath}{file}.vox rate 8k";
-                Process.Start(command,args).WaitForExit();
+                Process.Start(command, args).WaitForExit();
                 byte[] data = File.ReadAllBytes($"{soundPath}{file}.vox");
                 soundData.AddRange(data);
                 soundPos[t] = p + "u";
@@ -108,7 +109,7 @@ namespace rommaker
                 p += l;
                 t++;
             }
-            
+
 
             builder.AppendLine("#endif");
             File.WriteAllText(soundSourcePath + ".h", builder.ToString());
@@ -143,6 +144,8 @@ namespace rommaker
 
             uint pos = 0;
 
+            Dictionary<string, string> spriteSourceItems = new Dictionary<string, string>();
+
             int index = 0;
             foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly))
             {
@@ -152,34 +155,43 @@ namespace rommaker
                 int slicesY = 1;
 
                 // Remove extension
-                string name = image[0..^4];
+                string title = image[0..^4];
 
                 // Detect palette
-                if (!name.Contains('#'))
+                if (!title.Contains('#'))
                 {
                     throw new Exception("No palette data");
                 }
-                string[] paletteParts = name.Split("#");
-                name = paletteParts[0];
-                int paletteIndex = int.Parse(paletteParts[1]) -1;
+                string[] paletteParts = title.Split("#");
+                title = paletteParts[0];
+                int paletteIndex = int.Parse(paletteParts[1]) - 1;
+
+                // Get name
+                string name = title.Split("-")[0].Split("_")[1];
 
                 // Detect slices
-                if (!name.Contains('-'))
+                if (!title.Contains('-'))
                 {
                     throw new Exception("No slicing data");
                 }
-                string end = name.Split("-")[1];
+                string end = title.Split("-")[1];
                 string[] parts = end.Split("_");
                 slicesX = int.Parse(parts[0]);
                 slicesY = int.Parse(parts[1]);
                 int sizeX = img.Width / slicesX;
                 int sizeY = img.Height / slicesY;
 
+                // Add header items
+                spriteSourceItems.Add($"sprite_index_{name}_first", index.ToString());
+                spriteSourceItems.Add($"sprite_index_{name}_count", $"{slicesX * slicesY}");
+                spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
+                spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
+
                 for (int ys = 0; ys < slicesY; ys++)
                 {
                     for (int xs = 0; xs < slicesX; xs++)
                     {
-                        Console.WriteLine($"{index}: {image} - {xs},{ys} --> {pos}");
+                        Console.WriteLine($"{index}: {name} - {xs},{ys} --> {pos}");
                         int ymin = ys * sizeY;
                         int ymax = ymin + sizeY;
                         int xmin = xs * sizeX;
@@ -206,14 +218,14 @@ namespace rommaker
                                     if (pi == PaletteIndexMax)
                                     {
                                         //   throw new Exception("too many colours");
-                                      
-                                       Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
+
+                                        Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
                                         pi = 0;
                                     }
                                     else
                                     {
                                         Palettes[paletteIndex].Add(c);
-                                       // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                        // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
                                     }
                                 }
 
@@ -227,6 +239,29 @@ namespace rommaker
                 }
             }
 
+            StringBuilder builder = new();
+            builder.AppendLine("#ifndef SPRITE_IMAGES_H");
+            builder.AppendLine("#define SPRITE_IMAGES_H");
+            foreach (string v in spriteSourceItems.Keys)
+            {
+                builder.AppendLine("#define " + v + " " + spriteSourceItems[v]);
+            }
+            builder.AppendLine("#endif");
+            File.WriteAllText(spriteSourcePath + ".h", builder.ToString());
+
+            //            builder = new StringBuilder();
+            //builder.AppendLine("#ifndef SPRITE_IMAGES_C");
+            //builder.AppendLine("#define SPRITE_IMAGES_C");
+            //builder.AppendLine("#include \"sprite_images.h\"");
+            //foreach (string v in spriteSourceItems.Keys)
+            //{
+            //    builder.AppendLine("extern " + v + " " + spriteSourceItems[v]);
+            //}
+            //builder.AppendLine("#endif");
+            //File.WriteAllText(spriteSourcePath + ".c", builder.ToString());
+
+
+            // Palettes
             foreach (List<Color> palette in Palettes)
             {
                 while (palette.Count < PaletteIndexMax)
@@ -259,7 +294,7 @@ namespace rommaker
                             byte high = (byte)(color >> 8);
                             byte low = (byte)color;
 
-                           // Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
+                            // Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
                             paletteWriter.Write(high);
                             paletteWriter.Write(low);
 

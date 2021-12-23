@@ -24,7 +24,6 @@
 
 extern unsigned char ping_max;
 extern unsigned char ping_sprite_first;
-extern unsigned char ping_sprite_palette;
 extern unsigned char ping_timer[];
 extern unsigned char ping_frame[];
 extern unsigned char ping_type[];

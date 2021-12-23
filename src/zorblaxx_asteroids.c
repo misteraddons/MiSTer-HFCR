@@ -22,13 +22,13 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_asteroids.h"
 
 #define const_asteroids_max 16
 unsigned char asteroids_max = const_asteroids_max;
 unsigned char asteroids_sprite_first = 12;
-unsigned char asteroids_sprite_palette = 0;
 unsigned short asteroids_x[const_asteroids_max];
 unsigned short asteroids_y[const_asteroids_max];
 signed char asteroids_xs[const_asteroids_max];
@@ -63,8 +63,8 @@ void setup_asteroids()
 		asteroids_timer[m] = get_asteroid_timer();
 
 		unsigned char sprite = asteroids_sprite_first + m;
-		spr_index[sprite] = asteroids_sprite_index_first + rand_uchar(0, asteroids_sprite_index_count - 1);
-		enable_sprite(sprite, asteroids_sprite_palette, true);
+		spr_index[sprite] = sprite_index_asteroids_first + rand_uchar(0, sprite_index_asteroids_count - 1);
+		enable_sprite(sprite, sprite_palette_asteroids, true);
 		spr_on[sprite] = false;
 		set_sprite_position(sprite, asteroids_x[m] / x_divisor, 0);
 	}
@@ -85,7 +85,7 @@ void handle_asteroids(unsigned char spawn_enabled)
 					asteroids_timer[m]--;
 					if (asteroids_timer[m] == 0)
 					{
-						spr_index[sprite] = rand_uchar(asteroids_sprite_index_first, asteroids_sprite_index_first + asteroids_sprite_index_count - 1);
+						spr_index[sprite] = rand_uchar(sprite_index_asteroids_first, sprite_index_asteroids_last);
 						spr_on[sprite] = 1;
 					}
 				}

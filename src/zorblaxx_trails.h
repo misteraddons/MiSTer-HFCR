@@ -25,7 +25,6 @@
 // Trails
 extern unsigned char trail_max;
 extern unsigned char trail_sprite_first;
-extern unsigned char trail_sprite_palette;
 extern unsigned short trail_x[];
 extern unsigned short trail_y[];
 extern signed char trail_xs[];

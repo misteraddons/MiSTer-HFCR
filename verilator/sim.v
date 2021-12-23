@@ -106,9 +106,10 @@ jtframe_cen24 divider
 
 // Debug defines
 `define DEBUG_SIMULATION
+//`define DISABLE_SPRITES
 //`define DEBUG_SPRITE_COLLISION
 `define DISABLE_MUSIC
-//`define DISABLE_SOUND
+`define DISABLE_SOUND
 
 wire m_pause   = joystick_0[8];
 // PAUSE SYSTEM

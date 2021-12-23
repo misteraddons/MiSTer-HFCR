@@ -26,7 +26,6 @@
 extern unsigned char pickup_max;
 extern unsigned char pickup_type_count;
 extern unsigned char pickup_sprite_first;
-extern unsigned char pickup_sprite_palette;
 extern unsigned char pickup_state[];
 extern unsigned char pickup_value[];
 extern unsigned char pickup_timer[];

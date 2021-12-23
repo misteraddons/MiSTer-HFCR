@@ -25,6 +25,7 @@
 #include "ui.h"
 #include "ps2.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "inputtester.h"
 #include "inputtester_sys.h"
 #include "inputtester_ui.h"
@@ -269,8 +270,8 @@ void start_inputtester_advanced()
     page_inputtester_advanced();
 
     // Setup mouse pointer
-    enable_sprite(MOUSE_POINTER_SPRITE, 2, 0);
-    spr_index[MOUSE_POINTER_SPRITE] = 46;
+    enable_sprite(MOUSE_POINTER_SPRITE, sprite_palette_pointer, 0);
+    spr_index[MOUSE_POINTER_SPRITE] = sprite_index_pointer_first;
     spr_on[MOUSE_POINTER_SPRITE] = 0;
     mse_x_acc = 336;
     mse_y_acc = 256;
@@ -643,12 +644,10 @@ void inputtester_advanced()
             {
                 mse_y_acc = 511;
             }
-            unsigned short mx = 0;
-            unsigned short my = 0;
+            unsigned short mx = (mse_x_acc / 2);
+            unsigned short my = (mse_y_acc / 2);
             if (mse_x != 0 || mse_y != 0)
             {
-                mx = (mse_x_acc / 2);
-                my = (mse_y_acc / 2);
                 spr_on[MOUSE_POINTER_SPRITE] = 1;
                 set_sprite_position(MOUSE_POINTER_SPRITE, mx, my);
             }
@@ -682,7 +681,6 @@ void inputtester_advanced()
                 }
             }
             mse_button2_last = mse_button2;
-            mse_changed = 0;
 
             if (input_mouse_left && !input_mouse_left_last)
             {
@@ -692,6 +690,8 @@ void inputtester_advanced()
             {
                 add_ping(1, mx - 8, my - 8);
             }
+
+            mse_changed = 0;
         }
 
         handle_pings();

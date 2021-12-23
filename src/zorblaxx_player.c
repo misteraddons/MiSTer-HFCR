@@ -21,6 +21,7 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "sound.h"
 #include "sound_samples.h"
 #include "zorblaxx_app.h"
@@ -31,7 +32,6 @@
 
 // Player
 const unsigned char player_sprite = 11;
-const unsigned char player_sprite_palette = 1;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
 const unsigned char player_trail_frequency = 10;
@@ -168,8 +168,8 @@ void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 	player_invincible_flash = 0;
 
 	// Initialise player sprite
-	spr_index[player_sprite] = player_sprite_index_default;
-	enable_sprite(player_sprite, player_sprite_palette, true);
+	spr_index[player_sprite] = sprite_index_player_first;
+	enable_sprite(player_sprite, sprite_palette_player, true);
 
 	set_sprite_position(player_sprite, x, y);
 
@@ -197,7 +197,7 @@ void handle_player(bool allow_control)
 	if (player_respawn_timer > 0)
 	{
 		player_hit = false;
-		
+
 		// Decelerate player speed to minimum
 		if (player_speed > player_speed_min)
 		{
@@ -211,7 +211,7 @@ void handle_player(bool allow_control)
 			// Set player to spawn position
 			setup_player(player_spawn_x, player_spawn_y, player_lives);
 			// Enable invincibility and set timer
-			enable_sprite(player_sprite, player_sprite_palette, false);
+			enable_sprite(player_sprite, sprite_palette_player, false);
 			player_invincible_timer = player_invincible_timeout;
 		}
 		return;
@@ -228,7 +228,7 @@ void handle_player(bool allow_control)
 		if (player_invincible_timer == 0)
 		{
 			// Re-enable collision when invincibility runs out
-			enable_sprite(player_sprite, player_sprite_palette, true);
+			enable_sprite(player_sprite, sprite_palette_player, true);
 		}
 		else
 		{
@@ -311,8 +311,8 @@ void handle_player(bool allow_control)
 	}
 
 	// Set player sprite image
-	spr_index[player_sprite] = (player_xs < -2 ? player_sprite_index_left : player_xs > 2 ? player_sprite_index_right
-																						  : player_sprite_index_default);
+	spr_index[player_sprite] = (player_xs < -2 ? sprite_index_player_first + 2 : player_xs > 2 ? sprite_index_player_first + 3
+																							   : sprite_index_player_first);
 
 	// Integrate player move velocity
 	player_x += player_xs;

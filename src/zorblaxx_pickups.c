@@ -21,17 +21,17 @@
 
 #include "sys.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_pickups.h"
 #include "zorblaxx_asteroids.h"
 #include "zorblaxx_player.h"
 
 #define const_pickup_max 1
-#define const_type_count 3
+#define const_type_count 4
 unsigned char pickup_max = const_pickup_max;
 unsigned char pickup_type_count = const_type_count;
 unsigned char pickup_sprite_first = 10;
-unsigned char pickup_sprite_palette = 1;
 unsigned char pickup_spawn_y = 0;
 unsigned char pickup_spawn_interval = 10;
 unsigned short pickup_x[const_pickup_max];
@@ -57,8 +57,8 @@ void spawn_pickup()
 			pickup_ys[t] = rand_uchar(0, type * 12);
 			pickup_state[t] = 1;
 			pickup_value[t] = 50 * (type + 1);
-			enable_sprite(sprite, pickup_sprite_palette, 1);
-			spr_index[sprite] = pickup_sprite_index_first + type;
+			enable_sprite(sprite, sprite_palette_pickups, 1);
+			spr_index[sprite] = sprite_index_pickups_first + type;
 			set_sprite_position(sprite, pickup_x[t] / x_divisor, pickup_spawn_y);
 			return;
 		}
@@ -71,7 +71,7 @@ void setup_pickups()
 	pickup_y_offset = (8 * y_divisor);
 	for (int t = pickup_sprite_first; t < pickup_sprite_first + pickup_max; t++)
 	{
-		enable_sprite(t, pickup_sprite_palette, false);
+		enable_sprite(t, sprite_palette_pickups, false);
 		spr_on[t] = false;
 	}
 }

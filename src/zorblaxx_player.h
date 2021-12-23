@@ -23,7 +23,6 @@
 
 // Player
 extern const unsigned char player_sprite;
-extern const unsigned char player_sprite_palette;
 extern const signed char player_max_speed;
 extern const unsigned char player_accel;
 extern const unsigned char player_trail_frequency;

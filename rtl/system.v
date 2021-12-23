@@ -291,15 +291,23 @@ charmap casval
 	.a(charmap_a)
 );
 
-// Comet - sprite engine
-wire [13:0]	sprom_addr;
-wire [7:0]	spriterom_data_out;
+// Palettes
 wire [7:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
+
+// Comet - sprite engine
+wire [7:0]	spr_r;
+wire [7:0]	spr_g;
+wire [7:0]	spr_b;
+wire 		spr_a;
+wire		spritecollisionram_data_out_cpu;
+`ifndef DISABLE_SPRITES
+localparam SPRITE_ROM_WIDTH = 14;
+wire [SPRITE_ROM_WIDTH-1:0]	sprom_addr;
+wire [7:0]	spriterom_data_out;
 wire [6:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
 wire [4:0]	spritecollisionram_addr;
-wire		spritecollisionram_data_out_cpu;
 wire		spritecollisionram_data_out;
 wire		spritecollisionram_data_in;
 wire [9:0]	spritelbram_rd_addr;
@@ -307,10 +315,6 @@ wire [9:0]	spritelbram_wr_addr;
 wire 		spritelbram_wr;
 wire [15:0]	spritelbram_data_in;
 wire [15:0]	spritelbram_data_out;
-wire [7:0]	spr_r;
-wire [7:0]	spr_g;
-wire [7:0]	spr_b;
-wire 		spr_a;
 sprite_engine comet
 (
 	.clk(clk_24),
@@ -347,6 +351,7 @@ sprite_engine comet
 	.spr_b(spr_b),
 	.spr_a(spr_a)
 );
+`endif
 
 // Moroboshi (starfield)
 
@@ -623,6 +628,7 @@ dpram #(11,8) bgcolram
 	.q_b(bgcolram_data_out)
 );
 
+`ifndef DISABLE_SPRITES
 // Sprite RAM - 0xB000 - 0xB07F (0x0080 / 128 bytes)
 dpram #(7,8) spriteram
 (
@@ -698,6 +704,23 @@ dpram #(10,16) spritelbram
 	.q_b(spritelbram_data_out)
 );
 
+// Sprite ROM - 0x11000 - 0x11800 (0x1000 / 4096 bytes)
+dpram #(14,8, "sprite.hex") spriterom
+(
+	.clock_a(clk_24),
+	.address_a(sprom_addr),
+	.wren_a(1'b0),
+	.data_a(),
+	.q_a(spriterom_data_out),
+
+	.clock_b(clk_24),
+	.address_b(dn_addr[13:0]),
+	.wren_b(spriterom_wr),
+	.data_b(dn_data),
+	.q_b()
+);
+`endif
+
 // Work RAM - 0xC000 - 0xFFFF (0x4000 / 16384 bytes)
 spram #(14,8) wkram
 (
@@ -719,22 +742,6 @@ dpram_w1r2 #(8,8, "palette.hex") palrom
 	.clock_b(clk_24),
 	.address_b(palrom_addr),
 	.q_b(palrom_data_out)
-);
-
-// Sprite ROM - 0x11000 - 0x11800 (0x1000 / 4096 bytes)
-dpram #(14,8, "sprite.hex") spriterom
-(
-	.clock_a(clk_24),
-	.address_a(sprom_addr),
-	.wren_a(1'b0),
-	.data_a(),
-	.q_a(spriterom_data_out),
-
-	.clock_b(clk_24),
-	.address_b(dn_addr[13:0]),
-	.wren_b(spriterom_wr),
-	.data_b(dn_data),
-	.q_b()
 );
 
 `ifndef DISABLE_MUSIC
