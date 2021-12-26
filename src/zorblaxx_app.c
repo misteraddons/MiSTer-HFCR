@@ -468,12 +468,8 @@ void game_loop()
 
 					unsigned char par_speed = ((player_speed_max - player_speed_min) / 2);
 					unsigned short par_time = level_progress_max / 60 / par_speed;
-					signed short bonus = 0;
-					//					if (level_time < par_time)
-					//					{
-					bonus = (par_time - level_time) * bonus_score_multiplier;
+					signed short bonus = (par_time - level_time) * bonus_score_multiplier;
 					time_bonuses_collected += bonus;
-					//					}
 					if (bonus < 0)
 					{
 						if ((-bonus) > player_score)
@@ -487,7 +483,7 @@ void game_loop()
 					write_stringf_ushort("Par: %6d", 0xFF, 15, 14, par_time);
 					if (bonus > 0)
 					{
-						write_stringf_ushort("Bonus: %6d", 0b00011000, 13, 16, bonus);
+						write_stringf_short("Bonus: %6d", 0b00011000, 13, 16, bonus);
 					}
 					else
 					{

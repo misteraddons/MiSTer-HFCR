@@ -26,7 +26,7 @@
 #include "ps2.h"
 #include "sprite.h"
 #include "sprite_images.h"
-#include "inputtester.h"
+#include "inputtester_app.h"
 #include "inputtester_sys.h"
 #include "inputtester_ui.h"
 #include "inputtester_pings.h"

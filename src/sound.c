@@ -38,3 +38,9 @@ void play_sound(unsigned char sample)
 	// Write play instruction
 	sndram[8] = 1;
 }
+
+void set_sound_volume(unsigned char volume)
+{
+	// Write sample volume
+	sndram[12] = volume;
+}

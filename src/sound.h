@@ -24,5 +24,6 @@
 extern unsigned char sound_sample_max;
 
 extern void play_sound(unsigned char sample);
+extern void set_sound_volume(unsigned char volume);
 
 #endif

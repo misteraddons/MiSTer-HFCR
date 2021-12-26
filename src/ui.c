@@ -124,7 +124,7 @@ void write_stringf_ushort(const char *format, char color, unsigned char x, unsig
 }
 
 // Write formatted string to character RAM (signed short data)
-void write_stringf_short(const char *format, char color, unsigned char x, unsigned char y, short data)
+void write_stringf_short(const char *format, char color, unsigned char x, unsigned char y, signed short data)
 {
 	unsigned short p = (y * chram_cols) + x;
 	char temp[40];

@@ -22,13 +22,15 @@
 #include "sys.h"
 #include "ui.h"
 #include "sprite.h"
+#include "sound.h"
+#include "sound_samples.h"
 
-#include "zorblaxx_app.h"
-#include "inputtester.h"
+#include "inputtester_app.h"
 #include "inputtester_sys.h"
-#include "snek.h"
-#include "fader.h"
 #include "menu.h"
+#include "zorblaxx_app.h"
+#include "snek_app.h"
+#include "fader.h"
 
 void intro_text(const char *text, unsigned char start_x, unsigned char start_y, unsigned char space_x, unsigned char speed, unsigned char flash_speed)
 {
@@ -93,6 +95,10 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 
 void loader(const char *title)
 {
+	// Play startup sound
+	set_sound_volume(255);
+	play_sound(const_sound_newtype);
+
 	// Set charmap area
 	chram_size = chram_cols * chram_rows;
 	// Clear charmap

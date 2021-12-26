@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include "sys.h"
-#include "snek.h"
+#include "snek_app.h"
 #include "ui.h"
 #include "inputtester_sys.h"
 #include "fader.h"

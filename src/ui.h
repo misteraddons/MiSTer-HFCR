@@ -50,13 +50,13 @@ extern void write_string(const char *string, char color, unsigned char x, unsign
 extern void write_stringfs(const char *format, char color, unsigned char x, unsigned char y, signed char data);
 
 // Write formatted string to character RAM (unsigned char data)
-extern void write_stringf(const char *format, char color, unsigned char x, unsigned char y, char data);
+extern void write_stringf(const char *format, char color, unsigned char x, unsigned char y, unsigned char data);
 
 // Write formatted string to character RAM (unsigned short data)
 extern void write_stringf_ushort(const char *format, char color, unsigned char x, unsigned char y, unsigned short data);
 
 // Write formatted string to character RAM (signed short data)
-extern void write_stringf_short(const char *format, char color, unsigned char x, unsigned char y, short data);
+extern void write_stringf_short(const char *format, char color, unsigned char x, unsigned char y, signed short data);
 
 // Write formatted string to character RAM (unsigned long data)
 extern void write_stringf_ulong(const char *format, char color, unsigned char x, unsigned char y, unsigned long data);

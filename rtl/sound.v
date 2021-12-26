@@ -39,6 +39,7 @@ wire sample;						// Is m5205 requesting sample data
 reg  [3:0] snd_data_in;				// 4 bit data input to m5205
 reg [15:0] soundrom_addr_target;	// Current sample end position
 
+reg [7:0] volume;					// Sound output volume
 reg m5205_ce;						// Counter for 375KHz clock enable
 reg m5205_phase;					// Memory address phase counter - 0 = 4 high bits, 1 = 4 low bits
 reg playing;						// Is sound playing
@@ -87,6 +88,12 @@ begin
 			//$display("playing write: start=%d  end=%d", soundrom_addr, soundrom_addr_target);
 			ce_counter <= 14'd0;
 			playing <= 1'b1;
+		end
+		2'd3:
+		begin
+			// Set volume
+			$display("set volume: %d", data_in);
+			volume <= data_in;
 		end
 		default:
 		begin

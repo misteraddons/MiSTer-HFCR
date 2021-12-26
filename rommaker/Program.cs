@@ -30,6 +30,7 @@ namespace rommaker
 
         static void CreateMusicRom()
         {
+            Console.WriteLine("CREATING MUSIC ROM");
             if (File.Exists(musicRomPath)) { File.Delete(musicRomPath); }
 
             // Read track list
@@ -46,6 +47,7 @@ namespace rommaker
                 byte[] data = File.ReadAllBytes(musicPath + file);
                 trackData.AddRange(data);
                 trackPos[t] = p + "u";
+                Console.WriteLine($"\t{t} - {p} > {file}");
                 p += (uint)data.Length;
                 t++;
             }
@@ -74,6 +76,7 @@ namespace rommaker
 
         static void CreateSoundRom()
         {
+            Console.WriteLine("CREATING SOUND ROM");
             if (File.Exists(soundRomPath)) { File.Delete(soundRomPath); }
 
             // Read sample list
@@ -106,6 +109,7 @@ namespace rommaker
                 uint l = (uint)data.Length;
                 soundLen[t] = l + "u";
                 builder.AppendLine($"#define const_sound_{name} {t}");
+                Console.WriteLine($"\t{t} - {p} > {file}");
                 p += l;
                 t++;
             }
