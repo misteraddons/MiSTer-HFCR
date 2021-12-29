@@ -36,15 +36,17 @@ signed char trail_xs[const_trail_max];
 signed char trail_ys[const_trail_max];
 unsigned char trail_timer[const_trail_max];
 unsigned short trail_y_max;
+unsigned char trail_x_offset;
 unsigned char trail_y_offset;
 
 void setup_trails()
 {
 	trail_y_max = 248 * y_divisor;
-	trail_y_offset = (8 * y_divisor);
+	trail_x_offset = (4 * x_divisor);
+	trail_y_offset = (12 * y_divisor);
 	for (int t = trail_sprite_first; t < trail_sprite_first + trail_max; t++)
 	{
-		enable_sprite(t, sprite_palette_trails, false);
+		enable_sprite(t, sprite_palette_trails, sprite_size_trails, false);
 		spr_on[t] = false;
 	}
 }
@@ -59,12 +61,12 @@ void add_player_trail()
 			trail_xs[t] = rand_schar(-spread, spread);
 			trail_ys[t] = player_trail_speed;
 
-			trail_x[t] = player_x;
+			trail_x[t] = (player_x + trail_x_offset);
 			trail_y[t] = (player_y + trail_y_offset) - (player_trail_speed + player_speed);
 
 			trail_timer[t] = player_trail_lifespan;
 			unsigned char sprite = trail_sprite_first + t;
-			enable_sprite(sprite, sprite_palette_trails, 0);
+			enable_sprite(sprite, sprite_palette_trails, sprite_size_trails, false);
 			spr_index[sprite] = sprite_index_trails_first;
 			return;
 		}

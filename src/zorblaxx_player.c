@@ -169,7 +169,7 @@ void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 
 	// Initialise player sprite
 	spr_index[player_sprite] = sprite_index_player_first;
-	enable_sprite(player_sprite, sprite_palette_player, true);
+	enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, true);
 
 	set_sprite_position(player_sprite, x, y);
 
@@ -211,7 +211,7 @@ void handle_player(bool allow_control)
 			// Set player to spawn position
 			setup_player(player_spawn_x, player_spawn_y, player_lives);
 			// Enable invincibility and set timer
-			enable_sprite(player_sprite, sprite_palette_player, false);
+			enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, false);
 			player_invincible_timer = player_invincible_timeout;
 		}
 		return;
@@ -228,7 +228,7 @@ void handle_player(bool allow_control)
 		if (player_invincible_timer == 0)
 		{
 			// Re-enable collision when invincibility runs out
-			enable_sprite(player_sprite, sprite_palette_player, true);
+			enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, true);
 		}
 		else
 		{

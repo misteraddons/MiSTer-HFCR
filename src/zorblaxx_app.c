@@ -52,7 +52,7 @@ unsigned short x_h_max;
 unsigned char scroll_speed;
 
 // Game defaults
-unsigned short player_spawn_x = 166;
+unsigned short player_spawn_x = ((320 / 2) - 8) + 32;
 unsigned short player_spawn_y = 200;
 
 // Game states
@@ -128,6 +128,7 @@ void setup_variables()
 
 void intro_loop()
 {
+
 	clear_bgcolor(0);
 
 	// Start intro music loop
@@ -143,17 +144,17 @@ void intro_loop()
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
-	unsigned short title_x = 115;
+	unsigned short title_x = ((320 /2) + 32) - 64;
 	signed short title_y = -32 * y_divisor;
 	signed short title_target_y = 100 * y_divisor;
 	unsigned char si = 0;
-	for (unsigned char y = 0; y < 2; y++)
+	for (unsigned char y = 0; y < 1; y++)
 	{
-		for (unsigned char x = 0; x < 8; x++)
+		for (unsigned char x = 0; x < 4; x++)
 		{
-			enable_sprite(title_sprite, 2, 0);
+			enable_sprite(title_sprite, sprite_palette_title, sprite_size_title, 0);
 			spr_index[title_sprite] = sprite_index_title_first + si;
-			set_sprite_position(title_sprite, title_x + (x * 16), -32 + (y * 16));
+			set_sprite_position(title_sprite, title_x + (x * 32), -32);
 			si++;
 			title_sprite++;
 		}
@@ -261,7 +262,7 @@ void game_loop()
 					// Player collects pickup
 					if (pickup_state[0] == 1)
 					{
-						enable_sprite(pickup_sprite_first, sprite_palette_pickups, 0);
+						enable_sprite(pickup_sprite_first, sprite_palette_pickups, sprite_size_pickups, 0);
 						player_score += pickup_value[0];
 						pickup_bonuses_collected += pickup_value[0];
 						pickup_state[0] = 2;
@@ -394,7 +395,7 @@ void game_loop()
 				level_progress_max = level_progress_base + per_level;
 
 				// Start main music loop
-				play_music(1);
+				//play_music(1);
 
 				// Update asteroid difficulty
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
@@ -459,7 +460,7 @@ void game_loop()
 					game_state_timer = game_state_warp_timeout;
 
 					// Start score music loop
-					play_music(2);
+					//play_music(2);
 
 					level_playercontrol = 0;
 					set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
@@ -601,6 +602,16 @@ void app_zorblaxx()
 	{
 		clear_chars(0);
 		clear_sprites();
+
+		// for(int s=0;s<18;s++){
+		// 	enable_sprite(s, sprite_palette_player, sprite_size_player, 0);
+		// 	spr_index[s] = sprite_index_player_first;
+		// 	set_sprite_position(s, 32 + (s*16), 64);
+		// }
+		// update_sprites();
+		// while(1){
+		// }
+
 		setup_player(player_spawn_x, 256, player_lives_default);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 		setup_trails();

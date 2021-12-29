@@ -31,7 +31,6 @@ extern signed char trail_xs[];
 extern signed char trail_ys[];
 extern unsigned char trail_timer[];
 extern unsigned short trail_y_max;
-extern unsigned char trail_y_offset;
 
 extern void setup_trails();
 

@@ -112,6 +112,13 @@ wire [7:0] cpu_din;
 wire [7:0] cpu_dout;
 wire cpu_wr_n;
 
+reg 		cpu_cen; // 12 Mhz
+always @(posedge clk_24) 
+begin
+//	cpu_cen <= cpu_cen + 1'b1;
+	cpu_cen <= 1'b1;
+end
+
 // include Z80 CPU
 tv80s #(
 	.Mode(1),
@@ -119,6 +126,7 @@ tv80s #(
 ) T80x  (
 	.reset_n   ( !reset ),
 	.clk       ( clk_24 ),
+	//.cen       ( cpu_cen ),
 	.wait_n    ( !pause_system ),
 	.int_n     ( 1'b1 ),
 	.nmi_n     ( 1'b1 ),
@@ -302,20 +310,28 @@ wire [7:0]	spr_b;
 wire 		spr_a;
 wire		spritecollisionram_data_out_cpu;
 `ifndef DISABLE_SPRITES
+localparam SPRITE_POSITION_WIDTH = 9;
+localparam SPRITE_RAM_WIDTH = 7;
 localparam SPRITE_ROM_WIDTH = 14;
+localparam SPRITE_COLRAM_WIDTH = 5;
 wire [SPRITE_ROM_WIDTH-1:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
-wire [6:0]	spriteram_addr;
+wire [SPRITE_RAM_WIDTH-1:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
-wire [4:0]	spritecollisionram_addr;
+wire [SPRITE_COLRAM_WIDTH-1:0]	spritecollisionram_addr;
 wire		spritecollisionram_data_out;
 wire		spritecollisionram_data_in;
-wire [9:0]	spritelbram_rd_addr;
-wire [9:0]	spritelbram_wr_addr;
+wire [SPRITE_POSITION_WIDTH:0]	spritelbram_rd_addr;
+wire [SPRITE_POSITION_WIDTH:0]	spritelbram_wr_addr;
 wire 		spritelbram_wr;
 wire [15:0]	spritelbram_data_in;
 wire [15:0]	spritelbram_data_out;
-sprite_engine comet
+sprite_engine #(
+	.SPRITE_RAM_WIDTH(SPRITE_RAM_WIDTH),
+	.SPRITE_ROM_WIDTH(SPRITE_ROM_WIDTH),
+	.SPRITE_POSITION_WIDTH(SPRITE_POSITION_WIDTH),
+	.SPRITE_COLRAM_WIDTH(SPRITE_COLRAM_WIDTH)
+) comet
 (
 	.clk(clk_24),
 	.reset(reset),
@@ -351,79 +367,6 @@ sprite_engine comet
 	.spr_b(spr_b),
 	.spr_a(spr_a)
 );
-`endif
-
-// Moroboshi (starfield)
-
-wire 		sf_on1;
-wire [7:0]	sf_star1;
-starfield #(
-	.H(396),
-	.V(256),
-	.LEN(22),
-	.SEED(22'h1FFFFF),
-	.MASK(22'b0000111100001111000011),
-	.TAPS(22'b1100000000000000000000)
-) stars1
-(
-	.clk(clk_24),
-	.rst(reset),
-	.vblank(VGA_VB),
-	.en(ce_6),
-	.pause(pause_system),
-	.addr(cpu_addr[0]),
-	.data_in(cpu_dout),
-	.write(starfield1_cs && !cpu_wr_n),
-	.sf_on(sf_on1),
-	.sf_star(sf_star1)
-);
-wire 		sf_on2;
-wire [7:0]	sf_star2;
-starfield #(
-	.H(396),
-	.V(256),
-	.LEN(21),
-	.SEED(21'h1FFFF0),
-	.MASK(21'b000011110000111100001),
-	.TAPS(21'b101010000000000000000)
-) stars2
-(
-	.clk(clk_24),
-	.rst(reset),
-	.vblank(VGA_VB),	
-	.en(ce_6),
-	.pause(pause_system),
-	.addr(cpu_addr[0]),
-	.data_in(cpu_dout),
-	.write(starfield2_cs && !cpu_wr_n),
-	.sf_on(sf_on2),
-	.sf_star(sf_star2)
-);
-wire 		sf_on3;
-wire [7:0]	sf_star3;
-starfield #(
-	.H(396),
-	.V(256),
-	.LEN(21),
-	.SEED(21'h1FFF00),
-	.MASK(21'b000011110000111100001),
-	.TAPS(21'b101000000000000000000)
-) stars3
-(
-	.clk(clk_24),
-	.rst(reset),
-	.vblank(VGA_VB),	
-	.en(ce_6),
-	.pause(pause_system),
-	.addr(cpu_addr[0]),
-	.data_in(cpu_dout),
-	.write(starfield3_cs && !cpu_wr_n),
-	.sf_on(sf_on3),
-	.sf_star(sf_star3)
-);
-
-wire sf_on = sf_on1 || sf_on2 || sf_on3;
-wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
 // Sprite collision debug
 `ifdef DEBUG_SPRITE_COLLISION
@@ -441,10 +384,10 @@ begin
 
 			if(!pause_system)
 			begin
-					if(VGA_VB && !vblank_last)
-					begin
-						sd_state <= SD_CLEAR_BEGIN;
-					end
+				if(VGA_VB && !vblank_last)
+				begin
+					sd_state <= SD_CLEAR_BEGIN;
+				end
 			end
 		end
 
@@ -482,6 +425,78 @@ begin
 	endcase
 end
 `endif
+`endif
+
+// Moroboshi (starfield)
+wire 		sf_on1;
+wire [7:0]	sf_star1;
+starfield #(
+	.H(396),
+	.V(256),
+	.LEN(22),
+	.SEED(22'h1FFFFF),
+	.MASK(22'b0000111100001111000011),
+	.TAPS(22'b1100000000000000000000)
+) stars1
+(
+	.clk(clk_24),
+	.rst(reset),
+	.vblank(VGA_VB),
+	.en(ce_6),
+	.pause(pause_system),
+	.addr(cpu_addr[0]),
+	.data_in(cpu_dout),
+	.write(starfield1_cs && !cpu_wr_n),
+	.sf_on(sf_on1),
+	.sf_star(sf_star1)
+);
+wire 		sf_on2;
+wire [7:0]	sf_star2;
+starfield #(
+	.H(396),
+	.V(256),
+	.LEN(21),
+	.SEED(21'h1FFFF0),
+	.MASK(21'b000011110000111100001),
+	.TAPS(21'b101010000000000000000)
+) stars2
+(
+	.clk(clk_24),
+	.rst(reset),
+	.vblank(VGA_VB),
+	.en(ce_6),
+	.pause(pause_system),
+	.addr(cpu_addr[0]),
+	.data_in(cpu_dout),
+	.write(starfield2_cs && !cpu_wr_n),
+	.sf_on(sf_on2),
+	.sf_star(sf_star2)
+);
+wire 		sf_on3;
+wire [7:0]	sf_star3;
+starfield #(
+	.H(396),
+	.V(256),
+	.LEN(21),
+	.SEED(21'h1FFF00),
+	.MASK(21'b000011110000111100001),
+	.TAPS(21'b101000000000000000000)
+) stars3
+(
+	.clk(clk_24),
+	.rst(reset),
+	.vblank(VGA_VB),
+	.en(ce_6),
+	.pause(pause_system),
+	.addr(cpu_addr[0]),
+	.data_in(cpu_dout),
+	.write(starfield3_cs && !cpu_wr_n),
+	.sf_on(sf_on3),
+	.sf_star(sf_star3)
+);
+
+wire sf_on = sf_on1 || sf_on2 || sf_on3;
+wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
 
 // RGB mixer
 `ifdef DEBUG_SPRITE_COLLISION
@@ -547,18 +562,19 @@ assign AUDIO_R = AUDIO_L;
 
 // MEMORY
 // ------
+localparam PROGRAM_ROM_WIDTH = 15;
 
 // Program ROM - 0x0000 - 0x7FFF (0x6000 / 32768 bytes)
-dpram #(15,8, "rom.hex") pgrom
+dpram #(PROGRAM_ROM_WIDTH,8, "rom.hex") pgrom
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[14:0]),
+	.address_a(cpu_addr[PROGRAM_ROM_WIDTH-1:0]),
 	.wren_a(1'b0),
 	.data_a(),
 	.q_a(pgrom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[14:0]),
+	.address_b(dn_addr[PROGRAM_ROM_WIDTH-1:0]),
 	.wren_b(pgrom_wr),
 	.data_b(dn_data),
 	.q_b()
@@ -630,26 +646,26 @@ dpram #(11,8) bgcolram
 
 `ifndef DISABLE_SPRITES
 // Sprite RAM - 0xB000 - 0xB07F (0x0080 / 128 bytes)
-dpram #(7,8) spriteram
+dpram #(SPRITE_RAM_WIDTH,8) spriteram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[6:0]),
+	.address_a(cpu_addr[SPRITE_RAM_WIDTH-1:0]),
 	.wren_a(spriteram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
 	.clock_b(clk_24),
-	.address_b(spriteram_addr[6:0]),
+	.address_b(spriteram_addr),
 	.wren_b(1'b0),
 	.data_b(),
 	.q_b(spriteram_data_out)
 );
 
 // Sprite Collision RAM - 0xB400 - 0xB47F (0x0080 / 128 bytes)
-dpram #(5,1) spritecollisionram
+dpram #(SPRITE_COLRAM_WIDTH,1) spritecollisionram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[4:0]),
+	.address_a(cpu_addr[SPRITE_COLRAM_WIDTH-1:0]),
 	.wren_a(spritecollisionram_cs && ~cpu_wr_n),
 	.data_a(cpu_dout[0]),
 	.q_a(spritecollisionram_data_out_cpu),
@@ -689,7 +705,7 @@ dpram #(17,8) spritedebugram
 `endif
 
 // Sprite linebuffer RAM - 0xB800 - 0xBFFF (0x0800 / 2048 bytes)
-dpram #(10,16) spritelbram
+dpram #(SPRITE_POSITION_WIDTH+1,16) spritelbram
 (
 	.clock_a(clk_24),
 	.address_a(spritelbram_wr_addr),

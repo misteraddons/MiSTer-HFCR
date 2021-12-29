@@ -41,7 +41,7 @@ void setup_explosions()
 {
 	for (int e = explosion_sprite_first; e < explosion_sprite_first + explosion_max; e++)
 	{
-		enable_sprite(e, sprite_palette_explosions, false);
+		enable_sprite(e, sprite_palette_explosions, sprite_size_explosions, false);
 		spr_on[e] = false;
 	}
 }

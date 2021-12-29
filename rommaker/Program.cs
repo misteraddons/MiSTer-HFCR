@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace rommaker
@@ -143,105 +144,122 @@ namespace rommaker
             if (File.Exists(spriteRomPath)) { File.Delete(spriteRomPath); }
             if (File.Exists(palettePath)) { File.Delete(palettePath); }
 
-
             FileStream spriteStream = File.OpenWrite(spriteRomPath);
+            BinaryWriter spriteStreamWriter = new(spriteStream, Encoding.Default);
 
             uint pos = 0;
-
             Dictionary<string, string> spriteSourceItems = new Dictionary<string, string>();
 
-            int index = 0;
-            foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly))
+
+            int[] groups = { 32, 16, 8 };
+            
+            Dictionary<int, MemoryStream> groupStreams = new();
+            int groupIndex = groups.Length-1;
+            for (int gi= 0; gi <groups.Length; gi++)
             {
-                Bitmap img = new(image);
+                int g = groups[gi];
+                int index = 0;
+                ushort groupStartPos = (ushort)(pos + (groups.Length * 2));
+                byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
+                Console.WriteLine($"Starting image group {g} at {groupStartPos}");
+                spriteStreamWriter.Write(groupStartBytes[1]); // Write start point for size group
+                spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
 
-                int slicesX = 1;
-                int slicesY = 1;
+                MemoryStream groupStream = new MemoryStream();
 
-                // Remove extension
-                string title = image[0..^4];
-
-                // Detect palette
-                if (!title.Contains('#'))
+                foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                 {
-                    throw new Exception("No palette data");
-                }
-                string[] paletteParts = title.Split("#");
-                title = paletteParts[0];
-                int paletteIndex = int.Parse(paletteParts[1]) - 1;
+                    Bitmap img = new(image);
 
-                // Get name
-                string name = title.Split("-")[0].Split("_")[1];
+                    // Remove extension
+                    string title = image[0..^4];
 
-                // Detect slices
-                if (!title.Contains('-'))
-                {
-                    throw new Exception("No slicing data");
-                }
-                string end = title.Split("-")[1];
-                string[] parts = end.Split("_");
-                slicesX = int.Parse(parts[0]);
-                slicesY = int.Parse(parts[1]);
-                int sizeX = img.Width / slicesX;
-                int sizeY = img.Height / slicesY;
-
-                // Add header items
-                spriteSourceItems.Add($"sprite_index_{name}_first", index.ToString());
-                spriteSourceItems.Add($"sprite_index_{name}_count", $"{slicesX * slicesY}");
-                spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
-                spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
-
-                for (int ys = 0; ys < slicesY; ys++)
-                {
-                    for (int xs = 0; xs < slicesX; xs++)
+                    // Detect palette
+                    if (!title.Contains('#'))
                     {
-                        Console.WriteLine($"{index}: {name} - {xs},{ys} --> {pos}");
-                        int ymin = ys * sizeY;
-                        int ymax = ymin + sizeY;
-                        int xmin = xs * sizeX;
-                        int xmax = xmin + sizeX;
-                        for (int y = ymin; y < ymax; y++)
+                        throw new Exception("No palette data");
+                    }
+                    string[] paletteParts = title.Split("#");
+                    title = paletteParts[0];
+                    int paletteIndex = int.Parse(paletteParts[1]) - 1;
+
+                    // Get name
+                    int size = int.Parse(title[(title.LastIndexOf("\\") + 1)..].Split('_')[0]);
+                    string name = title.Split("-")[0].Split("_")[1];
+
+                    // Detect slices
+                    int imageSizeX = img.Width;
+                    int imageSizeY = img.Height;
+                    int slicesX = imageSizeX / size;
+                    int slicesY = imageSizeY / size;
+
+                    // Add header items
+                    spriteSourceItems.Add($"sprite_index_{name}_first", index.ToString());
+                    spriteSourceItems.Add($"sprite_index_{name}_count", $"{slicesX * slicesY}");
+                    spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
+                    spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
+                    spriteSourceItems.Add($"sprite_size_{name}", $"{gi}");
+
+                    for (int ys = 0; ys < slicesY; ys++)
+                    {
+                        for (int xs = 0; xs < slicesX; xs++)
                         {
-                            for (int x = xmin; x < xmax; x++)
+                            Console.WriteLine($"{index}: {name} - {xs},{ys} --> {pos}");
+                            int ymin = ys * size;
+                            int ymax = ymin + size;
+                            int xmin = xs * size;
+                            int xmax = xmin + size;
+                            for (int y = ymin; y < ymax; y++)
                             {
-
-                                Color c = img.GetPixel(x, y);
-                                // Find colour in palette
-                                int pi = -1;
-                                for (int ci = 0; ci < Palettes[paletteIndex].Count; ci++)
+                                for (int x = xmin; x < xmax; x++)
                                 {
-                                    if (Palettes[paletteIndex][ci] == c)
-                                    {
-                                        pi = ci;
-                                    }
-                                }
-                                // Colour not found, add to paletta
-                                if (pi == -1)
-                                {
-                                    pi = Palettes[paletteIndex].Count;
-                                    if (pi == PaletteIndexMax)
-                                    {
-                                        //   throw new Exception("too many colours");
 
-                                        Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
-                                        pi = 0;
-                                    }
-                                    else
+                                    Color c = img.GetPixel(x, y);
+                                    // Find colour in palette
+                                    int pi = -1;
+                                    for (int ci = 0; ci < Palettes[paletteIndex].Count; ci++)
                                     {
-                                        Palettes[paletteIndex].Add(c);
-                                        // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                        if (Palettes[paletteIndex][ci] == c)
+                                        {
+                                            pi = ci;
+                                        }
                                     }
-                                }
+                                    // Colour not found, add to paletta
+                                    if (pi == -1)
+                                    {
+                                        pi = Palettes[paletteIndex].Count;
+                                        if (pi == PaletteIndexMax)
+                                        {
+                                            //   throw new Exception("too many colours");
 
-                                // Write palette index to sprite rom
-                                spriteStream.WriteByte(Convert.ToByte(pi));
-                                pos += 1;
+                                            Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
+                                            pi = 0;
+                                        }
+                                        else
+                                        {
+                                            Palettes[paletteIndex].Add(c);
+                                            // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                        }
+                                    }
+
+                                    // Write palette index to sprite rom
+                                    groupStream.WriteByte(Convert.ToByte(pi));
+                                    pos += 1;
+                                }
                             }
+                            index++;
                         }
-                        index++;
                     }
                 }
+                groupIndex--;
+                groupStreams.Add(g, groupStream);
             }
+
+            foreach (int g in groups)
+            {
+                spriteStreamWriter.Write(groupStreams[g].ToArray());
+            }
+            spriteStreamWriter.Dispose();
 
             StringBuilder builder = new();
             builder.AppendLine("#ifndef SPRITE_IMAGES_H");
@@ -273,7 +291,6 @@ namespace rommaker
                     palette.Add(Color.FromArgb(255, 0, 255, 0));
                 }
             }
-            spriteStream.Close();
 
             if (File.Exists(palettePath))
             {

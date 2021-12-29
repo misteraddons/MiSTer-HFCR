@@ -270,7 +270,7 @@ void start_inputtester_advanced()
     page_inputtester_advanced();
 
     // Setup mouse pointer
-    enable_sprite(MOUSE_POINTER_SPRITE, sprite_palette_pointer, 0);
+    enable_sprite(MOUSE_POINTER_SPRITE, sprite_palette_pointer, sprite_size_pointer, 0);
     spr_index[MOUSE_POINTER_SPRITE] = sprite_index_pointer_first;
     spr_on[MOUSE_POINTER_SPRITE] = 0;
     mse_x_acc = 336;

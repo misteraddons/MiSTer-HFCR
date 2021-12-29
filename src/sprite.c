@@ -32,6 +32,7 @@ bool spr_on[const_sprite_max];
 bool spr_collide[const_sprite_max];
 unsigned char spr_palette_index[const_sprite_max];
 unsigned char spr_index[const_sprite_max];
+unsigned char spr_size[const_sprite_max];
 
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
 
@@ -56,7 +57,7 @@ void update_sprites()
 		if (spr_on[sprite])
 		{
 			// Set sprite properties
-			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];   // Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Position Y (upper 2 bits)
+			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];   // Enabled (1 bit) + Collide (1 bit) + Size (2 bits) + Palette Index (2 bits) + Position Y (upper 2 bits)
 			spriteram[s++] = spr_y_l[sprite];						   // Position Y (lower 8 bits)
 			spriteram[s++] = spr_index[sprite] << 2 | spr_x_h[sprite]; // Sprite Index (6 bits) + Position X (upper 2 bits)
 			spriteram[s++] = spr_x_l[sprite];						   // Position X (lower 8 bits)
@@ -70,12 +71,13 @@ void update_sprites()
 	}
 }
 
-void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char collide)
+void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char size, unsigned char collide)
 {
 	spr_on[sprite] = 1;
 	spr_collide[sprite] = collide;
 	spr_palette_index[sprite] = palette_index;
-	spr_highbits[sprite] = 1 << 7 | spr_collide[sprite] << 6 | spr_palette_index[sprite] << 4;
+	spr_size[sprite] = size;
+	spr_highbits[sprite] = 1 << 7 | collide << 6 | palette_index << 4 | size << 2;
 }
 
 void clear_sprites()

@@ -64,7 +64,7 @@ void setup_asteroids()
 
 		unsigned char sprite = asteroids_sprite_first + m;
 		spr_index[sprite] = sprite_index_asteroids_first + rand_uchar(0, sprite_index_asteroids_count - 1);
-		enable_sprite(sprite, sprite_palette_asteroids, true);
+		enable_sprite(sprite, sprite_palette_asteroids, sprite_size_asteroids, true);
 		spr_on[sprite] = false;
 		set_sprite_position(sprite, asteroids_x[m] / x_divisor, 0);
 	}

@@ -30,6 +30,7 @@ extern bool spr_on[];
 extern bool spr_collide[];
 extern unsigned char spr_palette_index[];
 extern unsigned char spr_index[];
+extern unsigned char spr_size[];
 
 extern void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y);
 
@@ -37,7 +38,7 @@ extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
 
 extern void update_sprites();
 
-extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char collide);
+extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char size, unsigned char collide);
 
 extern void clear_sprites();
 

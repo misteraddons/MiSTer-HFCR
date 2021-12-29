@@ -98,8 +98,8 @@ wire ce_2;
 jtframe_cen24 divider
 (
 	.clk(clk_sys),
-	.cen12(ce_6), // <-- dodgy video speed for faster simulation, will cause graphical corruption
-	//.cen6(ce_6), // <-- correct video speed
+	//.cen12(ce_6), // <-- dodgy video speed for faster simulation, will cause graphical corruption
+	.cen6(ce_6), // <-- correct video speed
 	.cen2(ce_2)
 );
 /* verilator lint_on PINMISSING */
@@ -108,8 +108,8 @@ jtframe_cen24 divider
 `define DEBUG_SIMULATION
 //`define DISABLE_SPRITES
 //`define DEBUG_SPRITE_COLLISION
-`define DISABLE_MUSIC
-`define DISABLE_SOUND
+//`define DISABLE_MUSIC
+//`define DISABLE_SOUND
 
 wire m_pause   = joystick_0[8];
 // PAUSE SYSTEM

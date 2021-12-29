@@ -305,11 +305,9 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("Sprite RAM");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
 		//ImGui::End();
-
 		//ImGui::Begin("Sprite Linebuffer RAM");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
 		//ImGui::End();
-
 		//ImGui::Begin("Sprite Collision Buffer RAM A");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__comet__DOT__spritecollisionbufferram_a__DOT__mem, 512, 0);
 		//ImGui::End();

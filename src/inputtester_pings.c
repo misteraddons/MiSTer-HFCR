@@ -38,7 +38,7 @@ void setup_pings()
 {
 	for (int e = ping_sprite_first; e < ping_sprite_first + ping_max; e++)
 	{
-		enable_sprite(e, sprite_palette_pings, false);
+		enable_sprite(e, sprite_palette_pings, sprite_size_pings, false);
 		spr_on[e] = false;
 	}
 }
@@ -54,7 +54,7 @@ void add_ping(unsigned type, unsigned short x, unsigned short y)
 			type = 0;
 			// ping_type[e] = type;
 			unsigned char sprite = ping_sprite_first + e;
-			enable_sprite(sprite, sprite_palette_pings, 0);
+			enable_sprite(sprite, sprite_palette_pings, sprite_size_pings, 0);
 			spr_index[sprite] = sprite_index_pings_first + (type * ping_frame_count);
 			set_sprite_position(sprite, x, y);
 			return;
