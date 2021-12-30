@@ -150,7 +150,7 @@ void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 	player_x_min = 32 * x_divisor;
 	player_x_max = 336 * x_divisor;
 	player_y_min = 32 * y_divisor;
-	player_y_max = 260 * y_divisor;
+	player_y_max = 244 * y_divisor;
 
 	// Player initial position
 	player_x = x * x_divisor;
