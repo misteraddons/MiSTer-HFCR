@@ -58,7 +58,7 @@ begin
 
 	// Generate 375Khz clock enable
 	m5205_ce <= (ce_counter == 14'd0);
-	if(ce_counter == 14'd31)
+	if(ce_counter == 14'd63)
 	begin
 		ce_counter <= 14'd0;
 	end

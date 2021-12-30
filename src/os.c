@@ -22,9 +22,9 @@
 #include "sys.h"
 #include "ui.h"
 #include "sprite.h"
+#include "sprite_images.h"
 #include "sound.h"
 #include "sound_samples.h"
-
 #include "inputtester_app.h"
 #include "inputtester_sys.h"
 #include "menu.h"
@@ -209,10 +209,10 @@ void app_main()
 
 		default:
 			// Start default state
-			state = STATE_START_ZORBLAXX;
-			//loader("INPUTTESTER.AZN");
-			// start_inputtester_digital();
-		//	start_inputtester_advanced();
+			//state = STATE_START_ZORBLAXX;
+			loader("INPUTTESTER.AZN");
+			start_inputtester_digital();
+			//	start_inputtester_advanced();
 			// start_inputtester_analog();
 			// start_btntest();
 			break;

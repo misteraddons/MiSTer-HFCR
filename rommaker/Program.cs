@@ -166,7 +166,7 @@ namespace rommaker
                 spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
 
                 MemoryStream groupStream = new MemoryStream();
-
+                ushort groupLen = 0;
                 foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                 {
                     Bitmap img = new(image);
@@ -245,12 +245,14 @@ namespace rommaker
                                     // Write palette index to sprite rom
                                     groupStream.WriteByte(Convert.ToByte(pi));
                                     pos += 1;
+                                    groupLen += 1;
                                 }
                             }
                             index++;
                         }
                     }
                 }
+                Console.WriteLine($"Ending image group {g} - length = {groupLen}");
                 groupIndex--;
                 groupStreams.Add(g, groupStream);
             }

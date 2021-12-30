@@ -108,9 +108,11 @@ unsigned char player_score_timer_frequency = 100;
 
 unsigned char button_a;
 unsigned char button_a_last;
+unsigned char pleaseStop; // Set to 1 to fall back to OS
 
 void setup_variables()
 {
+	pleaseStop = 0;
 	x_h_min = (unsigned short)(x_min * x_divisor);
 	x_h_max = (unsigned short)(x_max * x_divisor);
 
@@ -144,7 +146,7 @@ void intro_loop()
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
-	unsigned short title_x = ((320 /2) + 32) - 64;
+	unsigned short title_x = ((320 / 2) + 32) - 64;
 	signed short title_y = -32 * y_divisor;
 	signed short title_target_y = 100 * y_divisor;
 	unsigned char si = 0;
@@ -178,6 +180,13 @@ void intro_loop()
 				return;
 			}
 			update_sprites();
+
+			// Press select to quit
+			if (CHECK_BIT(joystick[1], 2))
+			{
+				pleaseStop = 1;
+				return;
+			}
 		}
 
 		if (VBLANK_FALLING)
@@ -291,10 +300,6 @@ void game_loop()
 			// Update sprite registers
 			update_sprites();
 
-			//
-			button_a_last = button_a;
-			button_a = CHECK_BIT(joystick[0], 4);
-
 			// Update starfield
 			scroll_speed = player_speed;
 			if (scroll_speed != scroll_speed_last)
@@ -304,6 +309,17 @@ void game_loop()
 				starfield[0] = s;
 				starfield[2] = s >> 1;
 				starfield[4] = s >> 1;
+			}
+
+			// Track player button press
+			button_a_last = button_a;
+			button_a = CHECK_BIT(joystick[0], 4);
+
+			// Presse Select to quit
+			if (CHECK_BIT(joystick[1], 2))
+			{
+				pleaseStop = 1;
+				return;
 			}
 		}
 
@@ -395,7 +411,7 @@ void game_loop()
 				level_progress_max = level_progress_base + per_level;
 
 				// Start main music loop
-				//play_music(1);
+				// play_music(1);
 
 				// Update asteroid difficulty
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
@@ -460,7 +476,7 @@ void game_loop()
 					game_state_timer = game_state_warp_timeout;
 
 					// Start score music loop
-					//play_music(2);
+					// play_music(2);
 
 					level_playercontrol = 0;
 					set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
@@ -602,6 +618,11 @@ void app_zorblaxx()
 	{
 		clear_chars(0);
 		clear_sprites();
+		stop_music();
+		if (pleaseStop)
+		{
+			return;
+		}
 
 		setup_player(player_spawn_x, 256, player_lives_default);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
@@ -612,6 +633,11 @@ void app_zorblaxx()
 		// Clear character map and title sprites
 		clear_chars(0);
 		clear_sprites();
+		stop_music();
+		if (pleaseStop)
+		{
+			return;
+		}
 
 		game_loop();
 	}

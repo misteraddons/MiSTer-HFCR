@@ -82,6 +82,7 @@ module music #(
 	localparam YM_GETLOOP_0 = 5;
 	localparam YM_GETLOOP_1 = 6;
 	localparam YM_SKIPSTRINGS = 7;
+	localparam YM_STOPPED = 8;
 	
 	localparam YM_WAITFORFRAME = 12;
 	localparam YM_GETREGISTER = 13;
@@ -144,7 +145,7 @@ module music #(
 				$display("YM->RAM->WRITE %x %x", addr, data_in);
 				regarray[addr] <= data_in;
 			end else begin
-				if(regarray[0] > 8'b0)
+				if(regarray[0] == 8'b1)
 				begin
 					$display("YM->PLAY-TRACK %d %d", {regarray[1], regarray[2], regarray[3]}, regarray[0][1:0]);
 					regarray[0] <= 8'b0;
@@ -153,6 +154,13 @@ module music #(
 					/* verilator lint_on WIDTH */
 					ymp_playing <= regarray[0][1:0];
 					ymp_state <= YM_INIT;
+				end
+				if(regarray[0] == 8'b2)
+				begin
+					$display("YM->STOP-TRACK");
+					regarray[0] <= 8'b0;
+					ymp_playing <= 0;
+					ymp_state <= YM_STOPPED;
 				end
 			end
 

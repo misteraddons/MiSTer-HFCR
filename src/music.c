@@ -35,3 +35,8 @@ void play_music(unsigned char track)
 	// Write start track instruction
 	musicram[0] = 1;
 }
+
+void stop_music()
+{
+	musicram[0] = 0;
+}
