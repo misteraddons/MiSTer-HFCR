@@ -31,7 +31,6 @@
 #include "zorblaxx_explosions.h"
 
 // Player
-const unsigned char player_sprite = 11;
 const signed char player_max_speed = 20;
 const unsigned char player_accel = 3;
 const unsigned char player_trail_frequency = 10;
@@ -148,10 +147,10 @@ void move_player_to_target()
 void setup_player(unsigned short x, unsigned short y, unsigned char lives)
 {
 	// Player bounds
-	player_x_min = 16 * x_divisor;
-	player_x_max = 320 * x_divisor;
-	player_y_min = 20 * y_divisor;
-	player_y_max = 216 * y_divisor;
+	player_x_min = 32 * x_divisor;
+	player_x_max = 336 * x_divisor;
+	player_y_min = 32 * y_divisor;
+	player_y_max = 260 * y_divisor;
 
 	// Player initial position
 	player_x = x * x_divisor;
@@ -181,7 +180,7 @@ void player_destroyed()
 {
 	play_sound(const_sound_player_explode);
 	add_explosion(0, 1);
-	add_explosion(1, 3);
+	add_explosion(1, 2);
 	spr_on[player_sprite] = false;
 	player_lives_changed = true;
 	if (player_lives > 0)

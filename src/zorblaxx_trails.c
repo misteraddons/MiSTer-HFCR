@@ -29,7 +29,6 @@
 
 #define const_trail_max 10
 unsigned char trail_max = const_trail_max;
-unsigned char trail_sprite_first = 0;
 unsigned short trail_x[const_trail_max];
 unsigned short trail_y[const_trail_max];
 signed char trail_xs[const_trail_max];
@@ -41,7 +40,7 @@ unsigned char trail_y_offset;
 
 void setup_trails()
 {
-	trail_y_max = 248 * y_divisor;
+	trail_y_max = 272 * y_divisor;
 	trail_x_offset = (4 * x_divisor);
 	trail_y_offset = (12 * y_divisor);
 	for (int t = trail_sprite_first; t < trail_sprite_first + trail_max; t++)

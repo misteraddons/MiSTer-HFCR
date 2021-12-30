@@ -24,7 +24,6 @@
 
 // Explosions
 extern unsigned char explosion_max;
-extern unsigned char explosion_sprite_first;
 extern unsigned char explosion_timer[];
 extern unsigned char explosion_frame[];
 extern unsigned char explosion_type[];

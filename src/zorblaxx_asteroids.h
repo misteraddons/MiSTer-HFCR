@@ -24,7 +24,6 @@
 #define ZORBLAXX_ASTEROIDS_H
 
 extern unsigned char asteroids_max;
-extern unsigned char asteroids_sprite_first;
 extern unsigned short asteroids_x[];
 extern unsigned short asteroids_y[];
 extern signed char asteroids_xs[];

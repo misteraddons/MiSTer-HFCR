@@ -105,8 +105,8 @@ reg					hsync_last;
 reg			 [4:0]	spr_state;
 reg			 [4:0]	spr_state_next;
 // Sprite index counter and maximum sprite limit
-reg			 [4:0]	spr_index;
-localparam			spr_index_max = 5'd31;
+reg			 [5:0]	spr_index;
+localparam			spr_index_max = 6'd31;
 // Sprite maximum sizes
 localparam	 [6:0]	spr_ram_item_width = 4;
 localparam	 [SPRITE_POSITION_WIDTH-1:0]	spr_line_max = 352;
@@ -117,6 +117,7 @@ reg					spr_enable;								// Sprite visibility enabled
 reg					spr_collide;							// Sprite collision enabled
 reg			 [1:0]	spr_palette_index;						// Sprite palette index
 reg			 [5:0]	spr_image_index;						// Sprite image index
+localparam   [SPRITE_POSITION_WIDTH-1:0]	spr_border_size = 32; // Sprite screen border width
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_active_y;	// Current active sprite engine Y
 reg			 [SPRITE_SIZE_WIDTH:0]			spr_pixel_index;// Current sprite X pixel
 reg			 [SPRITE_ROM_WIDTH-1:0]			spr_rom_offset; // Offset for current sprite size in image ROM
@@ -131,6 +132,7 @@ reg			 [SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
 
  //`define CASVAL_DEBUG
  //`define CASVAL_DEBUG_TIMES
+ //`define CASVAL_DEBUG_OUTLINE
 
 `ifdef CASVAL_DEBUG_TIMES
 parameter SPR_TIMER_WIDTH = 11;
@@ -140,8 +142,7 @@ reg [SPR_TIMER_WIDTH-1:0] spr_timer_line;
 `endif
 
 // Sprite engine outputs
-wire [SPRITE_POSITION_WIDTH-1:0] spritelbram_offset = { {SPRITE_POSITION_WIDTH-6{1'b0}}, 6'd32 };
-assign spritelbram_rd_addr = {spritelb_slot_rd, (hcnt + spritelbram_offset)};
+assign spritelbram_rd_addr = {spritelb_slot_rd, (hcnt + spr_border_size)};
 assign spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
 assign spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
 assign spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
@@ -367,11 +368,8 @@ begin
 				spritelb_slot_rd <= spritelb_slot_rd + 1'b1;
 				spritelb_slot_wr <= spritelb_slot_wr + 1'b1;
 				// Calculate active Y line
-				spr_active_y <= (vcnt + spr_size) + 9'd1;
-`ifdef CASVAL_DEBUG_TIMES
-					$display("CASVAL->LEAVING SE_IDLE: spr_timer_idle = %d, spr_linetime_max=%d", spr_timer_idle, spr_linetime_max);
-					spr_timer_line <= {SPR_TIMER_WIDTH{1'b0}};
-`endif
+				spr_active_y <= (vcnt == 9'd255) ? spr_border_size : (vcnt + spr_border_size) + 9'd1;	
+
 				spr_state <= SE_RESET;
 			end
 `ifdef CASVAL_DEBUG_TIMES
@@ -390,7 +388,13 @@ begin
 		SE_RESET:
 		begin
 			// Reset sprite index
-			spr_index <= 5'd0;
+			spr_index <= 6'd0;
+
+`ifdef CASVAL_DEBUG_TIMES
+					$display("CASVAL->LEAVING SE_IDLE: vcnt = %d  spr_active_y = %d", vcnt, spr_active_y);
+					$display("CASVAL->LEAVING SE_IDLE: spr_timer_idle = %d, spr_linetime_max=%d", spr_timer_idle, spr_linetime_max);
+					spr_timer_line <= {SPR_TIMER_WIDTH{1'b0}};
+`endif
 
 			// Setup line buffer RAM for clear operation
 			spritelbram_wr_addr <= {spritelb_slot_wr, {SPRITE_POSITION_WIDTH{1'b0}}};
@@ -618,7 +622,7 @@ begin
 					// Trigger collision check (not in vblank)
 					if(!vblank && spr_collide)
 					begin
-						col_spriteindex <= spr_index;
+						col_spriteindex <= spr_index[4:0];
 						col_x <= spr_x + {{(SPRITE_POSITION_WIDTH-SPRITE_SIZE_WIDTH)-1{1'b0}}, spr_pixel_index};
 						col_primary_state <= CP_STAGE_PIXEL;
 					end

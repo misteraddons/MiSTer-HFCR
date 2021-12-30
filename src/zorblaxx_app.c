@@ -603,15 +603,6 @@ void app_zorblaxx()
 		clear_chars(0);
 		clear_sprites();
 
-		// for(int s=0;s<18;s++){
-		// 	enable_sprite(s, sprite_palette_player, sprite_size_player, 0);
-		// 	spr_index[s] = sprite_index_player_first;
-		// 	set_sprite_position(s, 32 + (s*16), 64);
-		// }
-		// update_sprites();
-		// while(1){
-		// }
-
 		setup_player(player_spawn_x, 256, player_lives_default);
 		set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
 		setup_trails();
@@ -620,7 +611,7 @@ void app_zorblaxx()
 
 		// Clear character map and title sprites
 		clear_chars(0);
-		clear_sprites_range(16, 32);
+		clear_sprites();
 
 		game_loop();
 	}

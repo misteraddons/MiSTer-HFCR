@@ -216,12 +216,12 @@ always @(posedge clk_24) begin
  	//if(analog_r_cs) $display("analog_r %b  %b", analog_r_bit, analog_r_data_out);
 	//if(paddle_cs) $display("paddle %b", paddle_data_out);
 	//if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
- 	//$display("dn_addr: %x  dn_index: %x", dn_addr, dn_index);
 	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
 	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
 	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 	//if(!cpu_wr_n) $display("cpu_write %x %b",cpu_addr, cpu_dout);
 	//if(spritecollisionram_cs && !cpu_wr_n) $display("spritecollisionram %b %b %b", cpu_wr_n, cpu_addr, cpu_dout);
+	//if(spriteram_cs && !cpu_wr_n) $display("spriteram_cs %x %b", cpu_addr[SPRITE_RAM_WIDTH-1:0], cpu_dout);
 	//if(sound_cs && !cpu_wr_n) $display("sound_cs %b %b", cpu_addr, cpu_dout);
 	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 end

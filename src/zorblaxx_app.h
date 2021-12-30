@@ -35,10 +35,16 @@ extern unsigned char scroll_speed;
 extern unsigned short player_spawn_x;
 extern unsigned short player_spawn_y;
 
+// Sprite indexes
+#define trail_sprite_first 0
+#define pickup_sprite_first 10
+#define player_sprite 11
+#define asteroids_sprite_first 12
+#define explosion_sprite_first 29
+
+// Method headers
 extern void intro_loop();
-
 extern void game_loop();
-
 extern void app_zorblaxx();
 
 #endif

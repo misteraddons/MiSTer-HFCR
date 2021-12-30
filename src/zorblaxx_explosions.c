@@ -27,9 +27,8 @@
 #include "zorblaxx_explosions.h"
 
 // Explosions
-#define const_explosion_max 4
+#define const_explosion_max 3
 unsigned char explosion_max = const_explosion_max;
-unsigned char explosion_sprite_first = 28;
 unsigned char explosion_timer[const_explosion_max];
 unsigned char explosion_frame[const_explosion_max];
 unsigned char explosion_type[const_explosion_max];
@@ -41,7 +40,7 @@ void setup_explosions()
 {
 	for (int e = explosion_sprite_first; e < explosion_sprite_first + explosion_max; e++)
 	{
-		enable_sprite(e, sprite_palette_explosions, sprite_size_explosions, false);
+		enable_sprite(e, sprite_palette_explosions, sprite_size_explosions, 0);
 		spr_on[e] = false;
 	}
 }
@@ -56,9 +55,9 @@ void add_explosion(unsigned type, unsigned char count)
 			explosion_frame[e] = 0;
 			explosion_type[e] = type;
 			unsigned char sprite = explosion_sprite_first + e;
-			spr_on[sprite] = true;
+			spr_on[sprite] = 1;
 			spr_index[sprite] = sprite_index_explosions_first + (type * explosion_frame_count);
-			set_sprite_position(sprite, (player_x + (signed short)rand_schar(-32, 64)) / x_divisor, (player_y + (signed short)rand_schar(-32, 64)) / y_divisor);
+			set_sprite_position(sprite, (player_x / x_divisor) + rand_schar(-4, 8), (player_y / y_divisor) + rand_schar(-4, 8));
 			count--;
 			if (count == 0)
 			{

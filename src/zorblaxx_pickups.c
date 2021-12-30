@@ -31,7 +31,6 @@
 #define const_type_count 4
 unsigned char pickup_max = const_pickup_max;
 unsigned char pickup_type_count = const_type_count;
-unsigned char pickup_sprite_first = 10;
 unsigned char pickup_spawn_y = 0;
 unsigned char pickup_spawn_interval = 10;
 unsigned short pickup_x[const_pickup_max];
