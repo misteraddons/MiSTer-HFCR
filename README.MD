@@ -10,11 +10,12 @@ Aznable is a (no longer) simple-ish bespoke (i.e. I made it up with no real plan
 
 *Graphics:* 
 - 40x30 character display (each character foreground and background colour can be set independently to one of 256 colours, using an extended C64 'Petscii' character set)
-- Hardware sprites - 32 concurrent sprites, each 16x16 pixels, with a 32 colour palette out of 32768)
+- Hardware sprites - 32 concurrent sprites, selectable 8x8/16x16/32x32 size, with a 32 colour palette out of 32768)
 - Variable speed 3 layer LFSR-based starfield
 
 *Sound:*
 - YM music playback system (YM5/YM6 format only) using a YM2149 synth
+- Audio sample playback (4-bit 8Khz) using an OKI M5205
 
 All relevant MiSTer inputs are mapped into memory regions for the CPU to access directly.  There is also a dedicated microsecond timer (runs 0-32677, resettable by writing to any bit of the address).
 
@@ -43,10 +44,12 @@ All relevant MiSTer inputs are mapped into memory regions for the CPU to access 
    - ps2_mouse from HPS (48 bytes, combination of ps2_mouse and ps2_mouseext with some padding to align bytes)
    - timestamp from HPS (33 bytes, read-only)
  - Hardware microsecond timer (16 bytes read/write)
- - Hardware sprite engine (32 sprites, 16x16 pixels, 32 colour palette out of 32768)
+ - Hardware sprite engine (32 sprites, 8x8/16x16/32x32 pixels, 32 colour palette out of 32768)
+ - Hardware YM2149-based music player (YM2149 module (https://github.com/jotego/jt49) by Jotego)
+ - Hardware OKI M5205-based wave sample player (M5205 module (https://github.com/jotego/jt5205) by Jotego)
  - LFSR-based starfield generator (from Project F - Ad Astra (https://projectf.io/posts/fpga-ad-astra/) by Will Green)
 
-### Memory Map
+### Memory Map (CPU addressable)
 Start|Length|Name
 ---|---|---
 0x0000|0x8000|Program ROM
@@ -71,8 +74,6 @@ Start|Length|Name
 0xB400|0x0004|Sprite Collision RAM
 0xB800|0x0800|Sprite Linebuffer RAM
 0xC000|0x4000|Work RAM
-0x10000|0x0040|Palette ROM
-0x11000|0x0A00|Sprite ROM
 
 ## Software
 
