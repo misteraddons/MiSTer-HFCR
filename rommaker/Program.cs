@@ -10,7 +10,12 @@ namespace rommaker
 {
     class Program
     {
+        static readonly string tilemapRomPath = @"..\..\..\..\gfx\tilemap.bin";
+        static readonly string tilemapPath = @"..\..\..\..\gfx\tilemap\tilemap.png";
+
         static readonly string spriteRomPath = @"..\..\..\..\gfx\sprite.bin";
+
+        static readonly string spritePath = @"..\..\..\..\gfx\images\";
         static readonly string palettePath = @"..\..\..\..\gfx\palette.bin";
         static readonly string spriteSourcePath = @"..\..\..\..\src\sprite_images";
 
@@ -152,10 +157,10 @@ namespace rommaker
 
 
             int[] groups = { 32, 16, 8 };
-            
+
             Dictionary<int, MemoryStream> groupStreams = new();
-            int groupIndex = groups.Length-1;
-            for (int gi= 0; gi <groups.Length; gi++)
+            int groupIndex = groups.Length - 1;
+            for (int gi = 0; gi < groups.Length; gi++)
             {
                 int g = groups[gi];
                 int index = 0;
@@ -167,7 +172,7 @@ namespace rommaker
 
                 MemoryStream groupStream = new MemoryStream();
                 ushort groupLen = 0;
-                foreach (string image in Directory.GetFiles(@"C:\repos\Aznable\gfx\images\", "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
+                foreach (string image in Directory.GetFiles(spritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                 {
                     Bitmap img = new(image);
 
@@ -329,9 +334,60 @@ namespace rommaker
         }
 
 
+        static void CreateTilemapRom()
+        {
+
+            if (File.Exists(tilemapRomPath)) { File.Delete(tilemapRomPath); }
+
+            FileStream stream = File.OpenWrite(tilemapRomPath);
+            BinaryWriter streamWriter = new(stream, Encoding.Default);
+
+            uint pos = 0;
+            Bitmap img = new(tilemapPath);
+            int size = 16;
+            int slicesX = img.Width / size;
+            int slicesY = img.Height / size;
+
+            for (int ys = 0; ys < slicesY; ys++)
+            {
+                for (int xs = 0; xs < slicesX; xs++)
+                {
+                    int ymin = ys * size;
+                    int ymax = ymin + size;
+                    int xmin = xs * size;
+                    int xmax = xmin + size;
+                    for (int y = ymin; y < ymax; y++)
+                    {
+                        for (int x = xmin; x < xmax; x++)
+                        {
+
+
+                            Color c = img.GetPixel(x, y);
+                            ushort a = (ushort)(c.A == 255 ? 1 : 0);
+                            ushort color = (ushort)((c.R / 8) |
+                                                   ((c.G / 8) << 5) |
+                                                   ((c.B / 8) << 10) |
+                                                     a << 15);
+
+                            byte high = (byte)(color >> 8);
+                            byte low = (byte)color;
+                            streamWriter.Write(high);
+                            streamWriter.Write(low);
+
+                            pos += 1;
+                        }
+                    }
+                }
+            }
+
+            streamWriter.Dispose();
+        }
+
+
         static void Main(string[] args)
         {
             CreateSpriteRom();
+            CreateTilemapRom();
             CreateMusicRom();
             CreateSoundRom();
         }

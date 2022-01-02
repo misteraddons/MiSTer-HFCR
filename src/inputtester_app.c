@@ -847,14 +847,6 @@ void btntest_test()
     }
 }
 
-// unsigned short abs(signed short value)
-// {
-//     if (value < 0)
-//     {
-//         value = value * -1;
-//     }
-//     return value;
-// }
 // Button test - results view
 void btntest_results()
 {

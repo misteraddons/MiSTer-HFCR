@@ -28,3 +28,6 @@ od -An -t x1 -v music/music.bin > verilator/x64/Release/music.hex
 od -An -t x1 -v sound/sound.bin > verilator/sound.hex
 od -An -t x1 -v sound/sound.bin > verilator/x64/Release/sound.hex
 od -An -t x1 -v sound/sound.bin > rtl/sound.hex
+od -An -t x1 -v gfx/tilemap.bin > verilator/tilemap.hex
+od -An -t x1 -v gfx/tilemap.bin > rtl/tilemap.hex
+od -An -t x1 -v gfx/tilemap.bin > verilator/x64/Release/tilemap.hex

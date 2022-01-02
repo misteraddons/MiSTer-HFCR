@@ -40,8 +40,6 @@ unsigned char __at(0x8800) timestamp[5];
 unsigned char __at(0x8900) timer[2];
 unsigned char __at(0x8A00) starfield[6];
 unsigned char __at(0x8A30) system_pause[1];
-unsigned char __at(0x8B00) sndram[16];
-unsigned char __at(0x8B10) musicram[4];
 
 // - Casval (character map)
 unsigned char __at(0x9800) chram[2048];
@@ -50,6 +48,13 @@ unsigned char __at(0xA800) bgcolram[2048];
 // - Comet (sprite engine)
 unsigned char __at(0xB000) spriteram[512];
 unsigned char __at(0xB400) spritecollisionram[32];
+// - Zechs (tilemap)
+unsigned char __at(0x8C00) tilemapctl[4];
+unsigned char __at(0x8C10) tilemapram[1024];
+// - Charles (sound)
+unsigned char __at(0x8B00) sndram[16];
+// - Deikun (music)
+unsigned char __at(0x8B10) musicram[4];
 
 // Character map
 extern const unsigned char chram_cols;

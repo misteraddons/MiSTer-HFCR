@@ -145,20 +145,20 @@ module music #(
 				$display("YM->RAM->WRITE %x %x", addr, data_in);
 				regarray[addr] <= data_in;
 			end else begin
-				if(regarray[0] == 8'b1)
+				if(regarray[0] == 8'd1)
 				begin
 					$display("YM->PLAY-TRACK %d %d", {regarray[1], regarray[2], regarray[3]}, regarray[0][1:0]);
-					regarray[0] <= 8'b0;
+					regarray[0] <= 8'd0;
 					/* verilator lint_off WIDTH */
 					ymp_trackoffset <= {{regarray[1], regarray[2], regarray[3]}};
 					/* verilator lint_on WIDTH */
 					ymp_playing <= regarray[0][1:0];
 					ymp_state <= YM_INIT;
 				end
-				if(regarray[0] == 8'b2)
+				if(regarray[0] == 8'd2)
 				begin
 					$display("YM->STOP-TRACK");
-					regarray[0] <= 8'b0;
+					regarray[0] <= 8'd0;
 					ymp_playing <= 0;
 					ymp_state <= YM_STOPPED;
 				end

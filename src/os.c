@@ -209,7 +209,7 @@ void app_main()
 
 		default:
 			// Start default state
-			//state = STATE_START_ZORBLAXX;
+			// state = STATE_START_ZORBLAXX;
 			loader("INPUTTESTER.AZN");
 			start_inputtester_digital();
 			//	start_inputtester_advanced();
@@ -228,5 +228,58 @@ void app_main()
 // Main entry
 void main()
 {
-	app_main();
+
+	signed char hdir = 1;
+	signed char hpos = 0;
+	signed char vpos = 0;
+
+	// LOAD TILEMAP RAM
+	unsigned char ti = 0;
+	for (unsigned char y = 0; y < 17; y++)
+	{
+		ti=y % 2;
+		for (unsigned char x = 0; x < 22; x++)
+		{
+			unsigned short p = (y * 32) + x;
+			tilemapram[p] = ti;
+			ti++;
+			if (ti == 6)
+			{
+				ti = 0;
+			}
+		}
+	}
+
+	while (1)
+	{
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
+		if (VBLANK_RISING)
+		{
+			basic_input();
+
+			if (input_left && hpos > -16)
+			{
+				hpos--;
+			}
+			if (input_right && hpos < 16)
+			{
+				hpos++;
+			}
+			if (input_up && vpos > -16)
+			{
+				vpos--;
+			}
+			if (input_down && vpos < 16)
+			{
+				vpos++;
+			}
+
+			tilemapctl[0] = hpos;
+			tilemapctl[1] = vpos;
+		}
+
+		vblank_last = vblank;
+	}
+
+	// app_main();
 }

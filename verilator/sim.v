@@ -106,7 +106,8 @@ jtframe_cen24 divider
 
 // Debug defines
 `define DEBUG_SIMULATION
-//`define DISABLE_SPRITES
+`define DISABLE_SPRITES
+//`define DISABLE_TILEMAP
 //`define DEBUG_SPRITE_COLLISION
 `define DISABLE_MUSIC
 `define DISABLE_SOUND

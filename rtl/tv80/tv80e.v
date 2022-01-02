@@ -104,7 +104,7 @@ module tv80e (/*AUTOARG*/
           mreq_n <= #1 1'b1;
           di_reg <= #1 0;
         end
-      else
+      else if(cen)
         begin
           rd_n <= #1 1'b1;
           wr_n <= #1 1'b1;
