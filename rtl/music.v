@@ -26,7 +26,6 @@ module music #(
 	input				clk,
 	input				ce_2,
 	input				reset,
-	input				vblank,
 	
 	input		[1:0]	addr,
 	input		[7:0]	data_in,
@@ -79,10 +78,11 @@ module music #(
 	localparam YM_GETMODE = 2;
 	localparam YM_GETLENGTH_0 = 3;
 	localparam YM_GETLENGTH_1 = 4;
-	localparam YM_GETLOOP_0 = 5;
-	localparam YM_GETLOOP_1 = 6;
-	localparam YM_SKIPSTRINGS = 7;
-	localparam YM_STOPPED = 8;
+	localparam YM_GETFREQUENCY = 5;
+	localparam YM_GETLOOP_0 = 6;
+	localparam YM_GETLOOP_1 = 7;
+	localparam YM_SKIPSTRINGS = 8;
+	localparam YM_STOPPED = 9;
 	
 	localparam YM_WAITFORFRAME = 12;
 	localparam YM_GETREGISTER = 13;
@@ -98,9 +98,9 @@ module music #(
 	reg  [ROM_WIDTH-1:0] ymp_frame;
 	reg   [3:0] ymp_register;
 	reg			ymp_interleave;
+	reg			ymp_is_50hz;
 	reg   [2:0] ymp_skipstringindex = 3'b0;
 	reg  [ROM_WIDTH-1:0] ymp_firstframe;
-
 
 	reg  [ROM_WIDTH-1:0] ymp_length; 
 	reg  [ROM_WIDTH-1:0] ymp_looppoint;
@@ -123,13 +123,31 @@ module music #(
 			8'b11111111
 	};
 
-	reg vblank_last;
+	reg [19:0] frame_timer_50;
+	reg [19:0] frame_timer_60;
+	localparam [19:0] frame_timer_max_50 = 20'd480000;
+	localparam [19:0] frame_timer_max_60 = 20'd400000;
 
-//	`define YM_DEBUG
+	reg frame_ready;
+
+	//`define YM_DEBUG
 
 	always @(posedge clk)
 	begin
-		vblank_last <= vblank;
+
+		// Frame timers
+		frame_timer_50 <= frame_timer_50 + 20'd1;
+		if(frame_timer_50 == frame_timer_max_50) 
+		begin
+			frame_timer_50 <= 20'd0;
+			if(ymp_is_50hz) frame_ready <= 1'b1;
+		end
+		frame_timer_60 <= frame_timer_60 + 20'd1;
+		if(frame_timer_60 == frame_timer_max_60)
+		begin
+			frame_timer_60 <= 20'd0;
+			if(!ymp_is_50hz) frame_ready <= 1'b1;
+		end
 
 		if( reset ) begin
 			regarray[0]<=8'd0; 
@@ -223,6 +241,20 @@ module music #(
 				`endif
 				// Read song length byte 1
 				ymp_length[14:8] <= musicrom_data_out[6:0];
+				// Set address to frequency point
+				musicrom_addr <= ymp_trackoffset + 16'h1b;
+				ymp_state <= YM_WAIT;
+				ymp_state_next <= YM_GETFREQUENCY;
+			end
+
+			// Get song playback frequency
+			YM_GETFREQUENCY:
+			begin
+				`ifdef YM_DEBUG
+				$display("YM_GETFREQUENCY %x %x", musicrom_addr, musicrom_data_out);
+				`endif
+				// Read song length byte 1
+				ymp_is_50hz <= musicrom_data_out[7:0] == 8'd50;
 				// Set address to loop point
 				musicrom_addr <= ymp_trackoffset + 16'h1e;
 				ymp_state <= YM_WAIT;
@@ -285,11 +317,12 @@ module music #(
 					$display("ymp_playing %d - STOPPING MUSIC", ymp_playing);
 					ymp_state <= YM_INIT;
 				end
-				if(vblank && !vblank_last)
+				if(frame_ready)
 				begin
 					`ifdef YM_DEBUG
 					$display("YM_WAITFORFRAME f=%d l=%d ff=%d", ymp_frame, ymp_length, ymp_firstframe);
 					`endif
+					frame_ready <= 1'b0;
 					ymp_register <= 4'b0;
 					ymp_state <= YM_WAIT;
 					ymp_state_next <= YM_GETREGISTER;
