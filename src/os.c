@@ -229,7 +229,6 @@ void app_main()
 void main()
 {
 
-	signed char hdir = 1;
 	signed char hpos = 0;
 	signed char vpos = 0;
 
@@ -237,7 +236,7 @@ void main()
 	unsigned char ti = 0;
 	for (unsigned char y = 0; y < 17; y++)
 	{
-		ti=y % 2;
+		ti = y % 2;
 		for (unsigned char x = 0; x < 22; x++)
 		{
 			unsigned short p = (y * 32) + x;
@@ -249,6 +248,11 @@ void main()
 			}
 		}
 	}
+	unsigned char tsi = 0;
+	unsigned char vsi = 0;
+
+	signed char hscroll_dir = 0;
+	signed char vscroll_dir = 0;
 
 	while (1)
 	{
@@ -257,23 +261,140 @@ void main()
 		{
 			basic_input();
 
-			if (input_left && hpos > -16)
+			if (hscroll_dir > 0)
 			{
-				hpos--;
+				hpos -= hscroll_dir;
+				if (hpos <= -16)
+				{
+					hpos += 16;
+					tilemapctl[2] = 1;
+					// Scroll right?
+					while (tilemapctl[2] != 0)
+					{
+					}
+					for (unsigned char y = 0; y < 17; y++)
+					{
+						unsigned short p = (y * 32);
+						tilemapram[p] = tsi;
+					}
+					tsi++;
+					if (tsi == 6)
+					{
+						tsi = 0;
+					}
+				}
 			}
-			if (input_right && hpos < 16)
+			if (hscroll_dir < 0)
 			{
-				hpos++;
-			}
-			if (input_up && vpos > -16)
-			{
-				vpos--;
-			}
-			if (input_down && vpos < 16)
-			{
-				vpos++;
+				hpos += -hscroll_dir;
+				if (hpos >= 16)
+				{
+					hpos -= 16;
+					tilemapctl[2] = -1;
+					// Scroll left?
+					while (tilemapctl[2] != 0)
+					{
+					}
+					for (unsigned char y = 0; y < 17; y++)
+					{
+						unsigned short p = (y * 32) + 21;
+						tilemapram[p] = tsi;
+					}
+					tsi++;
+					if (tsi == 6)
+					{
+						tsi = 0;
+					}
+				}
 			}
 
+			if (vscroll_dir > 0)
+			{
+				vpos -= vscroll_dir;
+				if (vpos <= -16)
+				{
+					vpos += 16;
+					tilemapctl[3] = 1;
+					// Scroll right?
+					while (tilemapctl[3] != 0)
+					{
+					}
+					for (unsigned char x = 0; x < 22; x++)
+					{
+						unsigned short p = x;
+						tilemapram[p] = vsi;
+					}
+					vsi++;
+					if (vsi == 6)
+					{
+						vsi = 0;
+					}
+				}
+			}
+			if (vscroll_dir < 0)
+			{
+				vpos += -vscroll_dir;
+				if (vpos >= 16)
+				{
+					vpos -= 16;
+					tilemapctl[3] = -1;
+					// Scroll left?
+					while (tilemapctl[3] != 0)
+					{
+					}
+					for (unsigned char x = 0; x < 22; x++)
+					{
+						unsigned short p = (17 * 32) + 21;
+						tilemapram[p] = vsi;
+					}
+					vsi++;
+					if (vsi == 6)
+					{
+						vsi = 0;
+					}
+				}
+			}
+
+			if (input_left && !input_left_last && hscroll_dir > -4)
+			{
+				hscroll_dir--;
+			}
+			if (input_right && !input_right_last && hscroll_dir < 4)
+			{
+				hscroll_dir++;
+			}
+			if (input_up && !input_up_last && vscroll_dir > -4)
+			{
+				vscroll_dir--;
+			}
+			if (input_down && !input_down_last && vscroll_dir < 4)
+			{
+				vscroll_dir++;
+			}
+			// if (input_left && hpos > -16)
+			// {
+			// 	hpos--;
+			// }
+			// if (input_right && hpos < 16)
+			// {
+			// 	hpos++;
+			// }
+			// if (input_up && vpos > -16)
+			// {
+			// 	vpos--;
+			// }
+			// if (input_down && vpos < 16)
+			// {
+			// 	vpos++;
+			// }
+			// if (input_a)
+			// {
+			// 	hpos++;
+			// 	if (hpos >= 16)
+			// 	{
+			// 		hpos = 0;
+			// 	}
+			// }
 			tilemapctl[0] = hpos;
 			tilemapctl[1] = vpos;
 		}
