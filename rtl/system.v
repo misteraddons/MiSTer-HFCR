@@ -314,21 +314,21 @@ wire [7:0]	palrom_addr;
 wire [15:0]	palrom_data_out;
 
 // Zechs - tile map
-wire [7:0]	tilemap_r;
-wire [7:0]	tilemap_g;
-wire [7:0]	tilemap_b;
-wire		tilemap_a;
-// reg [7:0]	tilemap_r;
-// reg [7:0]	tilemap_g;
-// reg [7:0]	tilemap_b;
-// reg		tilemap_a;
+// wire [7:0]	tilemap_r;
+// wire [7:0]	tilemap_g;
+// wire [7:0]	tilemap_b;
+// wire		tilemap_a;
+reg [7:0]	tilemap_r;
+reg [7:0]	tilemap_g;
+reg [7:0]	tilemap_b;
+reg		tilemap_a;
+reg [7:0]	tilemapreg [3:0];
 `ifndef DISABLE_TILEMAP
 localparam TILEMAP_ROM_WIDTH = 13;
 localparam TILEMAP_RAM_WIDTH = 10;
 localparam [9:0] tilemap_width = 10'd352;
 localparam [9:0] tilemap_height = 10'd272;
 localparam [9:0] tilemap_border = 10'd16;
-reg [7:0]	tilemapreg [3:0];
 reg [TILEMAP_ROM_WIDTH-1:0]	tilemaprom_addr;
 wire [15:0]	tilemaprom_data_out;
 reg [TILEMAP_RAM_WIDTH-1:0]	tilemapram_addr;
@@ -344,7 +344,7 @@ wire signed [9:0] tilemap_offset_y = $signed(tilemapreg[1]);
 /* verilator lint_on WIDTH */
 
 reg [1:0] tilemap_cnt;
-reg [9:0] hcnt_last;
+reg [8:0] hcnt_last;
 always @(posedge clk_24) begin
 
 	if(reset)
@@ -365,66 +365,72 @@ always @(posedge clk_24) begin
 			tilemapreg[cpu_addr[1:0]] <= cpu_dout;
 		end
 
-		// if(VGA_HB)
-		// begin
-		// 	// Hold tilemap counter low while in hblank
-		// 	tilemap_cnt <= 2'b0;
-		// end
-		if(hcnt == 9'd395)
+		hcnt_last <= hcnt;
+		if(hcnt == 9'd395 && hcnt_last == 9'd394)
 		begin
+			// When end of HBLANK is reached, reset tilemap counter
 			tilemap_cnt <= 2'b0;
 		end
-		//hcnt_last <= hcnt;
+		else
+		begin
+			tilemap_cnt <= tilemap_cnt + 2'b1;
+			case(tilemap_cnt)
+				2'b00:
+				begin
+					//$display("TC1 : hcnt: %d  vcnt: %d  ce_pix: %b", hcnt, vcnt, ce_6);
+					// Cycle 1 - 2 cycles after previous ce_pix high
+					// -------
+					// - Calculate next pixel lookup address
+					tilemap_pos_x = $signed($signed((hcnt == 9'd395 ? 9'd0 : hcnt + 9'd1)) + tilemap_border) + $signed(tilemap_offset_x);
+					tilemap_pos_y = $signed($signed((vcnt == 9'd255 ? 9'd0 : vcnt)) + tilemap_border) + $signed(tilemap_offset_y);
+					
+					// - Calculate tilemap ram cell x/y  based on hcnt, vcnt and offsets in tilemapreg
+					// - Set tilemapram lookup address
+					// tilemap_pos_x = $signed(hcnt + tilemap_border) + $signed(tilemap_offset_x);
+					// tilemap_pos_y = $signed(vcnt + tilemap_border) + $signed(tilemap_offset_y);
+					tilemapram_addr = { tilemap_pos_y[8:4], tilemap_pos_x[8:4] };
 
-		//$display("tilemap_cnt: %d  hcnt: %d  ce_pix: %b", tilemap_cnt, hcnt, ce_6);
-		tilemap_cnt <= tilemap_cnt + 2'b1;
-		case(tilemap_cnt)
-			2'b00:
-			begin
-				// Cycle 1
-				// -------
-				// - Calculate tilemap ram cell x/y  based on hcnt, vcnt and offsets in tilemapreg
-				// - Set tilemapram lookup address
-				tilemap_pos_x = $signed(hcnt + tilemap_border) + $signed(tilemap_offset_x);
-				tilemap_pos_y = $signed(vcnt + tilemap_border) + $signed(tilemap_offset_y);
-				tilemapram_addr = { tilemap_pos_y[8:4], tilemap_pos_x[8:4] };
-			end
 
-			2'b01:
-			begin
-				// Cycle 2
-				// -------
-				// - Set tilemaprom lookup address based on tilemapram data out and calculated cell offsets
-				tilemaprom_addr <= { tilemapram_data_out[3:0], tilemap_pos_y[3:0], tilemap_pos_x[3:0], 1'b0 };
-			end
+					tilemap_r = {tilemaprom_data_out[4:0],tilemaprom_data_out[4:2]};
+					tilemap_g = {tilemaprom_data_out[9:5],tilemaprom_data_out[9:7]};
+					tilemap_b = {tilemaprom_data_out[14:10],tilemaprom_data_out[14:12]};
+					tilemap_a = tilemaprom_data_out[15];
+				end
 
-			2'b10:
-			begin
-				//tilemap_r = {tilemaprom_data_out[4:0],tilemaprom_data_out[4:2]};
-				//tilemap_g = {tilemaprom_data_out[9:5],tilemaprom_data_out[9:7]};
-				//tilemap_b = {tilemaprom_data_out[14:10],tilemaprom_data_out[14:12]};
-				//tilemap_a = tilemaprom_data_out[15];
-			end
-			
-			2'b11:
-			begin
-				// tilemap_r = 8'h0;
-			end
+				2'b01:
+				begin
+					//$display("TC2 : hcnt: %d  vcnt: %d  ce_pix: %b", hcnt, vcnt, ce_6);
+					//$display("TC2 : tilemap_pos_x: %d  tilemap_pos_y: %d", tilemap_pos_x, tilemap_pos_y);
+					// Cycle 2
+					// -------
+					// - Set tilemaprom lookup address based on tilemapram data out and calculated cell offsets
+				end
 
-			default:
-			begin
+				2'b10:
+				begin
+					//$display("TC3 : hcnt: %d  vcnt: %d  ce_pix: %b", hcnt, vcnt, ce_6);
+					tilemaprom_addr <= { tilemapram_data_out[3:0], tilemap_pos_y[3:0], tilemap_pos_x[3:0], 1'b0 };
+				end
 				
+				2'b11:
+				begin
+					//$display("TC4 : hcnt: %d  vcnt: %d  ce_pix: %b", hcnt, vcnt, ce_6);
+				end
 
-			end
-		endcase
+				default:
+				begin
+					
 
+				end
+			endcase
+		end
 	end
 end
 
-assign tilemap_r = {tilemaprom_data_out[4:0],tilemaprom_data_out[4:2]};
-assign tilemap_g = {tilemaprom_data_out[9:5],tilemaprom_data_out[9:7]};
-assign tilemap_b = {tilemaprom_data_out[14:10],tilemaprom_data_out[14:12]};
-assign tilemap_a = tilemaprom_data_out[15];
+// assign tilemap_r = {tilemaprom_data_out[4:0],tilemaprom_data_out[4:2]};
+// assign tilemap_g = {tilemaprom_data_out[9:5],tilemaprom_data_out[9:7]};
+// assign tilemap_b = {tilemaprom_data_out[14:10],tilemaprom_data_out[14:12]};
+// assign tilemap_a = tilemaprom_data_out[15];
 
 
 `endif
@@ -651,7 +657,6 @@ music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 	.addr(cpu_addr[1:0]),
 	.data_in(cpu_dout),
 	.write(music_cs && ~cpu_wr_n),
-	.vblank(VGA_VB),
 	.musicrom_addr(musicrom_addr),
 	.musicrom_data_out(musicrom_data_out),
 	.audio_out(music_audio_out)
