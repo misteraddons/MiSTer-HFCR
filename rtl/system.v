@@ -160,7 +160,7 @@ wire [7:0] ps2_key_data_out = ps2_key[{cpu_addr[0],3'd0} +: 8];
 wire [7:0] ps2_mouse_data_out = ps2_mouse[{cpu_addr[2:0],3'd0} +: 8];
 wire [7:0] timestamp_data_out = timestamp[{cpu_addr[2:0],3'd0} +: 8];
 wire [7:0] timer_data_out = timer[{cpu_addr[0],3'd0} +: 8];
-wire [7:0] tilemapcontrol_data_out = tilemapreg[cpu_addr[1:0]];
+wire [7:0] tilemapcontrol_data_out;
 
 // CPU address decodes
 // - Program ROM
@@ -309,278 +309,58 @@ charmap casval
 	.a(charmap_a)
 );
 
-// Palettes
-wire [7:0]	palrom_addr;
-wire [15:0]	palrom_data_out;
 
 // Zechs - tile map
-reg [7:0]	tilemap_r;
-reg [7:0]	tilemap_g;
-reg [7:0]	tilemap_b;
-reg		tilemap_a;
-reg [7:0]	tilemapreg [3:0];
+wire [7:0]	tilemap_r;
+wire [7:0]	tilemap_g;
+wire [7:0]	tilemap_b;
+wire		tilemap_a;
 `ifndef DISABLE_TILEMAP
-localparam TILEMAP_ROM_WIDTH = 13;
+localparam TILEMAP_ROM_WIDTH = 15;
 localparam TILEMAP_RAM_WIDTH = 10;
-localparam [9:0] tilemap_width = 10'd352;
-localparam [9:0] tilemap_height = 10'd272;
-localparam [9:0] tilemap_border = 10'd16;
-localparam [4:0] tilemap_cells_x = 5'd22;
-localparam [4:0] tilemap_cells_y = 5'd17;
-reg [TILEMAP_ROM_WIDTH-1:0]	tilemaprom_addr;
+wire [TILEMAP_ROM_WIDTH-1:0]	tilemaprom_addr;
 wire [15:0]	tilemaprom_data_out;
-reg [TILEMAP_RAM_WIDTH-1:0]	tilemapram_addr;
+wire [TILEMAP_RAM_WIDTH-1:0]	tilemapram_addr;
 wire [7:0]	tilemapram_data_out;
+wire 		tilemapram_ctl_wr;
+wire [7:0]	tilemapram_ctl_data_in;
 
-reg			tilemapram_ctl_wr;
-reg [7:0]	tilemapram_ctl_data_in;
-
-reg [9:0] tilemap_pos_x;
-reg [9:0] tilemap_pos_y;
-
-/* verilator lint_off WIDTH */
-wire signed [9:0] tilemap_offset_x = $signed(tilemapreg[0]); // Convert scroll control x register to signed
-wire signed [9:0] tilemap_offset_y = $signed(tilemapreg[1]); // Convert scroll control y register to signed
-/* verilator lint_on WIDTH */
-
-reg [1:0] tilemap_read_state;
-
-localparam TM_CTL_IDLE = 0;
-localparam TM_CTL_SCROLL_LEFT = 1;
-localparam TM_CTL_SCROLL_RIGHT = 2;
-localparam TM_CTL_SCROLL_UP = 3;
-localparam TM_CTL_SCROLL_DOWN = 4;
-localparam TM_CTL_SCROLL = 5;
-
-reg [2:0] tilemap_ctl_state;
-
-localparam TM_SCROLL_START = 0;
-localparam TM_SCROLL_WAIT = 1;
-localparam TM_SCROLL_GETINDEX = 2;
-localparam TM_SCROLL_SETINDEX = 3;
-
-reg [4:0]	tilemap_scroll_state;
-reg [4:0]	tilemap_scroll_state_next;
-reg [4:0]	tilemap_scroll_start_pos;
-reg [4:0]	tilemap_scroll_target_pos;
-reg [4:0]	tilemap_scroll_x;
-reg [4:0]	tilemap_scroll_y;
-reg			tilemap_scroll_axis;
-reg			tilemap_scroll_dir;
-
-reg [8:0] hcnt_last;
-
-reg [23:0] vblank_cycles;
-reg [23:0] tilemap_ctl_cycles;
-
-always @(posedge clk_24) begin
-
-	if(reset)
-	begin
-		// Reset tilemap control registers
-		tilemapreg[0] <= 8'b0;
-		tilemapreg[1] <= 8'b0;
-		tilemapreg[2] <= 8'b0;
-		tilemapreg[3] <= 8'b0;
-		tilemap_read_state <= 2'b0;
-	end
-	else
-	begin
-
-		if(tilemapcontrol_cs && !cpu_wr_n)
-		begin
-			// Write tilemap control data from CPU
-			tilemapreg[cpu_addr[1:0]] <= cpu_dout;
-
-			if(tilemap_ctl_state == TM_CTL_IDLE)
-			begin
-				if(cpu_addr[1:0] == 2'd2)
-				begin
-					// Horizontal scroll triggered
-					tilemap_ctl_state <= ($signed(cpu_dout)<0) ? TM_CTL_SCROLL_LEFT : TM_CTL_SCROLL_RIGHT;
-					tilemap_scroll_state <= TM_SCROLL_START;
-				end
-				if(cpu_addr[1:0] == 2'd3)
-				begin
-					// Vertical scroll triggered
-					tilemap_ctl_state <= ($signed(cpu_dout)<0) ? TM_CTL_SCROLL_UP : TM_CTL_SCROLL_DOWN;
-					tilemap_scroll_state <= TM_SCROLL_START;
-				end
-			end
-		end
-
-		case(tilemap_ctl_state)
-			TM_CTL_IDLE:
-			begin
-				tilemap_ctl_cycles <= 24'b0;
-				hcnt_last <= hcnt;
-				if(hcnt == 9'd395 && hcnt_last == 9'd394)
-				begin
-					// When end of HBLANK is reached, reset tilemap read state
-					tilemap_read_state <= 2'b0;
-				end
-				else
-				begin
-					tilemap_read_state <= tilemap_read_state + 2'b1;
-					case(tilemap_read_state)
-						2'b00:
-						begin
-							// - Calculate next pixel lookup address
-							tilemap_pos_x = $signed($signed((hcnt == 9'd395 ? 9'd0 : hcnt + 9'd1)) + tilemap_border) + $signed(tilemap_offset_x);
-							tilemap_pos_y = $signed($signed((vcnt == 9'd255 ? 9'd0 : vcnt)) + tilemap_border) + $signed(tilemap_offset_y);
-							// - Set tilemapram lookup address
-							tilemapram_addr <= { tilemap_pos_y[8:4], tilemap_pos_x[8:4] };
-							// Set colour output for previous ROM lookup
-							tilemap_r = {tilemaprom_data_out[4:0],tilemaprom_data_out[4:2]};
-							tilemap_g = {tilemaprom_data_out[9:5],tilemaprom_data_out[9:7]};
-							tilemap_b = {tilemaprom_data_out[14:10],tilemaprom_data_out[14:12]};
-							tilemap_a = tilemaprom_data_out[15];
-						end
-
-						2'b10:
-						begin
-							// Set ROM lookup address based on index RAM and cell offset
-							tilemaprom_addr <= { tilemapram_data_out[3:0], tilemap_pos_y[3:0], tilemap_pos_x[3:0], 1'b0 };
-						end
-					
-						default:
-						begin
-						end
-					endcase
-				end
-			end
-			TM_CTL_SCROLL_LEFT: 
-			begin
-				tilemap_scroll_dir <= 1'b0;
-				tilemap_scroll_axis <= 1'b0;
-				tilemap_scroll_start_pos = 5'd1;
-				tilemap_scroll_target_pos = tilemap_cells_x - 5'd1;
-				tilemap_scroll_x = tilemap_scroll_start_pos;
-				tilemap_scroll_y = 5'd0;
-				tilemap_ctl_state <= TM_CTL_SCROLL;
-			end
-			TM_CTL_SCROLL_RIGHT:
-			begin
-				tilemap_scroll_dir <= 1'b1;
-				tilemap_scroll_axis <= 1'b0;
-				tilemap_scroll_start_pos = tilemap_cells_x - 5'd2;
-				tilemap_scroll_target_pos = 5'd0;
-				tilemap_scroll_x = tilemap_scroll_start_pos;
-				tilemap_scroll_y = 5'd0;
-				tilemap_ctl_state <= TM_CTL_SCROLL;
-			end
-			TM_CTL_SCROLL_UP: 
-			begin
-				tilemap_scroll_dir <= 1'b0;
-				tilemap_scroll_axis <= 1'b1;
-				tilemap_scroll_start_pos = 5'd1;
-				tilemap_scroll_target_pos = tilemap_cells_y - 5'd1;
-				tilemap_scroll_x = 5'd0;
-				tilemap_scroll_y = tilemap_scroll_start_pos;
-				tilemap_ctl_state <= TM_CTL_SCROLL;
-			end
-			TM_CTL_SCROLL_DOWN:
-			begin
-				tilemap_scroll_dir <= 1'b1;
-				tilemap_scroll_axis <= 1'b1;
-				tilemap_scroll_start_pos = tilemap_cells_y - 5'd2;
-				tilemap_scroll_target_pos = 5'd0;
-				tilemap_scroll_x = 5'd0;
-				tilemap_scroll_y = tilemap_scroll_start_pos;
-				tilemap_ctl_state <= TM_CTL_SCROLL;
-			end
-			TM_CTL_SCROLL: 
-			begin
-				tilemap_ctl_cycles <= tilemap_ctl_cycles + 24'b1;
-				case(tilemap_scroll_state)
-					TM_SCROLL_WAIT:
-					begin
-						tilemap_scroll_state <= tilemap_scroll_state_next;
-					end
-					TM_SCROLL_START:
-					begin
-						//$display("TM_SCROLL_START: axis=%b dir=%b", tilemap_scroll_axis, tilemap_scroll_dir);
-						tilemapram_addr <= { tilemap_scroll_y, tilemap_scroll_x };
-						tilemap_scroll_state <= TM_SCROLL_WAIT;
-						tilemap_scroll_state_next <= TM_SCROLL_GETINDEX;
-					end
-					TM_SCROLL_GETINDEX:
-					begin
-						//$display("TM_SCROLL_GETINDEX: %d/%d - %x %d", tilemap_scroll_x, tilemap_scroll_y, tilemapram_addr, tilemapram_data_out);
-						tilemapram_ctl_data_in <= tilemapram_data_out;
-						if(tilemap_scroll_axis)
-						begin
-							tilemapram_addr <= { tilemap_scroll_dir ? tilemap_scroll_y + 5'd1 : tilemap_scroll_y - 5'd1, tilemap_scroll_x };
-						end
-						else
-						begin
-							tilemapram_addr <= { tilemap_scroll_y, tilemap_scroll_dir ? tilemap_scroll_x + 5'd1 : tilemap_scroll_x - 5'd1 };
-						end
-						tilemapram_ctl_wr <= 1'b1;
-						tilemap_scroll_state <= TM_SCROLL_WAIT;
-						tilemap_scroll_state_next <= TM_SCROLL_SETINDEX;
-					end
-					TM_SCROLL_SETINDEX:
-					begin
-						//$display("TM_SCROLL_SETINDEX: %d/%d - %x %d", tilemap_scroll_x, tilemap_scroll_y, tilemapram_addr, tilemapram_ctl_data_in);
-						tilemapram_ctl_wr <= 1'b0;
-						if((tilemap_scroll_axis ? tilemap_scroll_y : tilemap_scroll_x) == tilemap_scroll_target_pos)
-						begin
-							//$display("TM_SCROLL_SETINDEX - tilemap_scroll_target_pos HIT");
-							if(!tilemap_scroll_axis ? (tilemap_scroll_y == tilemap_cells_y - 5'd1) : (tilemap_scroll_x == tilemap_cells_x - 5'd1))
-							begin
-								// Scroll process completed
-								tilemap_ctl_state <= TM_CTL_IDLE;
-								//$display("Scroll complete in %d", tilemap_ctl_cycles);
-								// Clear scroll control register
-								tilemapreg[(tilemap_scroll_axis ? 3:2)] <= 8'b0;
-							end
-							else
-							begin
-								if(tilemap_scroll_axis)
-								begin
-									tilemap_scroll_y = tilemap_scroll_start_pos;
-									tilemap_scroll_x = tilemap_scroll_x + 5'd1;
-								end
-								else
-								begin
-									tilemap_scroll_x = tilemap_scroll_start_pos;
-									tilemap_scroll_y = tilemap_scroll_y + 5'd1;
-								end
-								tilemapram_addr <= { tilemap_scroll_y, tilemap_scroll_x };
-								tilemap_scroll_state <= TM_SCROLL_WAIT;
-								tilemap_scroll_state_next <= TM_SCROLL_GETINDEX;
-							end
-						end
-						else
-						begin
-							if(tilemap_scroll_axis)
-							begin
-								tilemap_scroll_y = tilemap_scroll_dir ? tilemap_scroll_y - 5'd1 : tilemap_scroll_y + 5'd1;
-							end
-							else
-							begin
-								tilemap_scroll_x = tilemap_scroll_dir ? tilemap_scroll_x - 5'd1 : tilemap_scroll_x + 5'd1;
-							end
-							tilemapram_addr <= { tilemap_scroll_y, tilemap_scroll_x };
-							tilemap_scroll_state <= TM_SCROLL_WAIT;
-							tilemap_scroll_state_next <= TM_SCROLL_GETINDEX;
-						end
-					end
-				endcase
-			end
-		endcase
-
-	end
-end
+tilemap #(
+	.TILEMAP_RAM_WIDTH(TILEMAP_RAM_WIDTH),
+	.TILEMAP_ROM_WIDTH(TILEMAP_ROM_WIDTH)
+) zechs
+(
+	.clk(clk_24),
+	.reset(reset),
+	.pause(pause_system),
+	.hcnt(hcnt),
+	.vcnt(vcnt),
+	.addr(cpu_addr[1:0]),
+	.data_in(cpu_dout),
+	.write(tilemapcontrol_wr),
+	.tilemaprom_data_out(tilemaprom_data_out),
+	.tilemapram_data_out(tilemapram_data_out),
+	.tilemapcontrol_data_out(tilemapcontrol_data_out),
+	.tilemapram_ctl_wr(tilemapram_ctl_wr),
+	.tilemapram_ctl_data_in(tilemapram_ctl_data_in),
+	.tilemapram_addr(tilemapram_addr),
+	.tilemaprom_addr(tilemaprom_addr),
+	.tilemap_r(tilemap_r),
+	.tilemap_g(tilemap_g),
+	.tilemap_b(tilemap_b),
+	.tilemap_a(tilemap_a)
+);
 
 `endif
 
+// Palettes
+wire [7:0]	palrom_addr;
+wire [15:0]	palrom_data_out;
 // Comet - sprite engine
 wire [7:0]	spr_r;
 wire [7:0]	spr_g;
 wire [7:0]	spr_b;
-wire 		spr_a;
+wire		spr_a;
 wire		spritecollisionram_data_out_cpu;
 `ifndef DISABLE_SPRITES
 localparam SPRITE_POSITION_WIDTH = 9;
@@ -596,7 +376,7 @@ wire		spritecollisionram_data_out;
 wire		spritecollisionram_data_in;
 wire [SPRITE_POSITION_WIDTH:0]	spritelbram_rd_addr;
 wire [SPRITE_POSITION_WIDTH:0]	spritelbram_wr_addr;
-wire 		spritelbram_wr;
+wire		spritelbram_wr;
 wire [15:0]	spritelbram_data_in;
 wire [15:0]	spritelbram_data_out;
 sprite_engine #(

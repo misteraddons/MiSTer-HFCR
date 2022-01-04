@@ -31,6 +31,7 @@
 #include "sys.h"
 #include "sprite.h"
 #include "sprite_images.h"
+#include "tilemap.h"
 #include "ui.h"
 #include "music.h"
 #include "sound.h"
@@ -128,6 +129,28 @@ void setup_variables()
 	}
 }
 
+const char *scroller_text = "CODE AND GFX BY JIMMYSTONES   ...   MUSIC BY DARRIN CARDANI   ...   ";
+unsigned char scroller_pos = 0;
+unsigned short scroller_entry_pos = (14 * 32) + 21;
+
+void update_scroller()
+{
+	tilemap_offset_x += 2;
+	if (tilemap_offset_x >= 16)
+	{
+		tilemap_offset_x -= 16;
+
+		scroll_tilemap_left();
+		
+		tilemapram[scroller_entry_pos] = scroller_text[scroller_pos] - 45;
+		scroller_pos++;
+		if (scroller_pos == strlen(scroller_text))
+		{
+			scroller_pos = 0;
+		}
+	}
+}
+
 void intro_loop()
 {
 
@@ -179,6 +202,8 @@ void intro_loop()
 			{
 				return;
 			}
+			update_scroller();
+			update_tilemap_offset();
 			update_sprites();
 
 			// Press select to quit

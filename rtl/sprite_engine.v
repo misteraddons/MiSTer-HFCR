@@ -25,7 +25,7 @@ module sprite_engine #(
 	parameter SPRITE_ROM_WIDTH = 14,		
 	parameter SPRITE_POSITION_WIDTH = 9,	
 	parameter SPRITE_COLRAM_WIDTH = 5,		
-	parameter SPRITE_SIZE_WIDTH = 5			// Width of sprite size related operations - 7 gives 
+	parameter SPRITE_SIZE_WIDTH = 5			// Width of sprite size related operations 
 )(
 	input				clk,
 	input				reset,

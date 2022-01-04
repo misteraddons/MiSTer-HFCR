@@ -1,9 +1,9 @@
 /*============================================================================
-	Aznable OS - Casval (sprite engine)
+	Aznable OS - Zechs (tilemap engine)
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
-	Date: 2021-11-27
+	Date: 2022-01-03
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -18,30 +18,17 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
-#ifndef SPRITE_H
-#define SPRITE_H
+#ifndef TILEMAP_H
+#define TILEMAP_H
 
-extern unsigned char sprite_max;
-extern unsigned char spr_x_l[];
-extern unsigned char spr_x_h[];
-extern unsigned char spr_y_l[];
-extern unsigned char spr_y_h[];
-extern bool spr_on[];
-extern bool spr_collide[];
-extern unsigned char spr_palette_index[];
-extern unsigned char spr_index[];
-extern unsigned char spr_size[];
+extern signed char tilemap_offset_x;
+extern signed char tilemap_offset_y;
 
-extern void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y);
-
-extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
-
-extern void update_sprites();
-
-extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char size, unsigned char collide);
-
-extern void clear_sprites();
-
-extern void clear_sprites_range(unsigned char first, unsigned char last);
+extern void update_tilemap_offset();
+extern void scroll_tilemap_left();
+extern void scroll_tilemap_right();
+extern void scroll_tilemap_up();
+extern void scroll_tilemap_down();
+extern void clear_tilemap();
 
 #endif

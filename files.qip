@@ -9,6 +9,7 @@ set_global_assignment -name QIP_FILE rtl/jt49/jt49.qip
 set_global_assignment -name QIP_FILE rtl/jt5205/jt5205.qip
 set_global_assignment -name VERILOG_FILE rtl/charmap.v
 set_global_assignment -name VERILOG_FILE rtl/sprite_engine.v
+set_global_assignment -name VERILOG_FILE rtl/tilemap.v
 set_global_assignment -name VERILOG_FILE rtl/lfsr.v
 set_global_assignment -name VERILOG_FILE rtl/starfield.v
 set_global_assignment -name VERILOG_FILE rtl/music.v

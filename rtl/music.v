@@ -130,7 +130,7 @@ module music #(
 
 	reg frame_ready;
 
-	//`define YM_DEBUG
+	// `define YM_DEBUG
 
 	always @(posedge clk)
 	begin
@@ -160,12 +160,16 @@ module music #(
 		else
 		begin
 			if( write ) begin
+`ifdef YM_DEBUG
 				$display("YM->RAM->WRITE %x %x", addr, data_in);
+`endif
 				regarray[addr] <= data_in;
 			end else begin
 				if(regarray[0] == 8'd1)
 				begin
+`ifdef YM_DEBUG
 					$display("YM->PLAY-TRACK %d %d", {regarray[1], regarray[2], regarray[3]}, regarray[0][1:0]);
+`endif
 					regarray[0] <= 8'd0;
 					/* verilator lint_off WIDTH */
 					ymp_trackoffset <= {{regarray[1], regarray[2], regarray[3]}};
@@ -175,7 +179,9 @@ module music #(
 				end
 				if(regarray[0] == 8'd2)
 				begin
+`ifdef YM_DEBUG
 					$display("YM->STOP-TRACK");
+`endif
 					regarray[0] <= 8'd0;
 					ymp_playing <= 0;
 					ymp_state <= YM_STOPPED;
@@ -187,9 +193,9 @@ module music #(
 			begin			
 				if(ymp_playing>2'b0)
 				begin
-					`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 					$display("YM_INIT");
-					`endif
+`endif
 					// Reset player frame and register
 					ymp_frame <= {ROM_WIDTH{1'b0}};
 					ymp_register <= 4'b0;
@@ -209,9 +215,9 @@ module music #(
 
 			YM_GETMODE:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETMODE %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				ymp_interleave <= musicrom_data_out[0];
 
 				// Set address to read song length byte 0
@@ -223,9 +229,9 @@ module music #(
 			// Get song length
 			YM_GETLENGTH_0:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETLENGTH_0 %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				// Read song length byte 0
 				ymp_length[7:0] <= musicrom_data_out;
 
@@ -236,9 +242,9 @@ module music #(
 			end
 			YM_GETLENGTH_1:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETLENGTH_1 %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				// Read song length byte 1
 				ymp_length[14:8] <= musicrom_data_out[6:0];
 				// Set address to frequency point
@@ -250,13 +256,13 @@ module music #(
 			// Get song playback frequency
 			YM_GETFREQUENCY:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETFREQUENCY %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				// Read song length byte 1
 				ymp_is_50hz <= musicrom_data_out[7:0] == 8'd50;
 				// Set address to loop point
-				musicrom_addr <= ymp_trackoffset + 16'h1e;
+				musicrom_addr <= ymp_trackoffset + 16'h1f;
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLOOP_0;
 			end
@@ -264,22 +270,22 @@ module music #(
 			// Get song loop point
 			YM_GETLOOP_0:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETLOOP_0 %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				// Read song loop point byte 0
 				ymp_looppoint[7:0] <= musicrom_data_out;
 
 				// Set address to read song length byte 1
-				musicrom_addr <= ymp_trackoffset + 16'h1f;
+				musicrom_addr <= ymp_trackoffset + 16'h1e;
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLOOP_1;
 			end
 			YM_GETLOOP_1:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETLOOP_1 %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				// Read song loop point byte 1
 				ymp_looppoint[14:8] <= musicrom_data_out[6:0];
 				// Set address to read past NT-string data
@@ -291,9 +297,9 @@ module music #(
 			// Skip past null terminated strings to find first frame data point
 			YM_SKIPSTRINGS:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_SKIPSTRINGS %x %x", musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				if(musicrom_data_out == 8'b0)
 				begin
 					if(ymp_skipstringindex == 3'd2)
@@ -314,14 +320,16 @@ module music #(
 			begin
 				if(ymp_playing == 2'b0)
 				begin
+`ifdef YM_DEBUG
 					$display("ymp_playing %d - STOPPING MUSIC", ymp_playing);
+`endif
 					ymp_state <= YM_INIT;
 				end
 				if(frame_ready)
 				begin
-					`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 					$display("YM_WAITFORFRAME f=%d l=%d ff=%d", ymp_frame, ymp_length, ymp_firstframe);
-					`endif
+`endif
 					frame_ready <= 1'b0;
 					ymp_register <= 4'b0;
 					ymp_state <= YM_WAIT;
@@ -334,9 +342,9 @@ module music #(
 				// Calculate address for this frame+register combo in ROM
 				// - If ymp_interleave=1 then position is (register * length) + frame
 				// - If ymp_interleave=0 then position is (frame * 16) + register
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_GETREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave, ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				if(ymp_interleave)
 				begin
 					musicrom_addr <= ymp_trackoffset + (ymp_register * ymp_length) + ymp_frame + ymp_firstframe;
@@ -351,9 +359,9 @@ module music #(
 
 			YM_SETREGISTER:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_SETREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				snd_data_in <= musicrom_data_out & ymp_registermask[{ymp_register, 3'b0}+:8];
 				snd_wr <= 1'b1;
 				ymp_state <= YM_NEXTREGISTER;
@@ -361,16 +369,18 @@ module music #(
 
 			YM_NEXTREGISTER:
 			begin
-				`ifdef YM_DEBUG
+`ifdef YM_DEBUG
 				$display("YM_NEXTREGISTER I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
-				`endif
+`endif
 				snd_wr <= 1'b0;
 				if(ymp_register == 4'd13)
 				begin
 					ymp_frame <= ymp_frame + 16'd1;
 					if(ymp_frame == ymp_length)
 					begin
+`ifdef YM_DEBUG
 						$display("YM LOOP I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
+`endif
 						ymp_frame <= ymp_looppoint;
 					end
 					ymp_state <= YM_WAITFORFRAME;

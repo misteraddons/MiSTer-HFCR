@@ -1,3 +1,1 @@
-darrin.ym#Intro
-4Mat_SpaceGun2.ym#Main loop
-Ajt_Beachtro.ym#Score
+Video Game Main Theme.ym#Main theme

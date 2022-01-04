@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Caval (sprite engine)
+	Aznable OS - Casval (sprite engine)
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
