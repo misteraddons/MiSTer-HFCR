@@ -33,7 +33,8 @@ char *menu_string[] = {
 	"Digital",
 	"Analog",
 	"Advanced",
-	"Button test"};
+	"Button test",
+	"Credits"};
 
 // Initialise menu state
 void start_menu()
@@ -87,6 +88,9 @@ void menu()
 			case 3:
 				state = STATE_START_BTNTEST;
 				break;
+			case 4:
+				state = STATE_START_CREDITS;
+				break;
 			}
 		}
 	}
@@ -94,7 +98,7 @@ void menu()
 	// As soon as vsync is detected start drawing screen updates
 	if (VBLANK_RISING)
 	{
-		char maxsize = (menu_count * 3) + 1;
+		char maxsize = (menu_count * 3) + 1 + (menu_count % 2);
 
 		if (menu_timer < maxsize)
 		{
@@ -117,7 +121,7 @@ void menu()
 		{
 			if (menu_dirty)
 			{
-				char ty = menu_my - ((menu_count * 3) / 2) + 1;
+				char ty = menu_my - ((menu_count * 3) / 2);
 				for (char m = 0; m < menu_count; m++)
 				{
 					if (menu_index == m)

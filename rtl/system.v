@@ -567,7 +567,7 @@ assign VGA_B = spr_a ? spr_b : charmap_a ? charmap_b : tilemap_a ? tilemap_b : s
 // Music player
 wire [9:0] music_audio_out;
 `ifndef DISABLE_MUSIC
-localparam MUSIC_ROM_WIDTH = 17;
+localparam MUSIC_ROM_WIDTH = 16;
 wire [MUSIC_ROM_WIDTH-1:0] musicrom_addr;
 wire  [7:0] musicrom_data_out;
 
@@ -588,7 +588,7 @@ music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 // M5205 sound player
 wire signed [11:0] snd_audio_out;
 `ifndef DISABLE_SOUND
-localparam SOUND_ROM_WIDTH = 16;
+localparam SOUND_ROM_WIDTH = 14;
 wire [SOUND_ROM_WIDTH-1:0] soundrom_addr;
 wire [7:0] soundrom_data_out;
 

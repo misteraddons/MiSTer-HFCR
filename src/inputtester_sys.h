@@ -48,7 +48,9 @@
 #define STATE_START_GAME_SNEK 40
 #define STATE_GAME_SNEK 41
 
-#define STATE_START_ZORBLAXX 42
+#define STATE_START_CREDITS 42
+
+#define STATE_START_ZORBLAXX 43
 
 #define GET_TIMER ((unsigned short)timer[1] << 8) | (unsigned char)timer[0]
 
@@ -78,6 +80,7 @@ extern bool input_mouse_right_last;
 
 // Input tester application state
 extern char state;
+extern char defaultstate;
 extern char nextstate;
 
 // Track joypad 1 directions and start for menu control

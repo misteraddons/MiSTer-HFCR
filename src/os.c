@@ -32,6 +32,7 @@
 #include "zorblaxx_app.h"
 #include "snek_app.h"
 #include "fader.h"
+#include "credits.h"
 
 void intro_text(const char *text, unsigned char start_x, unsigned char start_y, unsigned char space_x, unsigned char speed, unsigned char flash_speed)
 {
@@ -137,6 +138,7 @@ void loader(const char *title)
 void app_main()
 {
 	chram_size = chram_cols * chram_rows;
+	state = defaultstate;
 	while (1)
 	{
 		hsync = input0 & 0x80;
@@ -195,6 +197,9 @@ void app_main()
 		case STATE_ATTRACT:
 			snek_attract();
 			break;
+		case STATE_START_CREDITS:
+			app_credits();
+			break;
 
 		case STATE_START_GAME_SNEK:
 			start_snek_gameplay();
@@ -210,9 +215,9 @@ void app_main()
 
 		default:
 			// Start default state
-			 state = STATE_START_ZORBLAXX;
-			//loader("INPUTTESTER.AZN")
-			//start_inputtester_digital();
+			//state = STATE_START_ZORBLAXX;
+			loader("INPUTTESTER.AZN");
+			start_inputtester_digital();
 			//	start_inputtester_advanced();
 			// start_inputtester_analog();
 			// start_btntest();
@@ -229,152 +234,5 @@ void app_main()
 // Main entry
 void main()
 {
-
-	// // LOAD TILEMAP RAM
-	// unsigned char ti = 0;
-	// for (unsigned char y = 0; y < 17; y++)
-	// {
-	// 	ti = y % 2;
-	// 	for (unsigned char x = 0; x < 22; x++)
-	// 	{
-	// 		unsigned short p = (y * 32) + x;
-	// 		tilemapram[p] = ti;
-	// 		ti++;
-	// 		if (ti == 6)
-	// 		{
-	// 			ti = 0;
-	// 		}
-	// 	}
-	// }
-	// unsigned char tsi = 0;
-	// unsigned char vsi = 0;
-
-	// signed char hscroll_dir = 0;
-	// signed char vscroll_dir = 0;
-
-	// while (1)
-	// {
-	// 	vblank = CHECK_BIT(input0, INPUT_VBLANK);
-	// 	if (VBLANK_RISING)
-	// 	{
-	// 		basic_input();
-
-	// 		if (input_left && !input_left_last && hscroll_dir > -4)
-	// 		{
-	// 			hscroll_dir--;
-	// 		}
-	// 		if (input_right && !input_right_last && hscroll_dir < 4)
-	// 		{
-	// 			hscroll_dir++;
-	// 		}
-	// 		if (input_up && !input_up_last && vscroll_dir > -4)
-	// 		{
-	// 			vscroll_dir--;
-	// 		}
-	// 		if (input_down && !input_down_last && vscroll_dir < 4)
-	// 		{
-	// 			vscroll_dir++;
-	// 		}
-
-	// 		if (hscroll_dir > 0)
-	// 		{
-	// 			tilemap_offset_x -= hscroll_dir;
-	// 			if (tilemap_offset_x <= -16)
-	// 			{
-	// 				tilemap_offset_x += 16;
-	// 				tilemapctl[2] = 1;
-	// 				// Scroll right?
-	// 				while (tilemapctl[2] != 0)
-	// 				{
-	// 				}
-	// 				for (unsigned char y = 0; y < 17; y++)
-	// 				{
-	// 					unsigned short p = (y * 32);
-	// 					tilemapram[p] = tsi;
-	// 				}
-	// 				tsi++;
-	// 				if (tsi == 6)
-	// 				{
-	// 					tsi = 0;
-	// 				}
-	// 			}
-	// 		}
-	// 		if (hscroll_dir < 0)
-	// 		{
-	// 			tilemap_offset_x += -hscroll_dir;
-	// 			if (tilemap_offset_x >= 16)
-	// 			{
-	// 				tilemap_offset_x -= 16;
-	// 				tilemapctl[2] = -1;
-	// 				// Scroll left?
-	// 				while (tilemapctl[2] != 0)
-	// 				{
-	// 				}
-	// 				for (unsigned char y = 0; y < 17; y++)
-	// 				{
-	// 					unsigned short p = (y * 32) + 21;
-	// 					tilemapram[p] = tsi;
-	// 				}
-	// 				tsi++;
-	// 				if (tsi == 6)
-	// 				{
-	// 					tsi = 0;
-	// 				}
-	// 			}
-	// 		}
-
-	// 		if (vscroll_dir > 0)
-	// 		{
-	// 			tilemap_offset_y -= vscroll_dir;
-	// 			if (tilemap_offset_y <= -16)
-	// 			{
-	// 				tilemap_offset_y += 16;
-	// 				tilemapctl[3] = 1;
-	// 				// Scroll right?
-	// 				while (tilemapctl[3] != 0)
-	// 				{
-	// 				}
-	// 				for (unsigned char x = 0; x < 22; x++)
-	// 				{
-	// 					unsigned short p = x;
-	// 					tilemapram[p] = vsi;
-	// 				}
-	// 				vsi++;
-	// 				if (vsi == 6)
-	// 				{
-	// 					vsi = 0;
-	// 				}
-	// 			}
-	// 		}
-	// 		if (vscroll_dir < 0)
-	// 		{
-	// 			tilemap_offset_y += -vscroll_dir;
-	// 			if (tilemap_offset_y >= 16)
-	// 			{
-	// 				tilemap_offset_y -= 16;
-	// 				tilemapctl[3] = -1;
-	// 				// Scroll left?
-	// 				while (tilemapctl[3] != 0)
-	// 				{
-	// 				}
-	// 				for (unsigned char x = 0; x < 22; x++)
-	// 				{
-	// 					unsigned short p = (17 * 32) + 21;
-	// 					tilemapram[p] = vsi;
-	// 				}
-	// 				vsi++;
-	// 				if (vsi == 6)
-	// 				{
-	// 					vsi = 0;
-	// 				}
-	// 			}
-	// 		}
-
-	// 		update_tilemap_offset();
-	// 	}
-
-	// 	vblank_last = vblank;
-	// }
-
 	app_main();
 }

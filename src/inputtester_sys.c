@@ -49,6 +49,7 @@ bool input_mouse_right_last;
 
 // Input tester application state
 char state = 0;
+char defaultstate = STATE_START_INPUTTESTER;
 char nextstate = 0;
 
 // Track joypad 1 directions and start for menu control
