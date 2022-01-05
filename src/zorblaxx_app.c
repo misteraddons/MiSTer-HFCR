@@ -656,6 +656,7 @@ void app_zorblaxx()
 		intro_loop();
 
 		// Clear character map and title sprites
+		clear_tilemap();
 		clear_chars(0);
 		clear_sprites();
 		stop_music();

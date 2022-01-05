@@ -66,7 +66,7 @@ void spawn_pickup()
 
 void setup_pickups()
 {
-	pickup_y_max = 248 * y_divisor;
+	pickup_y_max = 272 * y_divisor;
 	pickup_y_offset = (8 * y_divisor);
 	for (int t = pickup_sprite_first; t < pickup_sprite_first + pickup_max; t++)
 	{

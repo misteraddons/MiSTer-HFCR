@@ -32,7 +32,7 @@ module sound #(
 
 	input		[7:0]	soundrom_data_out,
 	output reg [ROM_WIDTH-1:0]	soundrom_addr,
-	output	   [11:0]	audio_out
+	output signed [11:0]	audio_out
 	);
 
 wire sample;						// Is m5205 requesting sample data

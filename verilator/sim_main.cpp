@@ -84,7 +84,7 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
-#define DEBUG_AUDIO
+//#define DEBUG_AUDIO
 
 #ifdef DEBUG_AUDIO
 // Audio

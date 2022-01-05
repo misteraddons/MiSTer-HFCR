@@ -111,7 +111,7 @@ module starfield #(
                     end
                 end
                 sf_cnt <= 0;
-                RST_CNT <= (H * V) + (increment * H) - 1'b1;
+                RST_CNT <= (H * V) + ((pause ? 5'b0 : increment) * H) - 1'b1;
             end
             /* verilator lint_on WIDTH */
         end
