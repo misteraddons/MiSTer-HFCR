@@ -10,24 +10,33 @@ namespace rommaker
 {
     class Program
     {
-        static readonly string tilemapRomPath = @"..\..\..\..\gfx\tilemap.bin";
-        static readonly string tilemapPath = @"..\..\..\..\gfx\tilemap\tilemap.png";
+        static string TilemapRomPath => $@"{resourceOutputPath}tilemap.bin";
 
-        static readonly string spriteRomPath = @"..\..\..\..\gfx\sprite.bin";
+        static string TilemapPath => $@"{resourcePath}gfx\tilemap\tilemap.png";
 
-        static readonly string spritePath = @"..\..\..\..\gfx\images\";
-        static readonly string palettePath = @"..\..\..\..\gfx\palette.bin";
-        static readonly string spriteSourcePath = @"..\..\..\..\src\sprite_images";
+        static string SpriteRomPath => $@"{resourceOutputPath}sprite.bin";
 
-        static readonly string musicPath = @"..\..\..\..\music\";
-        static readonly string musicTrackListPath = @"..\..\..\..\music\tracks.txt";
-        static readonly string musicRomPath = @"..\..\..\..\music\music.bin";
-        static readonly string musicSourcePath = @"..\..\..\..\src\music_tracks";
+        static string SpritePath => $@"{resourcePath}gfx\images\";
 
-        static readonly string soundPath = @"..\..\..\..\sound\";
-        static readonly string soundListPath = @"..\..\..\..\sound\samples.txt";
-        static readonly string soundRomPath = @"..\..\..\..\sound\sound.bin";
-        static readonly string soundSourcePath = @"..\..\..\..\src\sound_samples";
+        static string PalettePath => $@"{resourceOutputPath}palette.bin";
+
+        static string SpriteSourcePath => $@"{resourcePath}src\sprite_images";
+
+        static string MusicPath => $@"{resourcePath}music\";
+
+        static string MusicTrackListPath => $@"{resourcePath}music\tracks.txt";
+
+        static string MusicRomPath => $@"{resourceOutputPath}music.bin";
+
+        static string MusicSourcePath => $@"{resourcePath}src\music_tracks";
+
+        static string SoundPath => $@"{resourcePath}sound\";
+
+        static string SoundListPath => $@"{resourcePath}sound\samples.txt";
+
+        static string SoundRomPath => $@"{resourceOutputPath}sound.bin";
+
+        static string SoundSourcePath => $@"{resourcePath}src\sound_samples";
 
         static readonly int PaletteMax = 4;
         static readonly int PaletteIndexMax = 32;
@@ -37,10 +46,10 @@ namespace rommaker
         static void CreateMusicRom()
         {
             Console.WriteLine("CREATING MUSIC ROM");
-            if (File.Exists(musicRomPath)) { File.Delete(musicRomPath); }
+            if (File.Exists(MusicRomPath)) { File.Delete(MusicRomPath); }
 
             // Read track list
-            string[] tracks = File.ReadAllLines(musicTrackListPath);
+            string[] tracks = File.ReadAllLines(MusicTrackListPath);
 
             List<byte> trackData = new();
             string[] trackPos = new string[tracks.Length];
@@ -50,7 +59,7 @@ namespace rommaker
             foreach (string track in tracks)
             {
                 string file = track.Split("#")[0];
-                byte[] data = File.ReadAllBytes(musicPath + file);
+                byte[] data = File.ReadAllBytes(MusicPath + file);
                 trackData.AddRange(data);
                 trackPos[t] = p + "u";
                 Console.WriteLine($"\t{t} - {p} > {file}");
@@ -65,7 +74,7 @@ namespace rommaker
             builder.AppendLine("extern unsigned long music_track_address[const_music_track_max];");
 
             builder.AppendLine("#endif");
-            File.WriteAllText(musicSourcePath + ".h", builder.ToString());
+            File.WriteAllText(MusicSourcePath + ".h", builder.ToString());
 
             builder = new StringBuilder();
             builder.AppendLine("#ifndef MUSIC_TRACKS_C");
@@ -73,9 +82,9 @@ namespace rommaker
             builder.AppendLine("#include \"music_tracks.h\"");
             builder.AppendLine("unsigned long music_track_address[] = {" + string.Join(",", trackPos) + "};");
             builder.AppendLine("#endif");
-            File.WriteAllText(musicSourcePath + ".c", builder.ToString());
+            File.WriteAllText(MusicSourcePath + ".c", builder.ToString());
 
-            File.WriteAllBytes(musicRomPath, trackData.ToArray());
+            File.WriteAllBytes(MusicRomPath, trackData.ToArray());
 
         }
 
@@ -83,10 +92,10 @@ namespace rommaker
         static void CreateSoundRom()
         {
             Console.WriteLine("CREATING SOUND ROM");
-            if (File.Exists(soundRomPath)) { File.Delete(soundRomPath); }
+            if (File.Exists(SoundRomPath)) { File.Delete(SoundRomPath); }
 
             // Read sample list
-            string[] samples = File.ReadAllLines(soundListPath);
+            string[] samples = File.ReadAllLines(SoundListPath);
 
             List<byte> soundData = new();
             string[] soundPos = new string[samples.Length];
@@ -107,9 +116,9 @@ namespace rommaker
                 string file = sample.Split("#")[0];
                 string name = sample.Split("#")[1];
 
-                string args = $"{soundPath}{file}.wav {soundPath}{file}.vox rate 8k";
+                string args = $"{SoundPath}{file}.wav {SoundPath}{file}.vox rate 8k";
                 Process.Start(command, args).WaitForExit();
-                byte[] data = File.ReadAllBytes($"{soundPath}{file}.vox");
+                byte[] data = File.ReadAllBytes($"{SoundPath}{file}.vox");
                 soundData.AddRange(data);
                 soundPos[t] = p + "u";
                 uint l = (uint)data.Length;
@@ -122,7 +131,7 @@ namespace rommaker
 
 
             builder.AppendLine("#endif");
-            File.WriteAllText(soundSourcePath + ".h", builder.ToString());
+            File.WriteAllText(SoundSourcePath + ".h", builder.ToString());
 
             builder = new StringBuilder();
             builder.AppendLine("#ifndef SOUND_SAMPLES_C");
@@ -131,9 +140,9 @@ namespace rommaker
             builder.AppendLine("unsigned long sound_sample_address[] = {" + string.Join(",", soundPos) + "};");
             builder.AppendLine("unsigned long sound_sample_length[] = {" + string.Join(",", soundLen) + "};");
             builder.AppendLine("#endif");
-            File.WriteAllText(soundSourcePath + ".c", builder.ToString());
+            File.WriteAllText(SoundSourcePath + ".c", builder.ToString());
 
-            File.WriteAllBytes(soundRomPath, soundData.ToArray());
+            File.WriteAllBytes(SoundRomPath, soundData.ToArray());
 
         }
 
@@ -146,14 +155,14 @@ namespace rommaker
                 Palettes[p].Add(Color.FromArgb(0, 0, 0, 0));
             }
 
-            if (File.Exists(spriteRomPath)) { File.Delete(spriteRomPath); }
-            if (File.Exists(palettePath)) { File.Delete(palettePath); }
+            if (File.Exists(SpriteRomPath)) { File.Delete(SpriteRomPath); }
+            if (File.Exists(PalettePath)) { File.Delete(PalettePath); }
 
-            FileStream spriteStream = File.OpenWrite(spriteRomPath);
+            FileStream spriteStream = File.OpenWrite(SpriteRomPath);
             BinaryWriter spriteStreamWriter = new(spriteStream, Encoding.Default);
 
             uint pos = 0;
-            Dictionary<string, string> spriteSourceItems = new Dictionary<string, string>();
+            Dictionary<string, string> spriteSourceItems = new();
 
 
             int[] groups = { 32, 16, 8 };
@@ -170,9 +179,9 @@ namespace rommaker
                 spriteStreamWriter.Write(groupStartBytes[1]); // Write start point for size group
                 spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
 
-                MemoryStream groupStream = new MemoryStream();
+                MemoryStream groupStream = new();
                 ushort groupLen = 0;
-                foreach (string image in Directory.GetFiles(spritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
+                foreach (string image in Directory.GetFiles(SpritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                 {
                     Bitmap img = new(image);
 
@@ -276,7 +285,7 @@ namespace rommaker
                 builder.AppendLine("#define " + v + " " + spriteSourceItems[v]);
             }
             builder.AppendLine("#endif");
-            File.WriteAllText(spriteSourcePath + ".h", builder.ToString());
+            File.WriteAllText(SpriteSourcePath + ".h", builder.ToString());
 
             //            builder = new StringBuilder();
             //builder.AppendLine("#ifndef SPRITE_IMAGES_C");
@@ -299,11 +308,11 @@ namespace rommaker
                 }
             }
 
-            if (File.Exists(palettePath))
+            if (File.Exists(PalettePath))
             {
-                File.Delete(palettePath);
+                File.Delete(PalettePath);
             }
-            using (FileStream paletteStream = File.OpenWrite(palettePath))
+            using (FileStream paletteStream = File.OpenWrite(PalettePath))
             {
                 using (BinaryWriter paletteWriter = new(paletteStream, Encoding.BigEndianUnicode))
                 {
@@ -337,13 +346,13 @@ namespace rommaker
         static void CreateTilemapRom()
         {
 
-            if (File.Exists(tilemapRomPath)) { File.Delete(tilemapRomPath); }
+            if (File.Exists(TilemapRomPath)) { File.Delete(TilemapRomPath); }
 
-            FileStream stream = File.OpenWrite(tilemapRomPath);
+            FileStream stream = File.OpenWrite(TilemapRomPath);
             BinaryWriter streamWriter = new(stream, Encoding.Default);
 
             uint pos = 0;
-            Bitmap img = new(tilemapPath);
+            Bitmap img = new(TilemapPath);
             int size = 16;
             int slicesX = img.Width / size;
             int slicesY = img.Height / size;
@@ -383,9 +392,17 @@ namespace rommaker
             streamWriter.Dispose();
         }
 
+        static string resourcePath;
+        static string resourceOutputPath;
 
         static void Main(string[] args)
         {
+            string rootPath = @"..\..\..\..\";
+            string currentProject = File.ReadAllText(rootPath + "CURRENT_PROJECT");
+
+            resourceOutputPath = $@"{rootPath}resources\";
+            resourcePath = $@"{resourceOutputPath}{currentProject}\";          
+
             CreateSpriteRom();
             CreateTilemapRom();
             CreateMusicRom();
