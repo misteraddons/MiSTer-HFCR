@@ -2,11 +2,9 @@
 PROJECT=$(cat CURRENT_PROJECT)
 CURRENTDIR=$(pwd)
 
-echo $PROJECT
-
 # Compile C code
-cd resources/$PROJECT/src
-make clean
+cd src/$PROJECT
+#make clean
 make all
 cd $CURRENTDIR
 
@@ -16,9 +14,9 @@ cd verilator
 cd $CURRENTDIR
 
 # Hexify roms
-od -An -t x1 -v resources/$PROJECT/src/bin/os.bin > verilator/rom.hex
-od -An -t x1 -v resources/$PROJECT/src/bin/os.bin > verilator/x64/Release/rom.hex
-od -An -t x1 -v resources/$PROJECT/src/bin/os.bin > rtl/rom.hex
+od -An -t x1 -v src/$PROJECT/bin/os.bin > verilator/rom.hex
+od -An -t x1 -v src/$PROJECT/bin/os.bin > verilator/x64/Release/rom.hex
+od -An -t x1 -v src/$PROJECT/bin/os.bin > rtl/rom.hex
 od -An -t x1 -v PETSCII.pf > verilator/font.hex
 od -An -t x1 -v PETSCII.pf > verilator/x64/Release/font.hex
 od -An -t x1 -v PETSCII.pf > rtl/font.hex

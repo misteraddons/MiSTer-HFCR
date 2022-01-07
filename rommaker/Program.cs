@@ -12,15 +12,16 @@ namespace rommaker
     {
         static string TilemapRomPath => $@"{resourceOutputPath}tilemap.bin";
 
-        static string TilemapPath => $@"{resourcePath}gfx\tilemap\tilemap.png";
+        static string TilemapPath => $@"{resourcePath}tilemap\tilemap.png";
+        static string TilemapExtractPath => $@"{resourcePath}tilemap\tilemap_extract.png";
 
         static string SpriteRomPath => $@"{resourceOutputPath}sprite.bin";
 
-        static string SpritePath => $@"{resourcePath}gfx\images\";
+        static string SpritePath => $@"{resourcePath}sprites\";
 
         static string PalettePath => $@"{resourceOutputPath}palette.bin";
 
-        static string SpriteSourcePath => $@"{resourcePath}src\sprite_images";
+        static string SpriteSourcePath => $@"{sourcePath}sprite_images";
 
         static string MusicPath => $@"{resourcePath}music\";
 
@@ -28,7 +29,7 @@ namespace rommaker
 
         static string MusicRomPath => $@"{resourceOutputPath}music.bin";
 
-        static string MusicSourcePath => $@"{resourcePath}src\music_tracks";
+        static string MusicSourcePath => $@"{sourcePath}music_tracks";
 
         static string SoundPath => $@"{resourcePath}sound\";
 
@@ -36,7 +37,7 @@ namespace rommaker
 
         static string SoundRomPath => $@"{resourceOutputPath}sound.bin";
 
-        static string SoundSourcePath => $@"{resourcePath}src\sound_samples";
+        static string SoundSourcePath => $@"{sourcePath}sound_samples";
 
         static readonly int PaletteMax = 4;
         static readonly int PaletteIndexMax = 32;
@@ -48,23 +49,28 @@ namespace rommaker
             Console.WriteLine("CREATING MUSIC ROM");
             if (File.Exists(MusicRomPath)) { File.Delete(MusicRomPath); }
 
-            // Read track list
-            string[] tracks = File.ReadAllLines(MusicTrackListPath);
-
             List<byte> trackData = new();
-            string[] trackPos = new string[tracks.Length];
+            string[] trackPos = new string[0];
 
-            int t = 0;
-            uint p = 0;
-            foreach (string track in tracks)
+            if (File.Exists(MusicTrackListPath))
             {
-                string file = track.Split("#")[0];
-                byte[] data = File.ReadAllBytes(MusicPath + file);
-                trackData.AddRange(data);
-                trackPos[t] = p + "u";
-                Console.WriteLine($"\t{t} - {p} > {file}");
-                p += (uint)data.Length;
-                t++;
+
+                // Read track list
+                string[] tracks = File.ReadAllLines(MusicTrackListPath);
+                trackPos = new string[tracks.Length];
+                int t = 0;
+                uint p = 0;
+                foreach (string track in tracks)
+                {
+                    string file = track.Split("#")[0];
+                    byte[] data = File.ReadAllBytes(MusicPath + file);
+                    trackData.AddRange(data);
+                    trackPos[t] = p + "u";
+                    Console.WriteLine($"\t{t} - {p} > {file}");
+                    p += (uint)data.Length;
+                    t++;
+                }
+
             }
 
             StringBuilder builder = new();
@@ -93,6 +99,12 @@ namespace rommaker
         {
             Console.WriteLine("CREATING SOUND ROM");
             if (File.Exists(SoundRomPath)) { File.Delete(SoundRomPath); }
+
+            if (!File.Exists(SoundListPath))
+            {
+                Console.WriteLine("No sounds!");
+                return;
+            }
 
             // Read sample list
             string[] samples = File.ReadAllLines(SoundListPath);
@@ -158,124 +170,129 @@ namespace rommaker
             if (File.Exists(SpriteRomPath)) { File.Delete(SpriteRomPath); }
             if (File.Exists(PalettePath)) { File.Delete(PalettePath); }
 
-            FileStream spriteStream = File.OpenWrite(SpriteRomPath);
-            BinaryWriter spriteStreamWriter = new(spriteStream, Encoding.Default);
-
-            uint pos = 0;
             Dictionary<string, string> spriteSourceItems = new();
 
-
-            int[] groups = { 32, 16, 8 };
-
-            Dictionary<int, MemoryStream> groupStreams = new();
-            int groupIndex = groups.Length - 1;
-            for (int gi = 0; gi < groups.Length; gi++)
+            if (Directory.Exists(SpritePath))
             {
-                int g = groups[gi];
-                int index = 0;
-                ushort groupStartPos = (ushort)(pos + (groups.Length * 2));
-                byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
-                Console.WriteLine($"Starting image group {g} at {groupStartPos}");
-                spriteStreamWriter.Write(groupStartBytes[1]); // Write start point for size group
-                spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
 
-                MemoryStream groupStream = new();
-                ushort groupLen = 0;
-                foreach (string image in Directory.GetFiles(SpritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
+                FileStream spriteStream = File.OpenWrite(SpriteRomPath);
+                BinaryWriter spriteStreamWriter = new(spriteStream, Encoding.Default);
+
+                uint pos = 0;
+
+
+                int[] groups = { 32, 16, 8 };
+
+                Dictionary<int, MemoryStream> groupStreams = new();
+                int groupIndex = groups.Length - 1;
+                for (int gi = 0; gi < groups.Length; gi++)
                 {
-                    Bitmap img = new(image);
+                    int g = groups[gi];
+                    int index = 0;
+                    ushort groupStartPos = (ushort)(pos + (groups.Length * 2));
+                    byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
+                    Console.WriteLine($"Starting image group {g} at {groupStartPos}");
+                    spriteStreamWriter.Write(groupStartBytes[1]); // Write start point for size group
+                    spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
 
-                    // Remove extension
-                    string title = image[0..^4];
-
-                    // Detect palette
-                    if (!title.Contains('#'))
+                    MemoryStream groupStream = new();
+                    ushort groupLen = 0;
+                    foreach (string image in Directory.GetFiles(SpritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                     {
-                        throw new Exception("No palette data");
-                    }
-                    string[] paletteParts = title.Split("#");
-                    title = paletteParts[0];
-                    int paletteIndex = int.Parse(paletteParts[1]) - 1;
+                        Bitmap img = new(image);
 
-                    // Get name
-                    int size = int.Parse(title[(title.LastIndexOf("\\") + 1)..].Split('_')[0]);
-                    string name = title.Split("-")[0].Split("_")[1];
+                        // Remove extension
+                        string title = image[0..^4];
 
-                    // Detect slices
-                    int imageSizeX = img.Width;
-                    int imageSizeY = img.Height;
-                    int slicesX = imageSizeX / size;
-                    int slicesY = imageSizeY / size;
-
-                    // Add header items
-                    spriteSourceItems.Add($"sprite_index_{name}_first", index.ToString());
-                    spriteSourceItems.Add($"sprite_index_{name}_count", $"{slicesX * slicesY}");
-                    spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
-                    spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
-                    spriteSourceItems.Add($"sprite_size_{name}", $"{gi}");
-
-                    for (int ys = 0; ys < slicesY; ys++)
-                    {
-                        for (int xs = 0; xs < slicesX; xs++)
+                        // Detect palette
+                        if (!title.Contains('#'))
                         {
-                            Console.WriteLine($"{index}: {name} - {xs},{ys} --> {pos}");
-                            int ymin = ys * size;
-                            int ymax = ymin + size;
-                            int xmin = xs * size;
-                            int xmax = xmin + size;
-                            for (int y = ymin; y < ymax; y++)
+                            throw new Exception("No palette data");
+                        }
+                        string[] paletteParts = title.Split("#");
+                        title = paletteParts[0];
+                        int paletteIndex = int.Parse(paletteParts[1]) - 1;
+
+                        // Get name
+                        int size = int.Parse(title[(title.LastIndexOf("\\") + 1)..].Split('_')[0]);
+                        string name = title.Split("-")[0].Split("_")[1];
+
+                        // Detect slices
+                        int imageSizeX = img.Width;
+                        int imageSizeY = img.Height;
+                        int slicesX = imageSizeX / size;
+                        int slicesY = imageSizeY / size;
+
+                        // Add header items
+                        spriteSourceItems.Add($"sprite_index_{name}_first", index.ToString());
+                        spriteSourceItems.Add($"sprite_index_{name}_count", $"{slicesX * slicesY}");
+                        spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
+                        spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
+                        spriteSourceItems.Add($"sprite_size_{name}", $"{gi}");
+
+                        for (int ys = 0; ys < slicesY; ys++)
+                        {
+                            for (int xs = 0; xs < slicesX; xs++)
                             {
-                                for (int x = xmin; x < xmax; x++)
+                                Console.WriteLine($"{index}: {name} - {xs},{ys} --> {pos}");
+                                int ymin = ys * size;
+                                int ymax = ymin + size;
+                                int xmin = xs * size;
+                                int xmax = xmin + size;
+                                for (int y = ymin; y < ymax; y++)
                                 {
-
-                                    Color c = img.GetPixel(x, y);
-                                    // Find colour in palette
-                                    int pi = -1;
-                                    for (int ci = 0; ci < Palettes[paletteIndex].Count; ci++)
+                                    for (int x = xmin; x < xmax; x++)
                                     {
-                                        if (Palettes[paletteIndex][ci] == c)
-                                        {
-                                            pi = ci;
-                                        }
-                                    }
-                                    // Colour not found, add to paletta
-                                    if (pi == -1)
-                                    {
-                                        pi = Palettes[paletteIndex].Count;
-                                        if (pi == PaletteIndexMax)
-                                        {
-                                            //   throw new Exception("too many colours");
 
-                                            Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
-                                            pi = 0;
-                                        }
-                                        else
+                                        Color c = img.GetPixel(x, y);
+                                        // Find colour in palette
+                                        int pi = -1;
+                                        for (int ci = 0; ci < Palettes[paletteIndex].Count; ci++)
                                         {
-                                            Palettes[paletteIndex].Add(c);
-                                            // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                            if (Palettes[paletteIndex][ci] == c)
+                                            {
+                                                pi = ci;
+                                            }
                                         }
-                                    }
+                                        // Colour not found, add to paletta
+                                        if (pi == -1)
+                                        {
+                                            pi = Palettes[paletteIndex].Count;
+                                            if (pi == PaletteIndexMax)
+                                            {
+                                                //   throw new Exception("too many colours");
 
-                                    // Write palette index to sprite rom
-                                    groupStream.WriteByte(Convert.ToByte(pi));
-                                    pos += 1;
-                                    groupLen += 1;
+                                                Console.WriteLine($"Palette full: {image} - {xs},{ys} - {pi}, {c}");
+                                                pi = 0;
+                                            }
+                                            else
+                                            {
+                                                Palettes[paletteIndex].Add(c);
+                                                // Console.WriteLine($"Adding to palette: {image} - {xs},{ys} - {pi}, {c}");
+                                            }
+                                        }
+
+                                        // Write palette index to sprite rom
+                                        groupStream.WriteByte(Convert.ToByte(pi));
+                                        pos += 1;
+                                        groupLen += 1;
+                                    }
                                 }
+                                index++;
                             }
-                            index++;
                         }
                     }
+                    Console.WriteLine($"Ending image group {g} - length = {groupLen}");
+                    groupIndex--;
+                    groupStreams.Add(g, groupStream);
                 }
-                Console.WriteLine($"Ending image group {g} - length = {groupLen}");
-                groupIndex--;
-                groupStreams.Add(g, groupStream);
-            }
 
-            foreach (int g in groups)
-            {
-                spriteStreamWriter.Write(groupStreams[g].ToArray());
+                foreach (int g in groups)
+                {
+                    spriteStreamWriter.Write(groupStreams[g].ToArray());
+                }
+                spriteStreamWriter.Dispose();
             }
-            spriteStreamWriter.Dispose();
 
             StringBuilder builder = new();
             builder.AppendLine("#ifndef SPRITE_IMAGES_H");
@@ -286,18 +303,6 @@ namespace rommaker
             }
             builder.AppendLine("#endif");
             File.WriteAllText(SpriteSourcePath + ".h", builder.ToString());
-
-            //            builder = new StringBuilder();
-            //builder.AppendLine("#ifndef SPRITE_IMAGES_C");
-            //builder.AppendLine("#define SPRITE_IMAGES_C");
-            //builder.AppendLine("#include \"sprite_images.h\"");
-            //foreach (string v in spriteSourceItems.Keys)
-            //{
-            //    builder.AppendLine("extern " + v + " " + spriteSourceItems[v]);
-            //}
-            //builder.AppendLine("#endif");
-            //File.WriteAllText(spriteSourcePath + ".c", builder.ToString());
-
 
             // Palettes
             foreach (List<Color> palette in Palettes)
@@ -351,6 +356,14 @@ namespace rommaker
             FileStream stream = File.OpenWrite(TilemapRomPath);
             BinaryWriter streamWriter = new(stream, Encoding.Default);
 
+            if (!File.Exists(TilemapPath))
+            {
+                Console.WriteLine("No tilemap!");
+                return;
+            }
+
+            Dictionary<ushort, int> colours = new();
+
             uint pos = 0;
             Bitmap img = new(TilemapPath);
             int size = 16;
@@ -378,6 +391,15 @@ namespace rommaker
                                                    ((c.B / 8) << 10) |
                                                      a << 15);
 
+                            if (colours.ContainsKey(color))
+                            {
+                                colours[color]++;
+                            }
+                            else
+                            {
+                                colours[color] = 1;
+                            }
+
                             byte high = (byte)(color >> 8);
                             byte low = (byte)color;
                             streamWriter.Write(high);
@@ -390,9 +412,148 @@ namespace rommaker
             }
 
             streamWriter.Dispose();
+
+            Console.WriteLine($"Tilemap created.  Unique colours={colours.Keys.Count}");
+
         }
 
+        static void ExtractTilemapRom()
+        {
+
+            if (File.Exists(TilemapRomPath)) { File.Delete(TilemapRomPath); }
+
+
+            Dictionary<ushort, int> colours = new();
+
+            uint pos = 0;
+            Bitmap img = new(TilemapExtractPath);
+            int size = 16;
+            int slicesX = img.Width / size;
+            int slicesY = img.Height / size;
+
+            // Find unique tiles in image
+
+            Dictionary<string, Tile> tiles = new();
+            int droppedTransparent = 0;
+            int droppedDuplicate = 0;
+            for (int ys = 0; ys < slicesY; ys++)
+            {
+                for (int xs = 0; xs < slicesX; xs++)
+                {
+                    int ymin = ys * size;
+                    int ymax = ymin + size;
+                    int xmin = xs * size;
+                    int xmax = xmin + size;
+
+                    Tile tile = new Tile();
+                    bool nonTransparent = false;
+                    for (int y = ymin; y < ymax; y++)
+                    {
+                        for (int x = xmin; x < xmax; x++)
+                        {
+
+
+                            Color c = img.GetPixel(x, y);
+                            ushort a = (ushort)(c.A == 255 ? 1 : 0);
+                            if (a == 0) { nonTransparent = true; }
+                            ushort color = (ushort)((c.R / 8) |
+                                                   ((c.G / 8) << 5) |
+                                                   ((c.B / 8) << 10) |
+                                                     a << 15);
+
+
+                            tile.Color[x - xmin][y - ymin] = color;
+
+                            if (colours.ContainsKey(color))
+                            {
+                                colours[color]++;
+                            }
+                            else
+                            {
+                                colours[color] = 1;
+                            }
+
+                        }
+                    }
+                    if (nonTransparent)
+                    {
+                        if (!tiles.ContainsKey(tile.Hash))
+                        {
+                            tiles[tile.Hash] = tile;
+                        }
+                        else
+                        {
+                            droppedDuplicate++;
+                            Console.WriteLine("Hash match found");
+                        }
+                    }
+                    else
+                    {
+                        droppedTransparent++;
+                    }
+
+                }
+            }
+
+            FileStream stream = File.OpenWrite(TilemapRomPath);
+            BinaryWriter streamWriter = new(stream, Encoding.Default);
+
+            foreach (Tile tile in tiles.Values)
+            {
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        byte high = (byte)(tile.Color[x][y] >> 8);
+                        byte low = (byte)tile.Color[x][y];
+                        streamWriter.Write(high);
+                        streamWriter.Write(low);
+                        pos += 1;
+                    }
+                }
+            }
+
+            streamWriter.Dispose();
+
+            Console.WriteLine($"Tilemap created.  Total tiles={tiles.Count} Dropped Transparent={droppedTransparent } Dropped Duplicate={droppedDuplicate} Unique colours={colours.Keys.Count}");
+
+        }
+
+        class Tile
+        {
+            public ushort[][] Color;
+
+            public string Hash
+            {
+                get
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    for (int y = 0; y < 16; y++)
+                    {
+                        for (int x = 0; x < 16; x++)
+                        {
+                            sb.Append(Color[x][y].ToString() + ",");
+                        }
+
+                    }
+                    return sb.ToString();
+                }
+            }
+
+            public Tile()
+            {
+                Color = new ushort[16][];
+                for (int y = 0; y < 16; y++)
+                {
+                    Color[y] = new ushort[16];
+                }
+            }
+        }
+
+
         static string resourcePath;
+        static string sourcePath;
         static string resourceOutputPath;
 
         static void Main(string[] args)
@@ -401,10 +562,21 @@ namespace rommaker
             string currentProject = File.ReadAllText(rootPath + "CURRENT_PROJECT");
 
             resourceOutputPath = $@"{rootPath}resources\";
-            resourcePath = $@"{resourceOutputPath}{currentProject}\";          
+            resourcePath = $@"{resourceOutputPath}{currentProject}\";
+
+            sourcePath = $@"{rootPath}src\{currentProject}\";
 
             CreateSpriteRom();
-            CreateTilemapRom();
+
+            if (File.Exists(TilemapPath))
+            {
+                CreateTilemapRom();
+            }
+            if (File.Exists(TilemapExtractPath))
+            {
+                ExtractTilemapRom();
+            }
+
             CreateMusicRom();
             CreateSoundRom();
         }
