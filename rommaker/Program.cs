@@ -563,6 +563,7 @@ namespace rommaker
 
             resourceOutputPath = $@"{rootPath}resources\";
             resourcePath = $@"{resourceOutputPath}{currentProject}\";
+            resourceOutputPath = resourcePath;
 
             sourcePath = $@"{rootPath}src\{currentProject}\";
 

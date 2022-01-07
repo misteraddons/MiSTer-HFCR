@@ -1,1 +1,1 @@
-Video Game Main Theme.ym#Main theme
+main_theme.ym#Main theme
