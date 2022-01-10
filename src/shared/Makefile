@@ -6,6 +6,7 @@ SHARED_RELS=$(patsubst %.c,build/%.rel,$(wildcard $(SHARED_PATH)*.c))
 OUT_DIR=build/
 PROJECT_RELS=$(patsubst %.c,build/%.rel,$(wildcard *.c)) 
 TARGET_RELS=$(patsubst build/os.rel,,$(wildcard build/*.rel))
+MAIN=os
 
 all: $(MAIN).bin
 

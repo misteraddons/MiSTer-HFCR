@@ -42,6 +42,7 @@ const char* windowTitle_Video = "VGA output";
 bool showDebugLog = true;
 DebugConsole console;
 MemoryEditor mem_edit;
+
 // HPS emulator
 // ------------
 SimBus bus(console);
@@ -71,7 +72,6 @@ const int input_start = 11;
 #define VGA_SCALE_Y vga_scale
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
 float vga_scale = 3.0;
-
 
 // Verilog module
 // --------------

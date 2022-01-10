@@ -23,7 +23,7 @@
 #include "../shared/sprite.h"
 #include "../shared/sound.h"
 #include "../shared/tilemap.h"
-#include "../shared/loader.h"
+#include "loader.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
 #include "inputtester_app.h"

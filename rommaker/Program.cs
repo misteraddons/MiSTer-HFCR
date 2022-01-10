@@ -14,6 +14,7 @@ namespace rommaker
 
         static string TilemapPath => $@"{resourcePath}tilemap\tilemap.png";
         static string TilemapExtractPath => $@"{resourcePath}tilemap\tilemap_extract.png";
+        static string TilemapSourcePath => $@"{sourcePath}tilemap_indexes";
 
         static string SpriteRomPath => $@"{resourceOutputPath}sprite.bin";
 
@@ -86,7 +87,14 @@ namespace rommaker
             builder.AppendLine("#ifndef MUSIC_TRACKS_C");
             builder.AppendLine("#define MUSIC_TRACKS_C");
             builder.AppendLine("#include \"music_tracks.h\"");
-            builder.AppendLine("unsigned long music_track_address[] = {" + string.Join(",", trackPos) + "};");
+            if (trackPos.Length > 0)
+            {
+                builder.AppendLine("unsigned long music_track_address[] = {" + string.Join(",", trackPos) + "};");
+            }
+            else
+            {
+                builder.AppendLine("unsigned long music_track_address[] = {0u};");
+            }
             builder.AppendLine("#endif");
             File.WriteAllText(MusicSourcePath + ".c", builder.ToString());
 
@@ -94,20 +102,18 @@ namespace rommaker
 
         }
 
-
         static void CreateSoundRom()
         {
             Console.WriteLine("CREATING SOUND ROM");
             if (File.Exists(SoundRomPath)) { File.Delete(SoundRomPath); }
 
-            if (!File.Exists(SoundListPath))
-            {
-                Console.WriteLine("No sounds!");
-                return;
-            }
-
             // Read sample list
-            string[] samples = File.ReadAllLines(SoundListPath);
+
+            string[] samples = { };
+            if (File.Exists(SoundListPath))
+            {
+                samples = File.ReadAllLines(SoundListPath);
+            }
 
             List<byte> soundData = new();
             string[] soundPos = new string[samples.Length];
@@ -149,8 +155,16 @@ namespace rommaker
             builder.AppendLine("#ifndef SOUND_SAMPLES_C");
             builder.AppendLine("#define SOUND_SAMPLES_C");
             builder.AppendLine("#include \"sound_samples.h\"");
-            builder.AppendLine("unsigned long sound_sample_address[] = {" + string.Join(",", soundPos) + "};");
-            builder.AppendLine("unsigned long sound_sample_length[] = {" + string.Join(",", soundLen) + "};");
+            if (soundPos.Length > 0)
+            {
+                builder.AppendLine("unsigned long sound_sample_address[] = {" + string.Join(",", soundPos) + "};");
+                builder.AppendLine("unsigned long sound_sample_length[] = {" + string.Join(",", soundLen) + "};");
+            }
+            else
+            {
+                builder.AppendLine("unsigned long sound_sample_address[] = {0u};");
+                builder.AppendLine("unsigned long sound_sample_length[] = {0u};");
+            }
             builder.AppendLine("#endif");
             File.WriteAllText(SoundSourcePath + ".c", builder.ToString());
 
@@ -347,7 +361,6 @@ namespace rommaker
             }
         }
 
-
         static void CreateTilemapRom()
         {
 
@@ -433,9 +446,19 @@ namespace rommaker
 
             // Find unique tiles in image
 
+            int [,] tileIndexes = new int[slicesX,slicesY];
+
             Dictionary<string, Tile> tiles = new();
             int droppedTransparent = 0;
             int droppedDuplicate = 0;
+
+            Tile transTile = new Tile();
+            tiles.Add(transTile.Hash, transTile);
+
+            int nextTileIndex = 1;
+
+
+
             for (int ys = 0; ys < slicesY; ys++)
             {
                 for (int xs = 0; xs < slicesX; xs++)
@@ -445,25 +468,20 @@ namespace rommaker
                     int xmin = xs * size;
                     int xmax = xmin + size;
 
-                    Tile tile = new Tile();
+                    Tile tile = new();
                     bool nonTransparent = false;
                     for (int y = ymin; y < ymax; y++)
                     {
                         for (int x = xmin; x < xmax; x++)
                         {
-
-
                             Color c = img.GetPixel(x, y);
                             ushort a = (ushort)(c.A == 255 ? 1 : 0);
-                            if (a == 0) { nonTransparent = true; }
+                            if (a == 1) { nonTransparent = true; }
                             ushort color = (ushort)((c.R / 8) |
                                                    ((c.G / 8) << 5) |
                                                    ((c.B / 8) << 10) |
                                                      a << 15);
-
-
                             tile.Color[x - xmin][y - ymin] = color;
-
                             if (colours.ContainsKey(color))
                             {
                                 colours[color]++;
@@ -472,18 +490,22 @@ namespace rommaker
                             {
                                 colours[color] = 1;
                             }
-
                         }
                     }
                     if (nonTransparent)
                     {
-                        if (!tiles.ContainsKey(tile.Hash))
+                        string hash = tile.Hash;
+                        if (!tiles.ContainsKey(hash))
                         {
-                            tiles[tile.Hash] = tile;
+                            tile.Index = nextTileIndex;
+                            nextTileIndex++;
+                            tiles[hash] = tile;
+                            tileIndexes[xs, ys] = tile.Index;
                         }
                         else
                         {
                             droppedDuplicate++;
+                            tileIndexes[xs, ys] = tiles[hash].Index;
                             Console.WriteLine("Hash match found");
                         }
                     }
@@ -515,13 +537,48 @@ namespace rommaker
 
             streamWriter.Dispose();
 
-            Console.WriteLine($"Tilemap created.  Total tiles={tiles.Count} Dropped Transparent={droppedTransparent } Dropped Duplicate={droppedDuplicate} Unique colours={colours.Keys.Count}");
+            Console.WriteLine($"Tilemap created.  Next tile index={nextTileIndex} Total tiles={tiles.Count} Dropped Transparent={droppedTransparent } Dropped Duplicate={droppedDuplicate} Unique colours={colours.Keys.Count}");
+
+
+
+            StringBuilder builder = new();
+            builder.AppendLine("#ifndef TILEMAP_INDEXES_H");
+            builder.AppendLine("#define TILEMAP_INDEXES_H");
+            builder.AppendLine($"#define const_tilemap_index_x_max {tileIndexes.GetUpperBound(0)+1}");
+            builder.AppendLine($"#define const_tilemap_index_y_max {tileIndexes.GetUpperBound(1) + 1}");
+            builder.AppendLine("extern unsigned long tilemap_index[const_tilemap_index_y_max][const_tilemap_index_x_max];");
+            builder.AppendLine("#endif");
+            File.WriteAllText(TilemapSourcePath + ".h", builder.ToString());
+
+            builder = new StringBuilder();
+            builder.AppendLine("#ifndef TILEMAP_INDEXES_C");
+            builder.AppendLine("#define TILEMAP_INDEXES_C");
+            builder.AppendLine("#include \"tilemap_indexes.h\"");
+
+            builder.AppendLine("unsigned long tilemap_index[const_tilemap_index_y_max][const_tilemap_index_x_max] = {");
+            for(int y = 0; y < slicesY; y++)
+            {
+                builder.Append("{");
+                for (int x = 0; x < slicesX; x++)
+                {
+                    builder.Append($"{tileIndexes[x,y]}");
+                    if (x < slicesX - 1) { builder.Append(","); }
+                }
+                builder.Append("}");
+                if (y < slicesY - 1) { builder.AppendLine(","); }
+            }
+            builder.AppendLine("};");
+
+            builder.AppendLine("#endif");
+            File.WriteAllText(TilemapSourcePath + ".c", builder.ToString());
+
 
         }
 
         class Tile
         {
             public ushort[][] Color;
+            public int Index;
 
             public string Hash
             {

@@ -18,11 +18,11 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
-#include "sys.h"
-#include "ui.h"
-#include "sound.h"
-#include "sprite.h"
-#include myPATH(../PROJECT_NAME/,sound_samples.h)
+#include "../shared/sys.h"
+#include "../shared/ui.h"
+#include "../shared/sound.h"
+#include "../shared/sprite.h"
+#include "sound_samples.h"
 
 // Loader (aesthetic pointlessness)
 void intro_text(const char *text, unsigned char start_x, unsigned char start_y, unsigned char space_x, unsigned char speed, unsigned char flash_speed)

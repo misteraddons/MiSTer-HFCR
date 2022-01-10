@@ -72,6 +72,7 @@ extern bool vblank;
 extern bool vblank_last;
 
 // INPUT 0 bits
+#define INPUT_HBLANK 5
 #define INPUT_VBLANK 4
 
 // Macros
