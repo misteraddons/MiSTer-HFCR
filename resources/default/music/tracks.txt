@@ -1,1 +1,2 @@
-main_theme.ym#Main theme
+main_theme.ym#maintheme
+game_over.ym#gameover

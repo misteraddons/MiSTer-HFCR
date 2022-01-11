@@ -124,6 +124,12 @@ always @(posedge clk) begin
 		tilemapreg[2] <= 8'b0;
 		tilemapreg[3] <= 8'b0;
 		tilemap_read_state <= 2'b0;
+
+		// Start tilemap clear process
+		tilemap_clear_state <= TM_CLEAR_PREP;
+		tilemap_ctl_x = 5'd0;
+		tilemap_ctl_y = 5'd0;
+		tilemap_ctl_state <= TM_CTL_CLEAR;
 	end
 	else
 	begin

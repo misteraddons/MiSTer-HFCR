@@ -45,6 +45,8 @@ namespace rommaker
 
         static readonly List<List<Color>> Palettes = new();
 
+        static long musicRomLength = (1024 * 64);
+
         static void CreateMusicRom()
         {
             Console.WriteLine("CREATING MUSIC ROM");
@@ -52,6 +54,13 @@ namespace rommaker
 
             List<byte> trackData = new();
             string[] trackPos = new string[0];
+
+
+            StringBuilder builder = new();
+            builder.AppendLine("#ifndef MUSIC_TRACKS_H");
+            builder.AppendLine("#define MUSIC_TRACKS_H");
+            builder.AppendLine("#define const_music_track_max 32");
+            builder.AppendLine("extern unsigned long music_track_address[const_music_track_max];");
 
             if (File.Exists(MusicTrackListPath))
             {
@@ -64,9 +73,12 @@ namespace rommaker
                 foreach (string track in tracks)
                 {
                     string file = track.Split("#")[0];
+                    string name = track.Split("#")[1];
                     byte[] data = File.ReadAllBytes(MusicPath + file);
                     trackData.AddRange(data);
                     trackPos[t] = p + "u";
+
+                    builder.AppendLine($"#define const_music_{name} {t}");
                     Console.WriteLine($"\t{t} - {p} > {file}");
                     p += (uint)data.Length;
                     t++;
@@ -74,11 +86,10 @@ namespace rommaker
 
             }
 
-            StringBuilder builder = new();
-            builder.AppendLine("#ifndef MUSIC_TRACKS_H");
-            builder.AppendLine("#define MUSIC_TRACKS_H");
-            builder.AppendLine("#define const_music_track_max 32");
-            builder.AppendLine("extern unsigned long music_track_address[const_music_track_max];");
+            while (trackData.Count < musicRomLength)
+            {
+                trackData.Add(0);
+            }
 
             builder.AppendLine("#endif");
             File.WriteAllText(MusicSourcePath + ".h", builder.ToString());
@@ -99,6 +110,7 @@ namespace rommaker
             File.WriteAllText(MusicSourcePath + ".c", builder.ToString());
 
             File.WriteAllBytes(MusicRomPath, trackData.ToArray());
+
 
         }
 

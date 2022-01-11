@@ -36,6 +36,7 @@
 #include "../shared/sound.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
+#include "music_tracks.h"
 #include "zorblaxx_app.h"
 #include "zorblaxx_player.h"
 #include "zorblaxx_trails.h"
@@ -89,7 +90,7 @@ const unsigned short level_progress_per_level = 3000;
 unsigned short game_state_warp_timeout_first = 120;
 unsigned short game_state_warp_timeout = 240;
 unsigned short game_state_danger_timeout = 120;
-unsigned short game_state_gameover_timeout = 120;
+unsigned short game_state_gameover_timeout = 180;
 const unsigned char asteroids_difficulty_base = 3;
 const unsigned char asteroids_difficulty_multiplier = 2;
 unsigned char player_lives_default = 3;
@@ -141,7 +142,7 @@ void update_scroller()
 		tilemap_offset_x -= 16;
 
 		scroll_tilemap_left();
-		
+
 		tilemapram[scroller_entry_pos] = scroller_text[scroller_pos] - 45;
 		scroller_pos++;
 		if (scroller_pos == strlen(scroller_text))
@@ -157,7 +158,10 @@ void intro_loop()
 	clear_bgcolor(0);
 
 	// Start intro music loop
-	play_music(0,1);
+	if (musicram[0] == 0)
+	{
+		play_music(const_music_maintheme, 1);
+	}
 
 	// Setup starfield layer speeds
 	starfield[0] = 8;
@@ -436,7 +440,7 @@ void game_loop()
 				level_progress_max = level_progress_base + per_level;
 
 				// Start main music loop
-				play_music(0,1);
+				play_music(const_music_maintheme, 1);
 
 				// Update asteroid difficulty
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
@@ -501,7 +505,6 @@ void game_loop()
 					game_state_timer = game_state_warp_timeout;
 
 					// Start score music loop
-					// play_music(2);
 
 					level_playercontrol = 0;
 					set_player_target(player_spawn_x * x_divisor, player_spawn_y * y_divisor, 6, 24);
@@ -584,6 +587,7 @@ void game_loop()
 				break;
 			case game_over:
 				write_string("GAME OVER", 0b00000011, 16, 14);
+				stop_music();
 				game_state_timer = game_state_gameover_timeout;
 				game_state = game_over_waitforstats;
 				break;
@@ -591,6 +595,7 @@ void game_loop()
 				game_state_timer--;
 				if (game_state_timer == 0)
 				{
+					play_music(const_music_gameover, 1);
 					clear_char_area(0, 0, 14, 39, 14);
 
 					// Write stats
@@ -639,11 +644,12 @@ void game_loop()
 void app_zorblaxx()
 {
 	setup_variables();
+	stop_music();
+
 	while (1)
 	{
 		clear_chars(0);
 		clear_sprites();
-		stop_music();
 		if (pleaseStop)
 		{
 			return;
@@ -659,7 +665,6 @@ void app_zorblaxx()
 		clear_tilemap();
 		clear_chars(0);
 		clear_sprites();
-		stop_music();
 		if (pleaseStop)
 		{
 			return;

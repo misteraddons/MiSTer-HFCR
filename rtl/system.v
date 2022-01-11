@@ -161,6 +161,7 @@ wire [7:0] ps2_mouse_data_out = ps2_mouse[{cpu_addr[2:0],3'd0} +: 8];
 wire [7:0] timestamp_data_out = timestamp[{cpu_addr[2:0],3'd0} +: 8];
 wire [7:0] timer_data_out = timer[{cpu_addr[0],3'd0} +: 8];
 wire [7:0] tilemapcontrol_data_out;
+wire [7:0] music_data_out;
 
 // CPU address decodes
 // - Program ROM
@@ -250,6 +251,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 timestamp_cs ? timestamp_data_out :
 				 timer_cs ? timer_data_out :
 				 tilemapcontrol_cs ? tilemapcontrol_data_out :
+				 music_cs ? music_data_out : 
 				 8'b00000000;
 
 // ROM data available to CPU
@@ -316,7 +318,7 @@ wire [7:0]	tilemap_g;
 wire [7:0]	tilemap_b;
 wire		tilemap_a;
 `ifndef DISABLE_TILEMAP
-localparam TILEMAP_ROM_WIDTH = 17;
+localparam TILEMAP_ROM_WIDTH = 15;
 localparam TILEMAP_RAM_WIDTH = 10;
 wire [TILEMAP_ROM_WIDTH-1:0]	tilemaprom_addr;
 wire [15:0]	tilemaprom_data_out;
@@ -577,6 +579,7 @@ music #(.ROM_WIDTH(MUSIC_ROM_WIDTH)) music (
 	.reset(reset),
 	.addr(cpu_addr[1:0]),
 	.data_in(cpu_dout),
+	.data_out(music_data_out),
 	.write(music_cs && ~cpu_wr_n),
 	.musicrom_addr(musicrom_addr),
 	.musicrom_data_out(musicrom_data_out),

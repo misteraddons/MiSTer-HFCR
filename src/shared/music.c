@@ -39,5 +39,6 @@ void play_music(unsigned char track, unsigned char loop)
 
 void stop_music()
 {
-	musicram[0] = 0;
+	// Send stop command
+	musicram[0] = 3;
 }

@@ -21,7 +21,7 @@
 ===========================================================================*/
 
 module sound #(
-	parameter ROM_WIDTH = 16
+	parameter ROM_WIDTH
 )(
 	input				clk,
 	input				reset,
@@ -37,7 +37,7 @@ module sound #(
 
 wire sample;						// Is m5205 requesting sample data
 reg  [3:0] snd_data_in;				// 4 bit data input to m5205
-reg [15:0] soundrom_addr_target;	// Current sample end position
+reg [ROM_WIDTH-1:0] soundrom_addr_target;	// Current sample end position
 
 reg [7:0] volume;					// Sound output volume
 reg m5205_ce;						// Counter for 375KHz clock enable
@@ -51,8 +51,8 @@ begin
 	begin
 		// Clear all signals on reset
 		ce_counter <= 14'd0;
-		soundrom_addr <= 16'd0;
-		soundrom_addr_target <= 16'd0;
+		soundrom_addr <= {ROM_WIDTH{1'b0}};
+		soundrom_addr_target <= {ROM_WIDTH{1'b0}};
 		playing <= 1'b0;
 	end
 
@@ -113,7 +113,7 @@ begin
 			if(m5205_phase == 1'b1)
 			begin
 				// Increment music ROM address
-				soundrom_addr <= soundrom_addr + 16'd1;
+				soundrom_addr <= soundrom_addr + {{ROM_WIDTH-1{1'b0}},1'b1};
 				// Get 4 low bits from ROM
 				snd_data_in <= soundrom_data_out[3:0];
 				// If target address has been reach, stop playing

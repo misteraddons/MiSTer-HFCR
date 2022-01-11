@@ -88,8 +88,8 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 void loader(const char *title)
 {
 	// Play startup sound
-	set_sound_volume(255);
-	play_sound(const_sound_newtype);
+	//set_sound_volume(255);
+	//play_sound(const_sound_newtype);
 
 	// Set charmap area
 	chram_size = chram_cols * chram_rows;

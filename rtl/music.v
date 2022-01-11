@@ -29,6 +29,7 @@ module music #(
 	
 	input		[1:0]	addr,
 	input		[7:0]	data_in,
+	output		[7:0]	data_out,
 	input				write,
 
 	input		[7:0]	musicrom_data_out,
@@ -40,14 +41,15 @@ module music #(
 	// - Currently recognises YM5/YM6 formats
 	// - Handles interleaved/non-interleaved data
 	// - Ignores DigiDrum samples completely
-	// - Ignores player rate (e.g. 50/60hz)
+	// - Variable play rate (50/60hz)
 	// - Recognises loop point
 
 	reg  [7:0] regarray[3:0];
 	// Music control registers
-	// 0 - If set to greater than zero, start playing YM track at address in following 3 bytes
+	// 0 - 1 = play, 2 = loop, 3 = stop
 	// 1-3 - Start address of music to play in ROM
-	
+	assign data_out = regarray[addr];
+
 	// YM2149 audio_out generator
 	reg  [7:0] snd_data_in;
 	reg        snd_wr;
@@ -92,7 +94,9 @@ module music #(
 	localparam YM_REGCOUNT = 16;
 
 	reg  [ROM_WIDTH-1:0] ymp_trackoffset;
-	reg   [1:0]	ymp_playing = 2'b0;
+	reg			ymp_playing;
+	reg			ymp_loop;
+	
 	reg   [3:0] ymp_state;
 	reg   [3:0] ymp_state_next;
 	reg  [ROM_WIDTH-1:0] ymp_frame;
@@ -164,8 +168,11 @@ module music #(
 				$display("YM->RAM->WRITE %x %x", addr, data_in);
 `endif
 				regarray[addr] <= data_in;
-			end else begin
-				if(regarray[0] == 8'd1)
+			end
+			else
+			begin
+				case(regarray[0])
+				8'd1:
 				begin
 `ifdef YM_DEBUG
 					$display("YM->PLAY-TRACK %d %d", {regarray[1], regarray[2], regarray[3]}, regarray[0][1:0]);
@@ -174,24 +181,46 @@ module music #(
 					/* verilator lint_off WIDTH */
 					ymp_trackoffset <= {{regarray[1], regarray[2], regarray[3]}};
 					/* verilator lint_on WIDTH */
-					ymp_playing <= regarray[0][1:0];
+					ymp_playing <= 1'b1;
+					ymp_loop <= 1'b0;
 					ymp_state <= YM_INIT;
 				end
-				if(regarray[0] == 8'd2)
+				8'd2:
+				begin
+`ifdef YM_DEBUG
+					$display("YM->LOOP-TRACK %d %d", {regarray[1], regarray[2], regarray[3]}, regarray[0][1:0]);
+`endif
+					regarray[0] <= 8'd0;
+					/* verilator lint_off WIDTH */
+					ymp_trackoffset <= {{regarray[1], regarray[2], regarray[3]}};
+					/* verilator lint_on WIDTH */
+					ymp_playing <= 1'b1;
+					ymp_loop <= 1'b1;
+					ymp_state <= YM_INIT;
+				end
+				8'd3:
 				begin
 `ifdef YM_DEBUG
 					$display("YM->STOP-TRACK");
 `endif
-					regarray[0] <= 8'd0;
 					ymp_playing <= 0;
+					regarray[0]<=8'd0; 
+					regarray[1]<=8'd0;
+					regarray[2]<=8'd0;
+					regarray[3]<=8'd0;
 					ymp_state <= YM_STOPPED;
 				end
+				default:
+				begin
+					
+				end
+				endcase
 			end
 
 			case (ymp_state)
 			YM_INIT:
 			begin			
-				if(ymp_playing>2'b0)
+				if(ymp_playing)
 				begin
 `ifdef YM_DEBUG
 					$display("YM_INIT");
@@ -201,7 +230,7 @@ module music #(
 					ymp_register <= 4'b0;
 					ymp_skipstringindex <= 3'b0;
 					// Set address to read first song attribute byte
-					musicrom_addr <= ymp_trackoffset + 17'h13;
+					musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h13};
 
 					ymp_state_next <= YM_GETMODE;
 					ymp_state <= YM_WAIT;
@@ -221,7 +250,7 @@ module music #(
 				ymp_interleave <= musicrom_data_out[0];
 
 				// Set address to read song length byte 0
-				musicrom_addr <= ymp_trackoffset + 16'h0f;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h0f};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLENGTH_0;
 			end
@@ -236,7 +265,7 @@ module music #(
 				ymp_length[7:0] <= musicrom_data_out;
 
 				// Set address to read song length byte 1
-				musicrom_addr <= ymp_trackoffset + 16'h0e;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h0e};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLENGTH_1;
 			end
@@ -248,7 +277,7 @@ module music #(
 				// Read song length byte 1
 				ymp_length[14:8] <= musicrom_data_out[6:0];
 				// Set address to frequency point
-				musicrom_addr <= ymp_trackoffset + 16'h1b;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h1b};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETFREQUENCY;
 			end
@@ -262,7 +291,7 @@ module music #(
 				// Read song length byte 1
 				ymp_is_50hz <= musicrom_data_out[7:0] == 8'd50;
 				// Set address to loop point
-				musicrom_addr <= ymp_trackoffset + 16'h1f;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h1f};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLOOP_0;
 			end
@@ -277,7 +306,7 @@ module music #(
 				ymp_looppoint[7:0] <= musicrom_data_out;
 
 				// Set address to read song length byte 1
-				musicrom_addr <= ymp_trackoffset + 16'h1e;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h1e};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_GETLOOP_1;
 			end
@@ -289,7 +318,7 @@ module music #(
 				// Read song loop point byte 1
 				ymp_looppoint[14:8] <= musicrom_data_out[6:0];
 				// Set address to read past NT-string data
-				musicrom_addr <= ymp_trackoffset + 16'h22;
+				musicrom_addr <= ymp_trackoffset + {{ROM_WIDTH-8{1'b0}},8'h22};
 				ymp_state <= YM_WAIT;
 				ymp_state_next <= YM_SKIPSTRINGS;
 			end
@@ -312,13 +341,13 @@ module music #(
 						ymp_skipstringindex <= ymp_skipstringindex + 3'b1;
 					end
 				end
-				musicrom_addr <= musicrom_addr + 16'b1;
+				musicrom_addr <= musicrom_addr + {{ROM_WIDTH-1{1'b0}},1'b1};
 			end
 		
 			// Main loop - wait for next vertical blank
 			YM_WAITFORFRAME:
 			begin
-				if(ymp_playing == 2'b0)
+				if(!ymp_playing)
 				begin
 `ifdef YM_DEBUG
 					$display("ymp_playing %d - STOPPING MUSIC", ymp_playing);
@@ -376,14 +405,28 @@ module music #(
 				if(ymp_register == 4'd13)
 				begin
 					ymp_frame <= ymp_frame + 16'd1;
+					ymp_state <= YM_WAITFORFRAME;
 					if(ymp_frame == ymp_length)
 					begin
+						if(ymp_loop)
+						begin
+							// Set frame back to loop start
 `ifdef YM_DEBUG
 						$display("YM LOOP I %d F %d / %d R %d - A %x D %x", ymp_interleave,ymp_frame, ymp_length, ymp_register, musicrom_addr, musicrom_data_out);
 `endif
 						ymp_frame <= ymp_looppoint;
+						end
+						else
+						begin
+							// Stop playing
+							ymp_playing <= 0;
+							regarray[0]<=8'd0; 
+							regarray[1]<=8'd0;
+							regarray[2]<=8'd0;
+							regarray[3]<=8'd0;
+							ymp_state <= YM_STOPPED;
+						end
 					end
-					ymp_state <= YM_WAITFORFRAME;
 				end
 				else
 				begin
