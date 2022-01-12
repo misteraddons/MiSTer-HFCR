@@ -48,7 +48,8 @@ module music #(
 	// Music control registers
 	// 0 - 1 = play, 2 = loop, 3 = stop
 	// 1-3 - Start address of music to play in ROM
-	assign data_out = regarray[addr];
+
+	assign data_out = { 6'b0, ymp_loop, ymp_playing };
 
 	// YM2149 audio_out generator
 	reg  [7:0] snd_data_in;
@@ -57,7 +58,7 @@ module music #(
 	jt49 jt49_music(
 		.clk(clk),
 		.clk_en(ce_2),
-		.rst_n(~(reset || ymp_state == YM_INIT)), // Hold YM2149 in reset while player state is initialising
+		.rst_n(~(reset || ymp_state == YM_INIT || ymp_state == YM_STOPPED )), // Hold YM2149 in reset while player state is initialising or stopped
 		.addr(ymp_register),
 		.din(snd_data_in),
 		.dout(),
@@ -134,7 +135,7 @@ module music #(
 
 	reg frame_ready;
 
-	// `define YM_DEBUG
+	 `define YM_DEBUG
 
 	always @(posedge clk)
 	begin
@@ -406,7 +407,7 @@ module music #(
 				begin
 					ymp_frame <= ymp_frame + 16'd1;
 					ymp_state <= YM_WAITFORFRAME;
-					if(ymp_frame == ymp_length)
+					if((ymp_frame + 16'd1)== ymp_length )
 					begin
 						if(ymp_loop)
 						begin

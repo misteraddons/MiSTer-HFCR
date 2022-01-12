@@ -24,6 +24,7 @@
 extern unsigned char music_track_max;
 
 extern void play_music(unsigned char track, unsigned char loop);
+extern void play_music_if(unsigned char track, unsigned char loop);
 extern void stop_music();
 
 #endif

@@ -25,6 +25,8 @@
 #define const_music_track_max 32
 unsigned char music_track_max = const_music_track_max;
 
+unsigned char music_last_played;
+
 #include myPATH(../PROJECT_NAME/,music_tracks.h) // Include auto generated track array
 
 void play_music(unsigned char track, unsigned char loop)
@@ -35,6 +37,15 @@ void play_music(unsigned char track, unsigned char loop)
 	musicram[3] = music_track_address[track];
 	// Write start track instruction (2 for looping, 1 for single play)
 	musicram[0] = loop ? 2 : 1;
+	music_last_played = track;
+}
+
+void play_music_if(unsigned char track, unsigned char loop)
+{
+	if (musicram[0] == 0 || music_last_played != track)
+	{
+		play_music(track, loop);
+	}
 }
 
 void stop_music()

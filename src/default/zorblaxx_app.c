@@ -158,10 +158,7 @@ void intro_loop()
 	clear_bgcolor(0);
 
 	// Start intro music loop
-	if (musicram[0] == 0)
-	{
-		play_music(const_music_maintheme, 1);
-	}
+	play_music_if(const_music_maintheme, 1);
 
 	// Setup starfield layer speeds
 	starfield[0] = 8;
@@ -440,7 +437,7 @@ void game_loop()
 				level_progress_max = level_progress_base + per_level;
 
 				// Start main music loop
-				play_music(const_music_maintheme, 1);
+				play_music_if(const_music_maintheme, 1);
 
 				// Update asteroid difficulty
 				asteroids_difficulty = asteroids_difficulty_base + (level_number * asteroids_difficulty_multiplier);
