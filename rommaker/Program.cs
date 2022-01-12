@@ -146,8 +146,11 @@ namespace rommaker
                 string file = sample.Split("#")[0];
                 string name = sample.Split("#")[1];
 
-                string args = $"{SoundPath}{file}.wav {SoundPath}{file}.vox rate 8k";
-                Process.Start(command, args).WaitForExit();
+                if (!File.Exists($"{SoundPath}{file}.vox") || File.GetLastWriteTimeUtc($"{SoundPath}{file}.wav") > File.GetLastWriteTimeUtc($"{SoundPath}{file}.vox"))
+                {
+                    string args = $"{SoundPath}{file}.wav {SoundPath}{file}.vox rate 8k";
+                    Process.Start(command, args).WaitForExit();
+                }
                 byte[] data = File.ReadAllBytes($"{SoundPath}{file}.vox");
                 soundData.AddRange(data);
                 soundPos[t] = p + "u";
@@ -458,7 +461,7 @@ namespace rommaker
 
             // Find unique tiles in image
 
-            int [,] tileIndexes = new int[slicesX,slicesY];
+            int[,] tileIndexes = new int[slicesX, slicesY];
 
             Dictionary<string, Tile> tiles = new();
             int droppedTransparent = 0;
@@ -556,7 +559,7 @@ namespace rommaker
             StringBuilder builder = new();
             builder.AppendLine("#ifndef TILEMAP_INDEXES_H");
             builder.AppendLine("#define TILEMAP_INDEXES_H");
-            builder.AppendLine($"#define const_tilemap_index_x_max {tileIndexes.GetUpperBound(0)+1}");
+            builder.AppendLine($"#define const_tilemap_index_x_max {tileIndexes.GetUpperBound(0) + 1}");
             builder.AppendLine($"#define const_tilemap_index_y_max {tileIndexes.GetUpperBound(1) + 1}");
             builder.AppendLine("extern unsigned long tilemap_index[const_tilemap_index_y_max][const_tilemap_index_x_max];");
             builder.AppendLine("#endif");
@@ -568,12 +571,12 @@ namespace rommaker
             builder.AppendLine("#include \"tilemap_indexes.h\"");
 
             builder.AppendLine("unsigned long tilemap_index[const_tilemap_index_y_max][const_tilemap_index_x_max] = {");
-            for(int y = 0; y < slicesY; y++)
+            for (int y = 0; y < slicesY; y++)
             {
                 builder.Append("{");
                 for (int x = 0; x < slicesX; x++)
                 {
-                    builder.Append($"{tileIndexes[x,y]}");
+                    builder.Append($"{tileIndexes[x, y]}");
                     if (x < slicesX - 1) { builder.Append(","); }
                 }
                 builder.Append("}");
