@@ -38,13 +38,22 @@ void app_credits()
 	stop_music();
 
 	starfield1[0] = 1;
-	starfield1[2] = 4;
+	starfield1[1] = 0;
+	starfield1[2] = 0;
+	starfield1[3] = 1;
+	starfield1[4] = 4;
 	
 	starfield2[0] = 1;
-	starfield2[2] = 8;
+	starfield2[1] = 0;
+	starfield2[2] = 0;
+	starfield2[3] = 1;
+	starfield2[4] = 8;
 	
 	starfield3[0] = 1;
-	starfield3[2] = 16;
+	starfield3[1] = 0;
+	starfield3[2] = 0;
+	starfield3[3] = 1;
+	starfield3[4] = 16;
 	
 	tilemap_offset_x = 0;
 	tilemap_offset_y = 0;

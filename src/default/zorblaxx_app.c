@@ -162,11 +162,23 @@ void intro_loop()
 
 	// Setup starfield layer speeds
 	starfield1[0] = 1;
-	starfield1[2] = 8;
+	starfield1[1] = 0;
+	starfield1[2] = 0;
+	starfield1[3] = 1;
+	starfield1[4] = 4;
+	
 	starfield2[0] = 1;
-	starfield2[2] = 16;
+	starfield2[1] = 0;
+	starfield2[2] = 0;
+	starfield2[3] = 1;
+	starfield2[4] = 8;
+	
 	starfield3[0] = 1;
-	starfield3[2] = 32;
+	starfield3[1] = 0;
+	starfield3[2] = 0;
+	starfield3[3] = 1;
+	starfield3[4] = 16;
+	
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
@@ -332,9 +344,9 @@ void game_loop()
 			{
 				scroll_speed_last = scroll_speed;
 				unsigned char s = scroll_speed >> 2;
-				starfield1[2] = s;
-				starfield2[2] = s >> 1;
-				starfield3[2] = s >> 1;
+				starfield1[4] = s;
+				starfield2[4] = s >> 1;
+				starfield3[4] = s >> 1;
 			}
 
 			// Track player button press
