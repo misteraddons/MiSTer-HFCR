@@ -100,11 +100,10 @@ void loader(const char *title)
 	clear_sprites();
 	update_sprites();
 	// Reset starfields
-	for (unsigned char s = 0; s < 6; s++)
-	{
-		starfield[s] = 0;
-	}
-
+	starfield1[0] = 0;
+	starfield2[0] = 0;
+	starfield3[0] = 0;
+	
 	const char *system_title = "AZNABLE";
 
 	// OS Intro

@@ -37,13 +37,15 @@ void app_credits()
 	clear_tilemap();
 	stop_music();
 
-	starfield[0] = 32;
-	starfield[1] = 1;
-	starfield[2] = 64;
-	starfield[3] = 1;
-	starfield[4] = 128;
-	starfield[5] = 1;
-
+	starfield1[0] = 1;
+	starfield1[2] = 4;
+	
+	starfield2[0] = 1;
+	starfield2[2] = 8;
+	
+	starfield3[0] = 1;
+	starfield3[2] = 16;
+	
 	tilemap_offset_x = 0;
 	tilemap_offset_y = 0;
 
@@ -117,9 +119,9 @@ void app_credits()
 	clear_tilemap();
 	stop_music();
 
-	starfield[1] = 0;
-	starfield[3] = 0;
-	starfield[5] = 0;
+	starfield1[0] = 0;
+	starfield2[0] = 0;
+	starfield3[0] = 0;
 
 	state = defaultstate;
 }

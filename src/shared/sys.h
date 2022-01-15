@@ -38,7 +38,9 @@ unsigned char __at(0x8600) ps2_key[2];
 unsigned char __at(0x8700) ps2_mouse[6];
 unsigned char __at(0x8800) timestamp[5];
 unsigned char __at(0x8900) timer[2];
-unsigned char __at(0x8A00) starfield[6];
+unsigned char __at(0x8A00) starfield1[5];
+unsigned char __at(0x8A10) starfield2[5];
+unsigned char __at(0x8A20) starfield3[5];
 unsigned char __at(0x8A30) system_pause[1];
 
 // - Casval (character map)

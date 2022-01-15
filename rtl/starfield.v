@@ -39,22 +39,31 @@ module starfield #(
     input  wire         pause,
     input  wire         rst,
     input  wire         vblank,
-    input  wire         addr,   // Write address - 0 = speed, 1 = enable
+    input  wire [2:0]   addr,   // Write address - 0 = enable, 1 = horizontal direction, 2 = horizontal speed, 3 = vertical direction, 4 = vertical speed
     input  wire [7:0]   data_in,
     input  wire         write,
     output wire         sf_on,  // star on (alpha)
     output wire [7:0]   sf_star // star brightness
     );
 
-    reg  [LEN-1:0] RST_CNT;  // counter starts at zero, so sub 1
-    reg  [LEN-1:0] seed;
-    reg   [7:0]    speed_set;
-    reg   [4:0]    increment;    
-    reg   [7:0]    timer;
+    reg     [LEN-1:0] RST_CNT;  // counter starts at zero, so sub 1
+    reg     [LEN-1:0] seed;
+    reg               enabled;
+
+    reg               vdirection;
+    reg         [7:0] vspeed_set;
+    reg         [4:0] vincrement;
+    reg         [7:0] vtimer;
+    wire        [7:0] vspeed_actual = pause ? 8'b0 : vspeed_set;
+
+    reg               hdirection;
+    reg         [7:0] hspeed_set;
+    reg         [4:0] hincrement;
+    reg         [7:0] htimer;
+    wire        [7:0] hspeed_actual = pause ? 8'b0 : hspeed_set;
+
     wire [LEN-1:0] sf_reg;
     reg  [LEN-1:0] sf_cnt;
-    reg            enabled;
-    wire [7:0]     speed_actual = pause ? 8'b0 : speed_set;
 
     always @(posedge clk) 
     begin
@@ -63,19 +72,21 @@ module starfield #(
         if(rst)
         begin
             seed <= SEED;
+            RST_CNT <= (H * V) - 1'b1;
         end
 
         // CPU write
         if(write)
         begin
             case(addr)
-                1'b0:
+                3'd0: enabled <= data_in[0];
+                3'd1: hdirection <= data_in[0];
+                3'd2: hspeed_set <= data_in;
+                3'd3: vdirection <= data_in[0];
+                3'd4: vspeed_set <= data_in;
+                default:
                 begin
-                    speed_set <= data_in[7:0];
-                end
-                1'b1:
-                begin
-                    enabled <= data_in[0];
+                    
                 end
             endcase
         end
@@ -83,37 +94,34 @@ module starfield #(
         if (en)
         begin
             sf_cnt <= sf_cnt + 1'b1;
-            /* verilator lint_off WIDTH */
-            if (sf_cnt == RST_CNT) 
+            
+            if(sf_cnt == RST_CNT)
             begin
-                if(speed_actual >= 8'd8)
+                vtimer = vtimer + vspeed_actual;
+                vincrement = 5'b0;
+                if(vtimer >= 8'd8)
                 begin
-                    // If speed_actual is 8 or above, use the speed_actual directly as an increment multiplier
-                    increment = speed_actual[7:3];
+                    vincrement = vtimer[7:3];
+                    vtimer = vtimer - (vtimer[7:3] * 8'd8);
                 end
+
+                htimer = htimer + hspeed_actual;
+                hincrement = 5'b0;
+                if(htimer >= 8'd8)
+                begin
+                    hincrement = htimer[7:3];
+                    htimer = htimer - (htimer[7:3] * 8'd8);
+                end
+
+                /* verilator lint_off WIDTH */
+                if(pause)
+                    RST_CNT <= (H * V) - 1'b1;
                 else
-                begin
-                    // If speed_actual is less than 8, increment a timer by that speed_actual
-                    timer <= timer + speed_actual;
-                    if (timer == 0)
-                    begin
-                        // If timer is zero then increment is low
-                        increment = 0;
-                    end
-                    else
-                    begin
-                        if (timer >= 8'd8)
-                        begin
-                            // If timer is 8 or over then set increment high (lasts for 1 cycle)
-                            increment = 1;
-                            timer <= 0;
-                        end
-                    end
-                end
+                    RST_CNT <= (H * (vdirection ? V + vincrement : V - vincrement)) + (hdirection ? hincrement : -hincrement) - 1'b1;
+            
+                /* verilator lint_on WIDTH */
                 sf_cnt <= 0;
-                RST_CNT <= (H * V) + ((pause ? 5'b0 : increment) * H) - 1'b1;
             end
-            /* verilator lint_on WIDTH */
         end
         if (rst) sf_cnt <= 0;
     end

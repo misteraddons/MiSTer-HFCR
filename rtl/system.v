@@ -106,44 +106,6 @@ generic_timer #(16,15,24) ms_timer
 	.counter(timer)
 );
 
-// CPU control signals
-wire [15:0] cpu_addr;
-wire [7:0] cpu_din;
-wire [7:0] cpu_dout;
-wire cpu_wr_n;
-
-// reg 	cpu_cen_count; // 24 Mhz
-wire	cpu_cen = 1'b1;
-// always @(posedge clk_24) 
-// begin
-// 	cpu_cen_count <= cpu_cen_count + 1'b1;
-// end
-
-// include Z80 CPU
-tv80e #(
-	.Mode(1),
-	.IOWait(0)
-) T80x  (
-	.reset_n   (!reset),
-	.clk       (clk_24),
-	.cen       (cpu_cen),
-	.wait_n    (!pause_system),
-	.int_n     (1'b1),
-	.nmi_n     (1'b1),
-	.busrq_n   (1'b1),
-	.mreq_n    (),
-	.rd_n      (),
-	.wr_n      (cpu_wr_n),
-	.A         (cpu_addr),
-	.di        (cpu_din),
-	.dout      (cpu_dout),
-	.m1_n      (),
-	.iorq_n    (),
-	.rfsh_n    (),
-	.halt_n    (),
-	.busak_n   ()
-  );
-
 // Hardware inputs
 `ifdef DEBUG_SIMULATION
 	wire debug = 1'b1;
@@ -178,9 +140,9 @@ wire ps2_key_cs = memory_map_addr == 8'b10000110;
 wire ps2_mouse_cs = memory_map_addr == 8'b10000111;
 wire timestamp_cs = memory_map_addr == 8'b10001000;
 wire timer_cs = memory_map_addr == 8'b10001001;
-wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b00;
-wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b01;
-wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[2:1] == 2'b10;
+wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b00;
+wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b01;
+wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b10;
 wire system_pause_cs = cpu_addr[15:4] == 12'b100010100011;
 wire sound_cs = cpu_addr[15:4] == 12'b100010110000;
 wire music_cs = cpu_addr[15:4] == 12'b100010110001;
@@ -221,9 +183,9 @@ always @(posedge clk_24) begin
  	//if(analog_r_cs) $display("analog_r %b  %b", analog_r_bit, analog_r_data_out);
 	//if(paddle_cs) $display("paddle %b", paddle_data_out);
 	//if(ps2_key_cs) $display("ps2_key %b %x", ps2_key_data_out, cpu_addr[3:0]);
-	//if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
-	//if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
-	//if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
+	// if(starfield1_cs) $display("starfield1 %b %b", cpu_addr, cpu_dout);
+	// if(starfield2_cs) $display("starfield2 %b %b", cpu_addr, cpu_dout);
+	// if(starfield3_cs) $display("starfield3 %b %b", cpu_addr, cpu_dout);
 	//if(!cpu_wr_n) $display("cpu_write %x %b",cpu_addr, cpu_dout);
 	//if(spritecollisionram_cs && !cpu_wr_n) $display("spritecollisionram %b %b %b", cpu_wr_n, cpu_addr, cpu_dout);
 	//if(spriteram_cs && !cpu_wr_n) $display("spriteram_cs %x %b", cpu_addr[SPRITE_RAM_WIDTH-1:0], cpu_dout);
@@ -232,27 +194,6 @@ always @(posedge clk_24) begin
 	//if(tilemapcontrol_cs) $display("tilemapcontrol_cs addr=%x dout=%x din=%x wr=%b", cpu_addr, cpu_dout, tilemapcontrol_data_out, cpu_wr_n);
 	//if(tilemapram_cs  && !cpu_wr_n) $display("tilemapram_cs addr=%x dout=%x", cpu_addr, cpu_dout);
 end
-
-// CPU data mux
-assign cpu_din = pgrom_cs ? pgrom_data_out :
-				 wkram_cs ? wkram_data_out :
-				 chram_cs ? chram_data_out :
-				 fgcolram_cs ? fgcolram_data_out :
-				 bgcolram_cs ? bgcolram_data_out :
-				 spritecollisionram_cs ? {8{spritecollisionram_data_out_cpu}} :
-				 in0_cs ? in0_data_out :
-				 joystick_cs ? joystick_data_out :
-				 analog_l_cs ? analog_l_data_out :
-				 analog_r_cs ? analog_r_data_out :
-				 paddle_cs ? paddle_data_out :
-				 spinner_cs ? spinner_data_out :
-				 ps2_key_cs ? ps2_key_data_out :
-				 ps2_mouse_cs ? ps2_mouse_data_out :
-				 timestamp_cs ? timestamp_data_out :
-				 timer_cs ? timer_data_out :
-				 tilemapcontrol_cs ? tilemapcontrol_data_out :
-				 music_cs ? music_data_out : 
-				 8'b00000000;
 
 // ROM data available to CPU
 wire [7:0] pgrom_data_out;
@@ -286,13 +227,74 @@ wire spritecollisionram_wr;
 wire tilemapcontrol_wr = !cpu_wr_n && tilemapcontrol_cs;
 wire tilemapram_wr = !cpu_wr_n && tilemapram_cs;
 
-// Casval - character map
-wire [11:0] chram_addr;
-wire [11:0] chrom_addr;
+// CPU data mux
+assign cpu_din = pgrom_cs ? pgrom_data_out :
+				 wkram_cs ? wkram_data_out :
+				 chram_cs ? chram_data_out :
+				 fgcolram_cs ? fgcolram_data_out :
+				 bgcolram_cs ? bgcolram_data_out :
+				 spritecollisionram_cs ? {8{spritecollisionram_data_out_cpu}} :
+				 in0_cs ? in0_data_out :
+				 joystick_cs ? joystick_data_out :
+				 analog_l_cs ? analog_l_data_out :
+				 analog_r_cs ? analog_r_data_out :
+				 paddle_cs ? paddle_data_out :
+				 spinner_cs ? spinner_data_out :
+				 ps2_key_cs ? ps2_key_data_out :
+				 ps2_mouse_cs ? ps2_mouse_data_out :
+				 timestamp_cs ? timestamp_data_out :
+				 timer_cs ? timer_data_out :
+				 tilemapcontrol_cs ? tilemapcontrol_data_out :
+				 music_cs ? music_data_out : 
+				 8'b00000000;
+
+// CPU control signals
+wire [15:0] cpu_addr;
+wire [7:0] cpu_din;
+wire [7:0] cpu_dout;
+wire cpu_wr_n;
+
+// reg 	cpu_cen_count; // 24 Mhz
+wire	cpu_cen = 1'b1;
+// always @(posedge clk_24) 
+// begin
+// 	cpu_cen_count <= cpu_cen_count + 1'b1;
+// end
+`ifndef DISABLE_CPU
+// include Z80 CPU
+tv80e #(
+	.Mode(1),
+	.IOWait(0)
+) T80x  (
+	.reset_n   (!reset),
+	.clk       (clk_24),
+	.cen       (cpu_cen),
+	.wait_n    (!pause_system),
+	.int_n     (1'b1),
+	.nmi_n     (1'b1),
+	.busrq_n   (1'b1),
+	.mreq_n    (),
+	.rd_n      (),
+	.wr_n      (cpu_wr_n),
+	.A         (cpu_addr),
+	.di        (cpu_din),
+	.dout      (cpu_dout),
+	.m1_n      (),
+	.iorq_n    (),
+	.rfsh_n    (),
+	.halt_n    (),
+	.busak_n   ()
+);
+`endif
+
 wire [7:0]	charmap_r;
 wire [7:0]	charmap_g;
 wire [7:0]	charmap_b;
 wire		charmap_a;
+`ifndef DISABLE_CHARMAP
+// Casval - character map
+wire [11:0] chram_addr;
+wire [11:0] chrom_addr;
 charmap casval
 (
 	.clk(clk_24),
@@ -310,7 +312,7 @@ charmap casval
 	.b(charmap_b),
 	.a(charmap_a)
 );
-
+`endif
 
 // Zechs - tile map
 wire [7:0]	tilemap_r;
@@ -499,7 +501,7 @@ starfield #(
 	.vblank(VGA_VB),
 	.en(ce_6),
 	.pause(pause_system),
-	.addr(cpu_addr[0]),
+	.addr(cpu_addr[2:0]),
 	.data_in(cpu_dout),
 	.write(starfield1_cs && !cpu_wr_n),
 	.sf_on(sf_on1),
@@ -507,6 +509,7 @@ starfield #(
 );
 wire 		sf_on2;
 wire [7:0]	sf_star2;
+`ifndef DISABLE_STARS_2
 starfield #(
 	.H(396),
 	.V(256),
@@ -521,14 +524,16 @@ starfield #(
 	.vblank(VGA_VB),
 	.en(ce_6),
 	.pause(pause_system),
-	.addr(cpu_addr[0]),
+	.addr(cpu_addr[2:0]),
 	.data_in(cpu_dout),
 	.write(starfield2_cs && !cpu_wr_n),
 	.sf_on(sf_on2),
 	.sf_star(sf_star2)
 );
+`endif 
 wire 		sf_on3;
 wire [7:0]	sf_star3;
+`ifndef DISABLE_STARS_3
 starfield #(
 	.H(396),
 	.V(256),
@@ -543,12 +548,13 @@ starfield #(
 	.vblank(VGA_VB),
 	.en(ce_6),
 	.pause(pause_system),
-	.addr(cpu_addr[0]),
+	.addr(cpu_addr[2:0]),
 	.data_in(cpu_dout),
 	.write(starfield3_cs && !cpu_wr_n),
 	.sf_on(sf_on3),
 	.sf_star(sf_star3)
 );
+`endif
 
 wire sf_on = sf_on1 || sf_on2 || sf_on3;
 wire [7:0] sf_star_colour = sf_on1 ? sf_star1[7:0] : sf_on2 ? {1'b0,sf_star2[6:0]} : sf_on3 ? {2'b0,sf_star3[5:0]} : 8'b0;
@@ -635,6 +641,7 @@ dpram #(PROGRAM_ROM_WIDTH,8, "rom.hex") pgrom
 	.q_b()
 );
 
+`ifndef DISABLE_CHARMAP
 // Char ROM - 0x9000 - 0x97FF (0x0800 / 2048 bytes)
 dpram #(11,8, "font.hex") chrom
 (
@@ -698,6 +705,7 @@ dpram #(11,8) bgcolram
 	.data_b(),
 	.q_b(bgcolram_data_out)
 );
+`endif
 
 `ifndef DISABLE_TILEMAP
 // Tilemap index RAM 

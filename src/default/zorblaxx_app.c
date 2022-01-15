@@ -161,12 +161,12 @@ void intro_loop()
 	play_music_if(const_music_maintheme, 1);
 
 	// Setup starfield layer speeds
-	starfield[0] = 8;
-	starfield[1] = 1;
-	starfield[2] = 16;
-	starfield[3] = 1;
-	starfield[4] = 32;
-	starfield[5] = 1;
+	starfield1[0] = 1;
+	starfield1[2] = 8;
+	starfield2[0] = 1;
+	starfield2[2] = 16;
+	starfield3[0] = 1;
+	starfield3[2] = 32;
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
@@ -332,9 +332,9 @@ void game_loop()
 			{
 				scroll_speed_last = scroll_speed;
 				unsigned char s = scroll_speed >> 2;
-				starfield[0] = s;
-				starfield[2] = s >> 1;
-				starfield[4] = s >> 1;
+				starfield1[2] = s;
+				starfield2[2] = s >> 1;
+				starfield3[2] = s >> 1;
 			}
 
 			// Track player button press

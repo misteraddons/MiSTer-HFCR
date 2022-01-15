@@ -320,15 +320,15 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("Sprite Debug RAM");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritedebugram__DOT__mem, 128000, 0);
 		//ImGui::End();
-		/*ImGui::Begin("Palette ROM");
-		mem_edit.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
-		ImGui::End();
-		ImGui::Begin("Sprite ROM");
-		mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
-		ImGui::End();*/
-		/*ImGui::Begin("Tilemap ROM");
-			mem_edit.DrawContents(&top->emu__DOT__system__DOT__tilemaprom__DOT__mem, 8192, 0);
-		ImGui::End();*/
+		//ImGui::Begin("Palette ROM");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__palrom__DOT__mem, 64, 0);
+		//ImGui::End();
+		//ImGui::Begin("Sprite ROM");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriterom__DOT__mem, 2048, 0);
+		//ImGui::End();
+		//ImGui::Begin("Tilemap ROM");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__tilemaprom__DOT__mem, 8192, 0);
+		//ImGui::End();
 		//ImGui::Begin("Tilemap RAM");
 		//	mem_edit.DrawContents(&top->emu__DOT__system__DOT__tilemapram__DOT__mem, 768, 0);
 		//ImGui::End();
