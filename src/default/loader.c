@@ -22,6 +22,7 @@
 #include "../shared/ui.h"
 #include "../shared/sound.h"
 #include "../shared/sprite.h"
+#include "../shared/starfield.h"
 #include "sound_samples.h"
 
 // Loader (aesthetic pointlessness)
@@ -100,9 +101,7 @@ void loader(const char *title)
 	clear_sprites();
 	update_sprites();
 	// Reset starfields
-	starfield1[0] = 0;
-	starfield2[0] = 0;
-	starfield3[0] = 0;
+	disable_starfield();
 	
 	const char *system_title = "AZNABLE";
 

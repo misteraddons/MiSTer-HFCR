@@ -1,8 +1,8 @@
 /*============================================================================
-	Aznable OS - System interface functions
+	Aznable OS - Moroboshi (starfield)
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.2
+	Version: 1.0
 	Date: 2021-11-27
 
 	This program is free software; you can redistribute it and/or modify it
@@ -18,42 +18,15 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
+#ifndef STARFIELD_H
+#define STARFIELD_H
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <math.h>
-#include <errno.h>
+extern void enable_starfield();
 
-#include "sys.h"
+extern void disable_starfield();
 
-// Character map
-const unsigned char chram_cols = 64;
-const unsigned char chram_rows = 32;
-unsigned short chram_size;
+extern void set_starfield_speed_x(float speed);
 
-// Hardware inputs
-bool hsync;
-bool hsync_last;
-bool vsync;
-bool vsync_last;
-bool hblank;
-bool hblank_last;
-bool vblank;
-bool vblank_last;
+extern void set_starfield_speed_y(float speed);
 
-// Helper functions
-unsigned char rand_uchar(unsigned char lower, unsigned char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
-
-unsigned short rand_ushort(unsigned short lower, unsigned short upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
-
-signed char rand_schar(signed char lower, signed char upper)
-{
-	return (rand() % (upper - lower + 1)) + lower;
-}
+#endif

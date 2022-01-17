@@ -23,10 +23,11 @@
 #include "../shared/sprite.h"
 #include "../shared/music.h"
 #include "../shared/tilemap.h"
+#include "../shared/starfield.h"
 #include "credits.h"
 #include "inputtester_sys.h"
 
-const char *credits_text = "CODE AND GFX_-_JIMMYSTONES___MUSIC_-_DARRIN CARDANI___TESTING_-_PORKCHOP EXPRESS_SORGELIG_M. WALRUS___EXTRA THANKS_-_ALANSWX_SORGELIG___";
+const char *credits_text = "CODE AND GFX_-_JIMMYSTONES___MUSIC_-_DARRIN CARDANI___TESTING_-_PORKCHOP EXPRESS_SORGELIG_M WALRUS___EXTRA THANKS_-_ALANSWX_SORGELIG___";
 unsigned char credits_pos = 0;
 unsigned short credits_entry_pos = (16 * 32);
 
@@ -37,24 +38,10 @@ void app_credits()
 	clear_tilemap();
 	stop_music();
 
-	starfield1[0] = 1;
-	starfield1[1] = 0;
-	starfield1[2] = 0;
-	starfield1[3] = 1;
-	starfield1[4] = 4;
-	
-	starfield2[0] = 1;
-	starfield2[1] = 0;
-	starfield2[2] = 0;
-	starfield2[3] = 1;
-	starfield2[4] = 8;
-	
-	starfield3[0] = 1;
-	starfield3[1] = 0;
-	starfield3[2] = 0;
-	starfield3[3] = 1;
-	starfield3[4] = 16;
-	
+	enable_starfield();
+	set_starfield_speed_x(0);
+	set_starfield_speed_y(-0.1f);
+
 	tilemap_offset_x = 0;
 	tilemap_offset_y = 0;
 
@@ -67,10 +54,10 @@ void app_credits()
 
 		if (VBLANK_RISING)
 		{
-			tilemap_offset_y += 2;
 			if (tilemap_offset_y >= 16)
 			{
 				tilemap_offset_y -= 16;
+				update_tilemap_offset();
 
 				scroll_tilemap_up();
 
@@ -81,7 +68,7 @@ void app_credits()
 				{
 					c = credits_text[credits_pos];
 					credits_pos++;
-					if (c == '_')
+					if (c == '_' || c == 0)
 					{
 						break;
 					}
@@ -90,7 +77,7 @@ void app_credits()
 						credits_line[d] = c;
 						credits_line_len++;
 					}
-					if (credits_pos == strlen(credits_text))
+					if (credits_pos >= strlen(credits_text) - 1)
 					{
 						credits_pos = 0;
 						break;
@@ -108,7 +95,10 @@ void app_credits()
 					tilemapram[credits_entry_pos + d] = c;
 				}
 			}
-			update_tilemap_offset();
+			else
+			{
+				update_tilemap_offset();
+			}
 		}
 
 		if (VBLANK_FALLING)
@@ -117,6 +107,12 @@ void app_credits()
 			if (input_a || input_b || input_select || input_start)
 			{
 				break;
+			}
+			signed dir = 1;
+			tilemap_offset_y += 2;
+			if (input_up)
+			{
+				tilemap_offset_y += 4;
 			}
 		}
 
@@ -128,9 +124,7 @@ void app_credits()
 	clear_tilemap();
 	stop_music();
 
-	starfield1[0] = 0;
-	starfield2[0] = 0;
-	starfield3[0] = 0;
+	disable_starfield();
 
 	state = defaultstate;
 }

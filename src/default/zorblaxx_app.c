@@ -34,6 +34,7 @@
 #include "../shared/ui.h"
 #include "../shared/music.h"
 #include "../shared/sound.h"
+#include "../shared/starfield.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
 #include "music_tracks.h"
@@ -161,24 +162,9 @@ void intro_loop()
 	play_music_if(const_music_maintheme, 1);
 
 	// Setup starfield layer speeds
-	starfield1[0] = 1;
-	starfield1[1] = 0;
-	starfield1[2] = 0;
-	starfield1[3] = 1;
-	starfield1[4] = 4;
-	
-	starfield2[0] = 1;
-	starfield2[1] = 0;
-	starfield2[2] = 0;
-	starfield2[3] = 1;
-	starfield2[4] = 8;
-	
-	starfield3[0] = 1;
-	starfield3[1] = 0;
-	starfield3[2] = 0;
-	starfield3[3] = 1;
-	starfield3[4] = 16;
-	
+	enable_starfield();
+	set_starfield_speed_x(0);
+	set_starfield_speed_y(-0.5f);
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
@@ -343,10 +329,7 @@ void game_loop()
 			if (scroll_speed != scroll_speed_last)
 			{
 				scroll_speed_last = scroll_speed;
-				unsigned char s = scroll_speed >> 2;
-				starfield1[4] = s;
-				starfield2[4] = s >> 1;
-				starfield3[4] = s >> 1;
+				set_starfield_speed_y(scroll_speed * -0.02f);
 			}
 
 			// Track player button press

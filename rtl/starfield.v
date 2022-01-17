@@ -39,7 +39,7 @@ module starfield #(
     input  wire         pause,
     input  wire         rst,
     input  wire         vblank,
-    input  wire [2:0]   addr,   // Write address - 0 = enable, 1 = horizontal direction, 2 = horizontal speed, 3 = vertical direction, 4 = vertical speed
+    input  wire [2:0]   addr,   // Write address - 0 = enable, 1 = horizontal direction + speed msbs, 2 = horizontal speed lsbs, 3 = vertical direction + speed msbs, 4 = vertical speed lsbs
     input  wire [7:0]   data_in,
     input  wire         write,
     output wire         sf_on,  // star on (alpha)
@@ -51,16 +51,16 @@ module starfield #(
     reg               enabled;
 
     reg               vdirection;
-    reg         [7:0] vspeed_set;
-    reg         [4:0] vincrement;
-    reg         [7:0] vtimer;
-    wire        [7:0] vspeed_actual = pause ? 8'b0 : vspeed_set;
+    reg         [14:0] vspeed_set;
+    reg          [7:0] vincrement;
+    reg         [15:0] vtimer;
+    wire        [14:0] vspeed_actual = pause ? 15'b0 : vspeed_set;
 
     reg               hdirection;
-    reg         [7:0] hspeed_set;
-    reg         [4:0] hincrement;
-    reg         [7:0] htimer;
-    wire        [7:0] hspeed_actual = pause ? 8'b0 : hspeed_set;
+    reg         [14:0] hspeed_set;
+    reg          [7:0] hincrement;
+    reg         [15:0] htimer;
+    wire        [14:0] hspeed_actual = pause ? 15'b0 : hspeed_set;
 
     wire [LEN-1:0] sf_reg;
     reg  [LEN-1:0] sf_cnt;
@@ -80,10 +80,10 @@ module starfield #(
         begin
             case(addr)
                 3'd0: enabled <= data_in[0];
-                3'd1: hdirection <= data_in[0];
-                3'd2: hspeed_set <= data_in;
-                3'd3: vdirection <= data_in[0];
-                3'd4: vspeed_set <= data_in;
+                3'd1: begin hdirection <= data_in[7]; hspeed_set[14:8] <= data_in[6:0]; end
+                3'd2: hspeed_set[7:0] <= data_in;
+                3'd3: begin vdirection <= data_in[7]; vspeed_set[14:8] <= data_in[6:0]; end
+                3'd4: vspeed_set[7:0] <= data_in;
                 default:
                 begin
                     
@@ -97,20 +97,20 @@ module starfield #(
             
             if(sf_cnt == RST_CNT)
             begin
-                vtimer = vtimer + vspeed_actual;
-                vincrement = 5'b0;
-                if(vtimer >= 8'd8)
-                begin
-                    vincrement = vtimer[7:3];
-                    vtimer = vtimer - (vtimer[7:3] * 8'd8);
-                end
-
+                
                 htimer = htimer + hspeed_actual;
-                hincrement = 5'b0;
-                if(htimer >= 8'd8)
+                hincrement = 8'b0;
+                if(htimer >= 16'hFF)
                 begin
-                    hincrement = htimer[7:3];
-                    htimer = htimer - (htimer[7:3] * 8'd8);
+                    hincrement = htimer[15:8] > 8'b0 ? htimer[15:8] : 8'b1;
+                    htimer = htimer - {hincrement[7:0], 8'b0};
+                end
+                vtimer = vtimer + vspeed_actual;
+                vincrement = 8'b0;
+                if(vtimer >= 16'hFF)
+                begin
+                    vincrement = vtimer[15:8] > 8'b0 ? vtimer[15:8] : 8'b1;
+                    vtimer = vtimer - {vincrement[7:0], 8'b0};
                 end
 
                 /* verilator lint_off WIDTH */

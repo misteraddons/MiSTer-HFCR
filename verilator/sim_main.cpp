@@ -49,7 +49,7 @@ SimBus bus(console);
 
 // Input handling
 // --------------
-SimInput input(12, console);
+SimInput input(13, console);
 const int input_right = 0;
 const int input_left = 1;
 const int input_down = 2;
@@ -62,6 +62,7 @@ const int input_l = 8;
 const int input_r = 9;
 const int input_select = 10;
 const int input_start = 11;
+const int input_menu = 12;
 
 // Video
 // -----
@@ -210,6 +211,7 @@ int main(int argc, char** argv, char** env) {
 	input.SetMapping(input_r, DIK_W); // R
 	input.SetMapping(input_select, DIK_1); // Select
 	input.SetMapping(input_start, DIK_2); // Start
+	input.SetMapping(input_menu, DIK_M); // System menu trigger
 
 #else
 	input.SetMapping(input_up, SDL_SCANCODE_UP);
@@ -359,6 +361,9 @@ int main(int argc, char** argv, char** env) {
 		video.UpdateTexture();
 
 		// Pass inputs to sim
+
+		top->menu = input.inputs[input_menu];
+
 		top->joystick_0 = 0;
 		for (int i = 0; i < input.inputCount; i++)
 		{

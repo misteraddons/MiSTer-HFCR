@@ -23,9 +23,12 @@
 #include "../shared/sprite.h"
 #include "../shared/sound.h"
 #include "../shared/tilemap.h"
+#include "../shared/starfield.h"
 #include "../shared/ps2.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
+#include <stdio.h>
+#include <math.h>
 
 // DPAD tracker
 bool input_left = 0;
@@ -38,8 +41,6 @@ bool input_down = 0;
 bool input_down_last = 0;
 bool input_a;
 bool input_a_last = 0;
-unsigned char x_off = 0;
-unsigned char y_off = 0;
 
 // Track joypad 1 directions and start for menu control
 void basic_input()
@@ -56,65 +57,90 @@ void basic_input()
 	input_a = CHECK_BIT(joystick[0], 4) || kbd_down[KEY_ENTER];
 }
 
-// void update_section(unsigned char lx, unsigned char rx, unsigned char ty, unsigned char by)
-// {
-// 	for (unsigned char y = ty; y <= by; y++)
-// 	{
-// 		for (unsigned char x = lx; x <= rx; x++)
-// 		{
-// 			unsigned short p = ((y)*32) + (x);
-// 			tilemapram[p] = tilemap_index[y + y_off - 1][x + x_off - 1];
-// 		}
-// 	}
-// }
+// Constants
+#define direction_count 16
 
-unsigned short player_x;
-unsigned short player_y;
+// Sprite indexes
+#define const_particle_sprite_first 0
+#define player_sprite 16
+
 signed short player_xs;
 signed short player_ys;
-unsigned char player_a;
 
+#define screen_center_x 176
+#define screen_center_y 144
+
+float player_v_x;
+float player_v_y;
+#define player_v_friction 0.97f
+
+unsigned char player_a;
 signed char player_turn_timer;
 signed char player_turn_timer_max = 4;
+#define player_thrust_divider 80.0f
+#define player_thrust_mag 2
+#define player_thrust_rev_divider 128.0f
+#define player_thrust_rev_mag -1
+float player_thrust_x[direction_count];
+float player_thrust_y[direction_count];
+float player_thrust_rev_x[direction_count];
+float player_thrust_rev_y[direction_count];
 
-#define player_sprite 0
+#define player_trail_timer_max 32
+unsigned char player_trail_timer = player_trail_timer_max;
+#define particle_timer_max 4
 
-unsigned char scale = 16;
-unsigned char vscale = 4;
-unsigned char sf_scale = 32;
+unsigned char sf_dir_x_last;
+unsigned char sf_dir_y_last;
 
-signed char vector_x[16] = {0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15, -16, -15, -11, -6};
-signed char vector_y[16] = {-16, -15, -11, -6, -0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15};
+signed char vector_x[direction_count] = {0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15, -16, -15, -11, -6};
+signed char vector_y[direction_count] = {-16, -15, -11, -6, -0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15};
+
+#define v_divider 16.0f
+float v_x[direction_count];
+float v_y[direction_count];
+
+#define const_particle_max 16
+bool particle_on[const_particle_max];
+unsigned char particle_timer[const_particle_max];
+float particle_x[const_particle_max];
+float particle_y[const_particle_max];
+float particle_v_x[const_particle_max];
+float particle_v_y[const_particle_max];
 
 // Main entry
 void main()
 {
-
+	// Initialise char map
 	chram_size = chram_cols * chram_rows;
-	// update_section(0, 22, 0, 16);
-	// tilemap_offset_x = 0;
-	// tilemap_offset_y = 0;
-
-	// unsigned char scroll_speed = 4;
-	// unsigned char x_off_max = const_tilemap_index_x_max - 20;
-	// unsigned char y_off_max = const_tilemap_index_y_max - 15;
-
-	enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, 0);
-	player_x = 64 * scale;
-	player_y = 64 * scale;
-
-	// for (unsigned char s = 1; s < 16; s++)
-	// {
-	// 	enable_sprite(s, sprite_palette_player, sprite_size_player, 0);
-	// 	set_sprite_position(s, 16 + (s * 16), 32);
-	// }
-
 	clear_bgcolor(0);
 
+	// Generate float unit vectors for sprite direction
+	for (unsigned char v = 0; v < direction_count; v++)
+	{
+		v_x[v] = ((float)vector_x[v]) / v_divider;
+		v_y[v] = ((float)vector_y[v]) / v_divider;
+		player_thrust_x[v] = ((float)vector_x[v]) / player_thrust_divider;
+		player_thrust_y[v] = ((float)vector_y[v]) / player_thrust_divider;
+		player_thrust_rev_x[v] = ((float)vector_x[v]) / player_thrust_divider;
+		player_thrust_rev_y[v] = ((float)vector_y[v]) / player_thrust_divider;
+	}
+
+	// Enable player sprite
+	enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, 0);
+	// Set player start position
+	set_sprite_position(player_sprite, screen_center_x - sprite_halfpixelsize_player, screen_center_y - sprite_halfpixelsize_player);
+
 	// Init starfields
-	starfield1[0] = 1;
-	starfield2[0] = 1;
-	starfield3[0] = 1;
+	enable_starfield();
+
+	// Init particles
+	for (unsigned char p = 0; p < const_particle_max; p++)
+	{
+		unsigned char s = p + const_particle_sprite_first;
+		enable_sprite(s, sprite_palette_trails, sprite_size_trails, 0);
+		spr_on[s] = 0;
+	}
 
 	while (1)
 	{
@@ -122,7 +148,6 @@ void main()
 
 		if (VBLANK_RISING)
 		{
-
 			update_sprites();
 		}
 		if (VBLANK_FALLING)
@@ -150,63 +175,82 @@ void main()
 				else
 					player_a++;
 			}
+
+			player_v_x *= player_v_friction;
+			player_v_y *= player_v_friction;
+			signed char player_thrust = 0;
 			if (input_up)
 			{
-				player_xs += vector_x[player_a];
-				player_ys += vector_y[player_a];
+				player_v_x += player_thrust_x[player_a];
+				player_v_y += player_thrust_y[player_a];
+				player_thrust = player_thrust_mag;
+				player_trail_timer += player_thrust_mag;
 			}
-			else
+			else if (input_down)
 			{
-				if (player_xs > 0)
+				player_v_x -= player_thrust_rev_x[player_a];
+				player_v_y -= player_thrust_rev_y[player_a];
+				player_thrust = player_thrust_rev_mag;
+				player_trail_timer -= player_thrust_rev_mag;
+			}
+
+			float player_speed = sqrtf((player_v_x * player_v_x) + (player_v_y * player_v_y));
+			unsigned char player_speed_int = (unsigned char)player_speed;
+
+			set_starfield_speed_x(player_v_x);
+			set_starfield_speed_y(player_v_y);
+
+			// Set player sprite index
+			spr_index[player_sprite] = sprite_index_player_first + player_a;
+
+			if (player_trail_timer >= 4)
+			{
+				player_trail_timer -= 4;
+
+				for (unsigned char p = 0; p < const_particle_max; p++)
 				{
-					player_xs--;
-				}
-				else if (player_xs < 0)
-				{
-					player_xs++;
-				}
-				if (player_ys > 0)
-				{
-					player_ys--;
-				}
-				else if (player_ys < 0)
-				{
-					player_ys++;
+					if (!particle_on[p])
+					{
+						particle_on[p] = true;
+						particle_x[p] = (screen_center_x - sprite_halfpixelsize_trails) - (v_x[player_a] * 7);
+						particle_y[p] = (screen_center_y - sprite_halfpixelsize_trails) - (v_y[player_a] * 7);
+						particle_v_x[p] = v_x[player_a] * -player_thrust;
+						particle_v_y[p] = v_y[player_a] * -player_thrust;
+						particle_timer[p] = particle_timer_max;
+						unsigned char s = const_particle_sprite_first + p;
+						spr_on[s] = 1;
+						spr_index[s] = const_particle_sprite_first;
+						break;
+					}
 				}
 			}
 
-			unsigned char sf_dir_x = (player_xs < 0);
-			unsigned char sf_dir_y = (player_ys < 0);
-			unsigned char sf_spd_x = (abs(player_xs / sf_scale));
-			unsigned char sf_spd_y = (abs(player_ys / sf_scale));
-
-			starfield3[1] = sf_dir_x;
-			starfield3[2] = sf_spd_x;
-			starfield3[3] = sf_dir_y;
-			starfield3[4] = sf_spd_y;
-			sf_spd_x = sf_spd_x << 1;
-			sf_spd_y = sf_spd_y << 1;
-			starfield2[1] = sf_dir_x;
-			starfield2[2] = sf_spd_x;
-			starfield2[3] = sf_dir_y;
-			starfield2[4] = sf_spd_y;
-			sf_spd_x = sf_spd_x << 1;
-			sf_spd_y = sf_spd_y << 1;
-			starfield1[1] = sf_dir_x;
-			starfield1[2] = sf_spd_x;
-			starfield1[3] = sf_dir_y;
-			starfield1[4] = sf_spd_y;
-
-			player_x = 176 * scale;
-			player_y = 144 * scale;
-			// player_x += player_xs / vscale;
-			// player_y += player_ys / vscale;
-
-			spr_index[player_sprite] = sprite_index_player_first + player_a;
-			unsigned short x = player_x / scale;
-			unsigned short y = player_y / scale;
-
-			set_sprite_position(player_sprite, x, y);
+			for (unsigned char p = 0; p < const_particle_max; p++)
+			{
+				if (particle_on[p])
+				{
+					unsigned char s = const_particle_sprite_first + p;
+					particle_x[p] -= player_v_x;
+					particle_y[p] -= player_v_y;
+					particle_x[p] += particle_v_x[p];
+					particle_y[p] += particle_v_y[p];
+					set_sprite_position(s, (unsigned short)particle_x[p], (unsigned short)particle_y[p]);
+					particle_timer[p]--;
+					if (particle_timer[p] == 0)
+					{
+						if (spr_index[s] == const_particle_sprite_first + 3)
+						{
+							spr_on[s] = 0;
+							particle_on[p] = 0;
+						}
+						else
+						{
+							particle_timer[p] = particle_timer_max;
+							spr_index[s]++;
+						}
+					}
+				}
+			}
 		}
 		vblank_last = vblank;
 	}

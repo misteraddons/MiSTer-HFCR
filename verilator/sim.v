@@ -24,6 +24,7 @@ module emu (
 
 	input clk_sys,
 	input reset,
+	input menu,
 	
 	input [31:0] joystick_0,
 	input [31:0] joystick_1,
@@ -108,13 +109,13 @@ jtframe_cen24 divider
 `define DEBUG_SIMULATION
 //`define DISABLE_CPU
 //`define DISABLE_SPRITES
-`define DISABLE_TILEMAP
-`define DISABLE_CHARMAP
+//`define DISABLE_TILEMAP
+//`define DISABLE_CHARMAP
 //`define DEBUG_SPRITE_COLLISION
 //`define DISABLE_STARS_2
 //`define DISABLE_STARS_3
-`define DISABLE_MUSIC
-`define DISABLE_SOUND
+//`define DISABLE_MUSIC
+//`define DISABLE_SOUND
 
 wire m_pause   = joystick_0[8];
 // PAUSE SYSTEM
@@ -138,6 +139,7 @@ system system(
 	.ce_2(ce_2),
 	.reset(reset | ioctl_download),
 	.pause(pause_cpu),
+	.menu(menu),
 	.VGA_HS(VGA_HS),
 	.VGA_VS(VGA_VS),
 	.VGA_R(r),
@@ -149,7 +151,6 @@ system system(
 	.dn_data(ioctl_dout),
 	.dn_wr(ioctl_wr),
 	.dn_index(ioctl_index),
-	
 	.joystick({joystick_5,joystick_4,joystick_3,joystick_2,joystick_1,joystick_0}),
 	.analog_l({joystick_l_analog_5,joystick_l_analog_4,joystick_l_analog_3,joystick_l_analog_2,joystick_l_analog_1,joystick_l_analog_0}),
 	.analog_r({joystick_r_analog_5,joystick_r_analog_4,joystick_r_analog_3,joystick_r_analog_2,joystick_r_analog_1,joystick_r_analog_0}),

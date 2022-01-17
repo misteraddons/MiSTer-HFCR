@@ -26,6 +26,7 @@ module system (
 	input 			ce_2,
 	input			reset,
 	input			pause,
+	input			menu, 			// Active-high trigger to open menu in system
 	input [16:0]	dn_addr,
 	input			dn_wr,
 	input [7:0]		dn_data,
@@ -112,7 +113,7 @@ generic_timer #(16,15,24) ms_timer
 `else
 	wire debug = 1'b0;
 `endif
-wire [7:0] in0_data_out = {VGA_HS, VGA_VS,VGA_HB, VGA_VB, 3'b100, debug};
+wire [7:0] in0_data_out = {VGA_HS, VGA_VS,VGA_HB, VGA_VB, 2'b10, menu, debug};
 wire [7:0] joystick_data_out = joystick[{cpu_addr[4:0],3'd0} +: 8];
 wire [7:0] analog_l_data_out = analog_l[{cpu_addr[3:0],3'd0} +: 8];
 wire [7:0] analog_r_data_out = analog_r[{cpu_addr[3:0],3'd0} +: 8];
@@ -143,7 +144,8 @@ wire timer_cs = memory_map_addr == 8'b10001001;
 wire starfield1_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b00;
 wire starfield2_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b01;
 wire starfield3_cs = memory_map_addr == 8'b10001010 && cpu_addr[5:4] == 2'b10;
-wire system_pause_cs = cpu_addr[15:4] == 12'b100010100011;
+wire system_pause_cs = cpu_addr == 16'b1000101000110000;
+wire system_menu_cs = cpu_addr == 16'b1000101000110001;
 wire sound_cs = cpu_addr[15:4] == 12'b100010110000;
 wire music_cs = cpu_addr[15:4] == 12'b100010110001;
 
@@ -168,11 +170,14 @@ always @(posedge clk_24) begin
 	if(pause) pause_trigger<=1'b0;
 end
 
-reg vblank_last;
-reg [15:0] vblank_start;
+// System menu trigger
+reg menu_trigger;
+always @(posedge clk_24) begin
+	if(menu) menu_trigger <= 1'b1;
+	if(system_menu_cs && !cpu_wr_n) menu_trigger <= 1'b0;
+end
 
 always @(posedge clk_24) begin
-	vblank_last <= VGA_VB;
 	//if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 	//if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 	//if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -245,7 +250,8 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 timestamp_cs ? timestamp_data_out :
 				 timer_cs ? timer_data_out :
 				 tilemapcontrol_cs ? tilemapcontrol_data_out :
-				 music_cs ? music_data_out : 
+				 music_cs ? music_data_out :
+				 system_menu_cs ? {8{menu_trigger}} :
 				 8'b00000000;
 
 // CPU control signals
@@ -320,7 +326,7 @@ wire [7:0]	tilemap_g;
 wire [7:0]	tilemap_b;
 wire		tilemap_a;
 `ifndef DISABLE_TILEMAP
-localparam TILEMAP_ROM_WIDTH = 15;
+localparam TILEMAP_ROM_WIDTH = 17;
 localparam TILEMAP_RAM_WIDTH = 10;
 wire [TILEMAP_ROM_WIDTH-1:0]	tilemaprom_addr;
 wire [15:0]	tilemaprom_data_out;
@@ -339,6 +345,7 @@ tilemap #(
 	.pause(pause_system),
 	.hcnt(hcnt),
 	.vcnt(vcnt),
+	.hblank(VGA_HB),
 	.addr(cpu_addr[1:0]),
 	.data_in(cpu_dout),
 	.write(tilemapcontrol_wr),
@@ -431,8 +438,11 @@ localparam SD_WAIT = 0;
 localparam SD_CLEAR_BEGIN = 1;
 localparam SD_CLEAR = 2;
 reg [2:0] sd_state;
+reg vblank_last;
+reg [15:0] vblank_start;
 always @(posedge clk_24) 
 begin
+	vblank_last <= VGA_VB;
 	case(sd_state)
 		SD_WAIT:
 		begin

@@ -88,15 +88,6 @@ void main()
 
 		if (VBLANK_RISING)
 		{
-			basic_input();
-			if (input_right && x_off < x_off_max)
-				tilemap_offset_x += scroll_speed;
-			if (input_left && x_off > 0)
-				tilemap_offset_x -= scroll_speed;
-			if (input_up && y_off > 0)
-				tilemap_offset_y -= scroll_speed;
-			if (input_down && y_off < y_off_max)
-				tilemap_offset_y += scroll_speed;
 
 			if (tilemap_offset_x >= 16)
 			{
@@ -111,9 +102,7 @@ void main()
 				scroll_tilemap_right();
 				x_off--;
 				update_section(0, 0, 0, 16);
-			}
-
-			if (tilemap_offset_y >= 16)
+			}else if (tilemap_offset_y >= 16)
 			{
 				tilemap_offset_y -= 16;
 				scroll_tilemap_up();
@@ -129,6 +118,19 @@ void main()
 			}
 
 			update_tilemap_offset();
+		}
+
+		if (VBLANK_FALLING)
+		{
+			basic_input();
+			if (input_right && x_off < x_off_max)
+				tilemap_offset_x += scroll_speed;
+			if (input_left && x_off > 0)
+				tilemap_offset_x -= scroll_speed;
+			if (input_up && y_off > 0)
+				tilemap_offset_y -= scroll_speed;
+			if (input_down && y_off < y_off_max)
+				tilemap_offset_y += scroll_speed;
 		}
 		vblank_last = vblank;
 	}

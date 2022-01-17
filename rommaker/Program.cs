@@ -258,6 +258,8 @@ namespace rommaker
                         spriteSourceItems.Add($"sprite_index_{name}_last", $"{index + (slicesX * slicesY) - 1}");
                         spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
                         spriteSourceItems.Add($"sprite_size_{name}", $"{gi}");
+                        spriteSourceItems.Add($"sprite_pixelsize_{name}", $"{g}");
+                        spriteSourceItems.Add($"sprite_halfpixelsize_{name}", $"{g/2}");
 
                         for (int ys = 0; ys < slicesY; ys++)
                         {

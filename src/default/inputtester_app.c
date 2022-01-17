@@ -354,6 +354,15 @@ void handle_codes()
 // Menu opening handler
 bool modeswitcher()
 {
+    // Check system menu trigger
+    if (system_menu)
+    {
+        system_menu = 0;
+        modeswitchtimer_select = 0;
+        start_menu();
+        return 1;
+    }
+
     // Open menu if select is held
     if (input_select)
     {

@@ -210,7 +210,9 @@ localparam CONF_STR = {
 	"-;",
 	"O6,Rotate video,Off,On;",
 	"O7,Flip video,Off,On;",
-	"-;",	
+	"-;",
+	"RA,Open menu;",
+	"-;",
 	"P1,Pause options;",
 	"P1OP,Pause when OSD is open,On,Off;",
 	"P1OQ,Dim video after 10s,On,Off;",
@@ -400,7 +402,7 @@ pause #(8,8,8,24) pause (
 
 ///////////////////   MAIN CORE   ////////////////////
 wire rom_download = ioctl_download && (ioctl_index < 8'd2);
-wire reset = (RESET | status[0] | buttons[1] | rom_download);
+wire reset = (RESET | status[0] | rom_download);
 assign LED_USER = rom_download;
 
 system system(
@@ -409,6 +411,7 @@ system system(
 	.ce_2(ce_2),
 	.reset(reset),
 	.pause(pause_cpu),
+	.menu(status[10] || buttons[1]),
 	.VGA_HS(hs_original),
 	.VGA_VS(vs_original),
 	.VGA_R(r),

@@ -41,7 +41,8 @@ unsigned char __at(0x8900) timer[2];
 unsigned char __at(0x8A00) starfield1[5];
 unsigned char __at(0x8A10) starfield2[5];
 unsigned char __at(0x8A20) starfield3[5];
-unsigned char __at(0x8A30) system_pause[1];
+unsigned char __at(0x8A30) system_pause;
+unsigned char __at(0x8A31) system_menu;
 
 // - Casval (character map)
 unsigned char __at(0x9800) chram[2048];
@@ -104,5 +105,6 @@ extern unsigned char rand_uchar(unsigned char lower, unsigned char upper);
 extern unsigned short rand_ushort(unsigned short lower, unsigned short upper);
 
 extern signed char rand_schar(signed char lower, signed char upper);
+
 
 #endif

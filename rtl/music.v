@@ -135,7 +135,7 @@ module music #(
 
 	reg frame_ready;
 
-	 `define YM_DEBUG
+	//`define YM_DEBUG
 
 	always @(posedge clk)
 	begin

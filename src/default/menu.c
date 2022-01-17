@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Popup menu functions 
+	Aznable OS - Popup menu functions
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
@@ -47,9 +47,9 @@ void start_menu()
 // Menu state
 void menu()
 {
-    // // Handle PS/2 inputs whenever possible to improve latency
-    handle_ps2();
-	
+	// // Handle PS/2 inputs whenever possible to improve latency
+	handle_ps2();
+
 	// Check inputs at end of each scanline.  Is this too much?!
 	if (HBLANK_RISING)
 	{
@@ -74,6 +74,8 @@ void menu()
 		}
 		if ((!input_start && input_start_last) || (!input_a && input_a_last) || (!input_b && input_b_last))
 		{
+			// Clear menu flag to avoid double trigger
+			system_menu = 0;
 			switch (menu_index)
 			{
 			case 0:
@@ -128,13 +130,13 @@ void menu()
 					{
 						panel_shaded(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_sel_outline_high, menu_sel_outline_mid, menu_sel_outline_low);
 						write_string(menu_string[m], menu_sel_text, menu_tx + 2, ty + 1);
-						//fill_bgcol(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_sel_back);
+						// fill_bgcol(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_sel_back);
 					}
 					else
 					{
 						panel_shaded(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_outline_high, menu_outline_mid, menu_outline_low);
 						write_string(menu_string[m], menu_text, menu_tx + 2, ty + 1);
-						//fill_bgcol(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_back);
+						// fill_bgcol(menu_tx + 1, ty, menu_bx - 1, ty + 2, menu_back);
 					}
 					ty += 3;
 				}
