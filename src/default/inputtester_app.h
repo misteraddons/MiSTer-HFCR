@@ -50,20 +50,6 @@ extern char modeswitchtimer_start;
 #define btntest_highlight_start 2
 #define btntest_highlight_end 35
 
-// // Draw static elements for digital input test page
-// void page_inputtester_digital();
-
-// // Draw static elements for analog input test page
-// void page_inputtester_analog();
-
-// // Draw static elements for advanced input test page
-// void page_inputtester_advanced();
-
-// // Draw static elements for button test page
-// void page_btntest(bool showMenuButton, bool showContinueButton);
-
-// void reset_inputstates();
-
 // Initialise digital inputtester state and draw static elements
 extern void start_inputtester_digital();
 
@@ -76,39 +62,17 @@ extern void start_inputtester_advanced();
 // Initialise button test state and draw static elements
 extern void start_btntest();
 
-// // Rotate DPAD direction history and push new entry
-// void pushhistory(char new);
-
-// // Track input history of P1 DPAD for secret codes!
-// void handle_codes();
-
-// // Menu opening handler
-// bool modeswitcher();
-
-// // Digital input tester state
+// Digital input tester state
 extern void inputtester_digital();
 
-// // Analog input tester state
+// Analog input tester state
 extern void inputtester_analog();
 
-// // Advanced input tester state
+// Advanced input tester state
 extern void inputtester_advanced();
 
-// void btntest_starttest();
-
-// // Button test - button select state
-// void btntest_select();
-
-// // Button test - ready state
-// void btntest_ready();
-
-// // Button test - begin test state
-// void btntest_test();
-
-// // Button test - results view
-// void btntest_results();
-
-// // Button test - mode handler
+// Button test - mode handler
 extern void btntest();
+
 
 #endif

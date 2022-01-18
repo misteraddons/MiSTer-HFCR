@@ -4,9 +4,11 @@ DATALOC=0xC000
 SHARED_PATH=../shared/
 SHARED_RELS=$(patsubst %.c,build/%.rel,$(wildcard $(SHARED_PATH)*.c))
 OUT_DIR=build/
-PROJECT_RELS=$(patsubst %.c,build/%.rel,$(wildcard *.c)) 
-TARGET_RELS=$(patsubst build/os.rel,,$(wildcard build/*.rel))
 MAIN=os
+PROJECT_RELS_1=$(patsubst %.c,build/%.rel,$(wildcard *.c)) 
+PROJECT_RELS=$(patsubst build/$(MAIN).rel,,$(PROJECT_RELS_1)) 
+TARGET_RELS=$(patsubst build/$(MAIN).rel,,$(wildcard build/*.rel))
+
 
 all: $(MAIN).bin
 

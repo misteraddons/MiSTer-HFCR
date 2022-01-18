@@ -24,7 +24,6 @@
 #include "../shared/sound.h"
 #include "../shared/tilemap.h"
 #include "../shared/starfield.h"
-#include "../shared/ps2.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
 #include <stdio.h>
@@ -50,11 +49,11 @@ void basic_input()
 	input_left_last = input_left;
 	input_right_last = input_right;
 	input_a_last = input_a;
-	input_up = CHECK_BIT(joystick[0], 3) || kbd_down[KEY_UP];
-	input_down = CHECK_BIT(joystick[0], 2) || kbd_down[KEY_DOWN];
-	input_left = CHECK_BIT(joystick[0], 1) || kbd_down[KEY_LEFT];
-	input_right = CHECK_BIT(joystick[0], 0) || kbd_down[KEY_RIGHT];
-	input_a = CHECK_BIT(joystick[0], 4) || kbd_down[KEY_ENTER];
+	input_up = CHECK_BIT(joystick[0], 3);
+	input_down = CHECK_BIT(joystick[0], 2);
+	input_left = CHECK_BIT(joystick[0], 1);
+	input_right = CHECK_BIT(joystick[0], 0);
+	input_a = CHECK_BIT(joystick[0], 4);
 }
 
 // Constants
@@ -77,10 +76,8 @@ float player_v_y;
 unsigned char player_a;
 signed char player_turn_timer;
 signed char player_turn_timer_max = 4;
-#define player_thrust_divider 80.0f
-#define player_thrust_mag 2
-#define player_thrust_rev_divider 128.0f
-#define player_thrust_rev_mag -1
+#define player_thrust_mag 0.05f
+#define player_thrust_rev_mag -0.025f
 float player_thrust_x[direction_count];
 float player_thrust_y[direction_count];
 float player_thrust_rev_x[direction_count];
@@ -93,10 +90,10 @@ unsigned char player_trail_timer = player_trail_timer_max;
 unsigned char sf_dir_x_last;
 unsigned char sf_dir_y_last;
 
-signed char vector_x[direction_count] = {0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15, -16, -15, -11, -6};
-signed char vector_y[direction_count] = {-16, -15, -11, -6, -0, 6, 11, 15, 16, 15, 11, 6, 0, -6, -11, -15};
+signed char vector_x[direction_count] = {0, 49, 90, 117, 127, 117, 90, 49, 0, -49, -90, -117, -127, -117, -90, -49};
+signed char vector_y[direction_count] = {-127, -117, -90, -49, 0, 49, 90, 117, 127, 117, 90, 49, 0, -49, -90, -117};
 
-#define v_divider 16.0f
+#define v_divider 127.0f
 float v_x[direction_count];
 float v_y[direction_count];
 
@@ -120,12 +117,12 @@ void main()
 	{
 		v_x[v] = ((float)vector_x[v]) / v_divider;
 		v_y[v] = ((float)vector_y[v]) / v_divider;
-		player_thrust_x[v] = ((float)vector_x[v]) / player_thrust_divider;
-		player_thrust_y[v] = ((float)vector_y[v]) / player_thrust_divider;
-		player_thrust_rev_x[v] = ((float)vector_x[v]) / player_thrust_divider;
-		player_thrust_rev_y[v] = ((float)vector_y[v]) / player_thrust_divider;
+		player_thrust_x[v] = (v_x[v]) * player_thrust_mag;
+		player_thrust_y[v] = (v_y[v]) * player_thrust_mag;
+		player_thrust_rev_x[v] = (v_x[v]) * player_thrust_rev_mag;
+		player_thrust_rev_y[v] = (v_y[v]) * player_thrust_rev_mag;
 	}
-
+	
 	// Enable player sprite
 	enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, 0);
 	// Set player start position
@@ -183,15 +180,15 @@ void main()
 			{
 				player_v_x += player_thrust_x[player_a];
 				player_v_y += player_thrust_y[player_a];
-				player_thrust = player_thrust_mag;
-				player_trail_timer += player_thrust_mag;
+				player_thrust = player_thrust_mag * 24;
+				player_trail_timer += player_thrust;
 			}
 			else if (input_down)
 			{
-				player_v_x -= player_thrust_rev_x[player_a];
-				player_v_y -= player_thrust_rev_y[player_a];
-				player_thrust = player_thrust_rev_mag;
-				player_trail_timer -= player_thrust_rev_mag;
+				player_v_x += player_thrust_rev_x[player_a];
+				player_v_y += player_thrust_rev_y[player_a];
+				player_thrust = player_thrust_rev_mag * 24;
+				player_trail_timer -= player_thrust;
 			}
 
 			float player_speed = sqrtf((player_v_x * player_v_x) + (player_v_y * player_v_y));

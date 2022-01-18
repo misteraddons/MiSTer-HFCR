@@ -305,9 +305,6 @@ always @(posedge clk) begin
 						tilemapram_ctl_wr <= 1'b0;
 						if((tilemap_scroll_axis ? tilemap_ctl_y : tilemap_ctl_x) == tilemap_scroll_target_pos)
 						begin
-`ifdef TM_DEBUG
-							$display("TM_SCROLL_SETINDEX - tilemap_scroll_target_pos HIT");
-`endif
 							if(!tilemap_scroll_axis ? (tilemap_ctl_y == TILEMAP_CELLS_Y - 5'd1) : (tilemap_ctl_x == TILEMAP_CELLS_X - 5'd1))
 							begin
 								// Scroll process completed

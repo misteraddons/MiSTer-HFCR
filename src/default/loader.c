@@ -25,6 +25,8 @@
 #include "../shared/starfield.h"
 #include "sound_samples.h"
 
+const char *system_title = "AZNABLE";
+
 // Loader (aesthetic pointlessness)
 void intro_text(const char *text, unsigned char start_x, unsigned char start_y, unsigned char space_x, unsigned char speed, unsigned char flash_speed)
 {
@@ -103,7 +105,6 @@ void loader(const char *title)
 	// Reset starfields
 	disable_starfield();
 	
-	const char *system_title = "AZNABLE";
 
 	// OS Intro
 	write_char('>', 0xFF, 0, 1);

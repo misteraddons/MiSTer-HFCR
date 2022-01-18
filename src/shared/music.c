@@ -25,7 +25,7 @@
 #define const_music_track_max 32
 unsigned char music_track_max = const_music_track_max;
 
-unsigned char music_last_played;
+unsigned char music_last_played = 255;
 
 #include myPATH(../PROJECT_NAME/,music_tracks.h) // Include auto generated track array
 
