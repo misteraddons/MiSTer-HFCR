@@ -1,30 +1,36 @@
 SDCC=sdcc
 CPU=z80
 DATALOC=0xC000
-SHARED_PATH=../shared/
-SHARED_RELS=$(patsubst %.c,build/%.rel,$(wildcard $(SHARED_PATH)*.c))
+
 OUT_DIR=build/
 MAIN=os
-PROJECT_RELS_1=$(patsubst %.c,build/%.rel,$(wildcard *.c)) 
-PROJECT_RELS=$(patsubst build/$(MAIN).rel,,$(PROJECT_RELS_1)) 
+OUTPUT=rom
+
+SHARED_PATH=../shared/
+SHARED_RELS_ALL=$(patsubst %.c,build/%.rel,$(wildcard $(SHARED_PATH)*.c)) # Get all c files from src/shared/ folder
+IGNORE_SHARED_RELS=$(patsubst %, build/../shared/%.rel, $(IGNORE_SHARED)) # Format shared files to ignore correctly for filtering
+SHARED_RELS=$(filter-out $(IGNORE_SHARED_RELS), $(SHARED_RELS_ALL)) # Filter out ignored shared files
+
+PROJECT_RELS_ALL=$(patsubst %.c,build/%.rel,$(wildcard *.c)) # Get all c files from src/[project]  folder
+IGNORE_PROJECT_RELS=$(patsubst %, build/%.rel, $(IGNORE_PROJECT)) # Format project files to ignore correctly for filtering
+PROJECT_RELS_FILTERED=$(filter-out $(IGNORE_PROJECT_RELS),$(PROJECT_RELS_ALL)) # Filter out ignored shared files
+PROJECT_RELS=$(patsubst build/$(MAIN).rel,,$(PROJECT_RELS_FILTERED))  # Remove main c file
+
 TARGET_RELS=$(patsubst build/$(MAIN).rel,,$(wildcard build/*.rel))
 
+all: $(OUTPUT).bin
 
-all: $(MAIN).bin
+build/$(OUTPUT).ihx: $(PROJECT_RELS) $(SHARED_RELS)
+	$(SDCC) $(DEFINES) -m$(CPU) --data-loc $(DATALOC) -o $(OUT_DIR)$(OUTPUT).ihx $(MAIN).c $(TARGET_RELS)
 
-$(MAIN).ihx: $(PROJECT_RELS) $(SHARED_RELS)
-	$(SDCC) $(DEFINES) -m$(CPU) --data-loc $(DATALOC) -o $(OUT_DIR) $(MAIN).c $(TARGET_RELS)
-
-build/%.rel: %.c 
+build/%.rel: %.c
 	$(SDCC) $(DEFINES) -m$(CPU) --data-loc $(DATALOC) -o $(OUT_DIR) -c $<
 
-%.hex: %.ihx
-	mv build/$< $@
-
-%.bin: %.hex
+$(OUTPUT).bin: build/$(OUTPUT).ihx
 	srec_cat $< -intel -o $@ -binary
-#	rm -f build/*.rel build/*.lst build/*.sym build/*.lk build/*.map build/*.noi
-	mv $(MAIN).bin bin/$(MAIN).bin
+	rm build/$(OUTPUT).ihx
+#	rm -f build/*.rel build/*.lst build/*.sym build/*.lk build/*.map build/*.noi build/*.asm
+	mv $(OUTPUT).bin bin/$(OUTPUT).bin
 
 clean:
 	rm -f build/*

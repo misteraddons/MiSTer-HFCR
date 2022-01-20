@@ -4,34 +4,32 @@ CURRENTDIR=$(pwd)
 
 # Compile C code
 cd src/$PROJECT
-#make clean
+make clean
 make all
 cd $CURRENTDIR
 
 # Compile verilator code
 cd verilator
-./verilate.sh
+./verilate.sh $PROJECT
 cd $CURRENTDIR
 
-# Hexify roms
-od -An -t x1 -v src/$PROJECT/bin/os.bin > verilator/rom.hex
-od -An -t x1 -v src/$PROJECT/bin/os.bin > verilator/x64/Release/rom.hex
-od -An -t x1 -v src/$PROJECT/bin/os.bin > rtl/rom.hex
-od -An -t x1 -v PETSCII.pf > verilator/font.hex
-od -An -t x1 -v PETSCII.pf > verilator/x64/Release/font.hex
-od -An -t x1 -v PETSCII.pf > rtl/font.hex
-od -An -t x1 -v resources/$PROJECT/sprite.bin > verilator/sprite.hex
-od -An -t x1 -v resources/$PROJECT/sprite.bin > rtl/sprite.hex
-od -An -t x1 -v resources/$PROJECT/sprite.bin > verilator/x64/Release/sprite.hex
-od -An -t x1 -v resources/$PROJECT/palette.bin > verilator/palette.hex
-od -An -t x1 -v resources/$PROJECT/palette.bin > rtl/palette.hex
-od -An -t x1 -v resources/$PROJECT/palette.bin > verilator/x64/Release/palette.hex
-od -An -t x1 -v resources/$PROJECT/music.bin > verilator/music.hex
-od -An -t x1 -v resources/$PROJECT/music.bin > rtl/music.hex
-od -An -t x1 -v resources/$PROJECT/music.bin > verilator/x64/Release/music.hex
-od -An -t x1 -v resources/$PROJECT/sound.bin > verilator/sound.hex
-od -An -t x1 -v resources/$PROJECT/sound.bin > verilator/x64/Release/sound.hex
-od -An -t x1 -v resources/$PROJECT/sound.bin > rtl/sound.hex
-od -An -t x1 -v resources/$PROJECT/tilemap.bin > verilator/tilemap.hex
-od -An -t x1 -v resources/$PROJECT/tilemap.bin > rtl/tilemap.hex
-od -An -t x1 -v resources/$PROJECT/tilemap.bin > verilator/x64/Release/tilemap.hex
+# Build target locations
+#TARGETS=( verilator/ verilator/x64/Release/ rtl/ )
+TARGETS=( verilator rtl )
+
+# Hexify rom and font and copy to build targets
+for TARGET in "${TARGETS[@]}"; do
+od -An -t x1 -v src/$PROJECT/bin/rom.bin > $TARGET/rom.hex
+od -An -t x1 -v font.pf > $TARGET/font.hex
+done
+
+# Hexify resource binarys and copy to build targets
+RESOURCES=( sprite palette music sound tilemap )
+for RESOURCE in "${RESOURCES[@]}"; do
+if [ -r "resources/$PROJECT/$RESOURCE.bin" ]; then
+echo "Updating resources/$PROJECT/$RESOURCE.bin"
+for TARGET in "${TARGETS[@]}"; do
+od -An -t x1 -v resources/$PROJECT/$RESOURCE.bin > $TARGET/$RESOURCE.hex
+done
+fi
+done

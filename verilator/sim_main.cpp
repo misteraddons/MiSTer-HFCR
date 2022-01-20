@@ -286,16 +286,16 @@ int main(int argc, char** argv, char** env) {
 		ImGui::SetWindowPos(windowTitle_DebugLog, ImVec2(0, 160), ImGuiCond_Once);
 
 		// Memory debug
-		/*ImGui::Begin("PGROM Editor");
-		mem_edit.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 32768, 0);
-		ImGui::End();
-		ImGui::Begin("CHROM Editor");
-		mem_edit.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
-		ImGui::End();*/
-		/*ImGui::Begin("WKRAM Editor");
-		mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
-		ImGui::End();
-		*///ImGui::Begin("CHRAM Editor");
+		//ImGui::Begin("PGROM Editor");
+		//mem_edit.DrawContents(top->emu__DOT__system__DOT__pgrom__DOT__mem, 32768, 0);
+		//ImGui::End();
+		//ImGui::Begin("CHROM Editor");
+		//mem_edit.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
+		//ImGui::End();
+		//ImGui::Begin("WKRAM Editor");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
+		//ImGui::End();
+		//ImGui::Begin("CHRAM Editor");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		//ImGui::Begin("FGCOLRAM Editor");
@@ -349,10 +349,12 @@ int main(int argc, char** argv, char** env) {
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
+#ifdef DEBUG_AUDIO
 		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
 		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
 		ImGui::ProgressBar(vol_l+0.5, ImVec2(200, 16), 0); ImGui::SameLine();
 		ImGui::ProgressBar(vol_r+0.5, ImVec2(200, 16), 0);
+#endif
 
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));

@@ -82,6 +82,8 @@ float player_thrust_x[direction_count];
 float player_thrust_y[direction_count];
 float player_thrust_rev_x[direction_count];
 float player_thrust_rev_y[direction_count];
+float player_trail_offset_x[direction_count];
+float player_trail_offset_y[direction_count];
 
 #define player_trail_timer_max 32
 unsigned char player_trail_timer = player_trail_timer_max;
@@ -98,6 +100,7 @@ float v_x[direction_count];
 float v_y[direction_count];
 
 #define const_particle_max 16
+float v_y[direction_count];
 bool particle_on[const_particle_max];
 unsigned char particle_timer[const_particle_max];
 float particle_x[const_particle_max];
@@ -112,17 +115,26 @@ void main()
 	chram_size = chram_cols * chram_rows;
 	clear_bgcolor(0);
 
-	// Generate float unit vectors for sprite direction
+	write_string("CALCULATING VECTORS", 0xFF, 0, 0);
+
+	// Generate float vectors for various angles
 	for (unsigned char v = 0; v < direction_count; v++)
 	{
+		// Generate unit vector
 		v_x[v] = ((float)vector_x[v]) / v_divider;
 		v_y[v] = ((float)vector_y[v]) / v_divider;
+
+		// Player thrust vectors
 		player_thrust_x[v] = (v_x[v]) * player_thrust_mag;
 		player_thrust_y[v] = (v_y[v]) * player_thrust_mag;
 		player_thrust_rev_x[v] = (v_x[v]) * player_thrust_rev_mag;
 		player_thrust_rev_y[v] = (v_y[v]) * player_thrust_rev_mag;
+		// Player trail start offset vectors
+		player_trail_offset_x[v] = (v_x[v]) * -7;
+		player_trail_offset_y[v] = (v_y[v]) * -7;
 	}
-	
+	clear_char_area(0, 0, 0, 40, 0);
+
 	// Enable player sprite
 	enable_sprite(player_sprite, sprite_palette_player, sprite_size_player, 0);
 	// Set player start position
@@ -209,8 +221,8 @@ void main()
 					if (!particle_on[p])
 					{
 						particle_on[p] = true;
-						particle_x[p] = (screen_center_x - sprite_halfpixelsize_trails) - (v_x[player_a] * 7);
-						particle_y[p] = (screen_center_y - sprite_halfpixelsize_trails) - (v_y[player_a] * 7);
+						particle_x[p] = (screen_center_x - sprite_halfpixelsize_trails) + player_trail_offset_x[player_a];
+						particle_y[p] = (screen_center_y - sprite_halfpixelsize_trails) + player_trail_offset_y[player_a];
 						particle_v_x[p] = v_x[player_a] * -player_thrust;
 						particle_v_y[p] = v_y[player_a] * -player_thrust;
 						particle_timer[p] = particle_timer_max;

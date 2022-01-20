@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Input Tester main application
+	Aznable OS - Scrolling tilemap test
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.1
@@ -20,12 +20,7 @@
 ===========================================================================*/
 #include "../shared/sys.h"
 #include "../shared/ui.h"
-#include "../shared/sprite.h"
-#include "../shared/sound.h"
 #include "../shared/tilemap.h"
-#include "../shared/ps2.h"
-#include "sprite_images.h"
-#include "sound_samples.h"
 #include "tilemap_indexes.h"
 
 // DPAD tracker
@@ -50,21 +45,23 @@ void basic_input()
 	input_left_last = input_left;
 	input_right_last = input_right;
 	input_a_last = input_a;
-	input_up = CHECK_BIT(joystick[0], 3) || kbd_down[KEY_UP];
-	input_down = CHECK_BIT(joystick[0], 2) || kbd_down[KEY_DOWN];
-	input_left = CHECK_BIT(joystick[0], 1) || kbd_down[KEY_LEFT];
-	input_right = CHECK_BIT(joystick[0], 0) || kbd_down[KEY_RIGHT];
-	input_a = CHECK_BIT(joystick[0], 4) || kbd_down[KEY_ENTER];
+	input_up = CHECK_BIT(joystick[0], 3);
+	input_down = CHECK_BIT(joystick[0], 2);
+	input_left = CHECK_BIT(joystick[0], 1);
+	input_right = CHECK_BIT(joystick[0], 0);
+	input_a = CHECK_BIT(joystick[0], 4);
 }
 
 void update_section(unsigned char lx, unsigned char rx, unsigned char ty, unsigned char by)
 {
 	for (unsigned char y = ty; y <= by; y++)
 	{
+		unsigned short p = (y * 32) + lx;
+		unsigned char yi = (y + y_off - 1);
 		for (unsigned char x = lx; x <= rx; x++)
 		{
-			unsigned short p = ((y)*32) + (x);
-			tilemapram[p] = tilemap_index[y + y_off - 1][x + x_off - 1];
+			tilemapram[p] = tilemap_index[yi][x + x_off - 1];
+			p++;
 		}
 	}
 }
@@ -102,7 +99,8 @@ void main()
 				scroll_tilemap_right();
 				x_off--;
 				update_section(0, 0, 0, 16);
-			}else if (tilemap_offset_y >= 16)
+			}
+			else if (tilemap_offset_y >= 16)
 			{
 				tilemap_offset_y -= 16;
 				scroll_tilemap_up();
