@@ -90,9 +90,6 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 }
 void loader(const char *title)
 {
-	// Play startup sound
-	//set_sound_volume(255);
-	//play_sound(const_sound_newtype);
 
 	// Set charmap area
 	chram_size = chram_cols * chram_rows;
@@ -104,7 +101,6 @@ void loader(const char *title)
 	update_sprites();
 	// Reset starfields
 	disable_starfield();
-	
 
 	// OS Intro
 	write_char('>', 0xFF, 0, 1);
@@ -112,8 +108,8 @@ void loader(const char *title)
 	write_char(' ', 0xFF, 0, 1);
 
 	write_char('>', 0xFF, 0, 3);
-	intro_text("LOAD ", 2, 3, 1, 4, 1);
-	intro_text(title, 7, 3, 1, 4, 1);
+	intro_text("LOAD ", 2, 3, 1, 2, 1);
+	intro_text(title, 7, 3, 1, 2, 1);
 	write_char(' ', 0xFF, 0, 3);
 
 	write_char('>', 0xFF, 0, 5);
