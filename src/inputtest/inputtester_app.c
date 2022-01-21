@@ -385,7 +385,7 @@ bool modeswitcher()
 void inputtester_digital()
 {
 
-    // // Handle PS/2 inputs whenever possible to improve latency
+    // Handle PS/2 inputs whenever possible to improve latency
     handle_ps2();
 
     // Handle secret code detection (joypad 1 directions)

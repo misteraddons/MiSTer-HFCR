@@ -352,8 +352,8 @@ int main(int argc, char** argv, char** env) {
 #ifdef DEBUG_AUDIO
 		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
 		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
-		ImGui::ProgressBar(vol_l+0.5, ImVec2(200, 16), 0); ImGui::SameLine();
-		ImGui::ProgressBar(vol_r+0.5, ImVec2(200, 16), 0);
+		ImGui::ProgressBar(vol_l + 0.5, ImVec2(200, 16), 0); ImGui::SameLine();
+		ImGui::ProgressBar(vol_r + 0.5, ImVec2(200, 16), 0);
 #endif
 
 		// Draw VGA output
@@ -384,8 +384,8 @@ int main(int argc, char** argv, char** env) {
 		//	}
 		//	if (spinner_toggle) { top->spinner_0 |= 1UL << 8; }
 		//}
-		
-		mouse_buttons =0;
+
+		mouse_buttons = 0;
 		mouse_x = 0;
 		mouse_y = 0;
 		if (input.inputs[input_left]) { mouse_x = -2; }
@@ -401,7 +401,7 @@ int main(int argc, char** argv, char** env) {
 		mouse_temp += (mouse_y << 16);
 		if (mouse_clock) { mouse_temp |= (1UL << 24); }
 		mouse_clock = !mouse_clock;
-		
+
 		top->ps2_mouse = mouse_temp;
 		top->ps2_mouse_ext = mouse_x + (mouse_buttons << 8);
 

@@ -336,7 +336,7 @@ void game_loop()
 			button_a_last = button_a;
 			button_a = CHECK_BIT(joystick[0], 4);
 
-			// Presse Select to quit
+			// Press Select to quit
 			if (CHECK_BIT(joystick[1], 2))
 			{
 				pleaseStop = 1;
