@@ -21,7 +21,10 @@ cp -r verilator/sim_main.cpp $TARGETDIR/verilator/
 cp -r verilator/sim/* $TARGETDIR/verilator/sim/
 
 # Remove resource working folders
-rm -r $TARGETDIR/resources/*/res/
+rm -r $TARGETDIR/resources/$TARGETPROJ/sprites/res/
+rm -r $TARGETDIR/resources/$TARGETPROJ/tilemap/res/
+rm -r $TARGETDIR/resources/$TARGETPROJ/sound/res/
+rm -r $TARGETDIR/resources/$TARGETPROJ/music/res/
 
 # Clear build data
 rm -r $TARGETDIR/src/$TARGETPROJ/build
