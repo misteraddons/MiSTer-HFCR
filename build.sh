@@ -4,7 +4,7 @@ CURRENTDIR=$(pwd)
 
 # Compile C code
 cd src/$PROJECT
-make clean
+#make clean
 make all
 cd $CURRENTDIR
 
@@ -14,7 +14,6 @@ cd verilator
 cd $CURRENTDIR
 
 # Build target locations
-#TARGETS=( verilator/ verilator/x64/Release/ rtl/ )
 TARGETS=( verilator rtl )
 
 # Hexify rom and font and copy to build targets

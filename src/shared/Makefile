@@ -29,8 +29,8 @@ build/%.rel: %.c
 $(OUTPUT).bin: build/$(OUTPUT).ihx
 	srec_cat $< -intel -o $@ -binary
 	rm build/$(OUTPUT).ihx
-#	rm -f build/*.rel build/*.lst build/*.sym build/*.lk build/*.map build/*.noi build/*.asm
 	mv $(OUTPUT).bin bin/$(OUTPUT).bin
+	rm -f build/$(OUTPUT).*
 
 clean:
 	rm -f build/*

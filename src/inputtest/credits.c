@@ -20,6 +20,7 @@
 ===========================================================================*/
 #include "../shared/sys.h"
 #include "../shared/ui.h"
+#include "../shared/ps2.h"
 #include "../shared/sprite.h"
 #include "../shared/music.h"
 #include "../shared/tilemap.h"
@@ -103,6 +104,7 @@ void app_credits()
 
 		if (VBLANK_FALLING)
 		{
+			handle_ps2();
 			basic_input();
 			if (input_a || input_b || input_select || input_start)
 			{
