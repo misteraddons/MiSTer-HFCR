@@ -1,15 +1,22 @@
 #ifndef SPRITE_IMAGES_H
 #define SPRITE_IMAGES_H
-#define sprite_index_explosions_first 0
+#define sprite_index_enemy_first 0
+#define sprite_index_enemy_count 1
+#define sprite_index_enemy_last 0
+#define sprite_palette_enemy 2
+#define sprite_size_enemy 1
+#define sprite_pixelsize_enemy 16
+#define sprite_halfpixelsize_enemy 8
+#define sprite_index_explosions_first 1
 #define sprite_index_explosions_count 8
-#define sprite_index_explosions_last 7
+#define sprite_index_explosions_last 8
 #define sprite_palette_explosions 1
 #define sprite_size_explosions 1
 #define sprite_pixelsize_explosions 16
 #define sprite_halfpixelsize_explosions 8
-#define sprite_index_player_first 8
+#define sprite_index_player_first 9
 #define sprite_index_player_count 16
-#define sprite_index_player_last 23
+#define sprite_index_player_last 24
 #define sprite_palette_player 0
 #define sprite_size_player 1
 #define sprite_pixelsize_player 16
