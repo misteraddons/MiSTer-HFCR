@@ -177,7 +177,25 @@ always @(posedge clk_24) begin
 	if(system_menu_cs && !cpu_wr_n) menu_trigger <= 1'b0;
 end
 
+reg [25:0] frame_timer;
+reg vblank_last;
 always @(posedge clk_24) begin
+	vblank_last <= VGA_VB;
+	if(!VGA_VB && vblank_last)
+	begin
+		//$display("VB ended - %d", frame_timer);
+		frame_timer <= 26'b0;
+	end
+	else
+	if(VGA_VB && !vblank_last)
+	begin
+		//$display("VB started - %d", frame_timer);
+		frame_timer <= 26'b0;
+	end
+	else
+	begin
+		frame_timer <= frame_timer + 26'b1;
+	end
 	//if(pgrom_cs) $display("%x pgrom o %x", cpu_addr, pgrom_data_out);
 	//if(wkram_cs) $display("%x wkram i %x o %x w %b", cpu_addr, cpu_dout, wkram_data_out, wkram_wr);
 	//if(chram_cs) $display("%x chram i %x o %x w %b", cpu_addr, cpu_dout, chram_data_out, chram_wr);
@@ -198,6 +216,7 @@ always @(posedge clk_24) begin
 	//if(music_cs && !cpu_wr_n) $display("music_cs %b %b", cpu_addr, cpu_dout);
 	//if(tilemapcontrol_cs) $display("tilemapcontrol_cs addr=%x dout=%x din=%x wr=%b", cpu_addr, cpu_dout, tilemapcontrol_data_out, cpu_wr_n);
 	//if(tilemapram_cs  && !cpu_wr_n) $display("tilemapram_cs addr=%x dout=%x", cpu_addr, cpu_dout);
+	//if(timer_cs) $display("timer_cs wr=%b timer=%d   frame_time=%d  hcnt=%d  vcnt=%d", ~cpu_wr_n, timer, frame_timer, hcnt, vcnt);
 end
 
 // ROM data available to CPU
@@ -438,11 +457,9 @@ localparam SD_WAIT = 0;
 localparam SD_CLEAR_BEGIN = 1;
 localparam SD_CLEAR = 2;
 reg [2:0] sd_state;
-reg vblank_last;
 reg [15:0] vblank_start;
 always @(posedge clk_24) 
 begin
-	vblank_last <= VGA_VB;
 	case(sd_state)
 		SD_WAIT:
 		begin
@@ -577,9 +594,15 @@ assign VGA_G = spr_a ? spr_g : charmap_a ? charmap_g : sf_on ? sf_star_colour : 
 assign VGA_B = spritedebugram_data_out_a > 8'b0 ? spritedebugram_data_out_a : spr_a ? spr_b : charmap_a ? charmap_b : sf_on ? sf_star_colour : 8'b0;
 `endif
 `ifndef DEBUG_SPRITE_COLLISION
+`ifdef SPRITE_LAYER_HIGH
 assign VGA_R = spr_a ? spr_r : charmap_a ? charmap_r : tilemap_a ? tilemap_r : sf_on ? sf_star_colour : 8'b0; 
 assign VGA_G = spr_a ? spr_g : charmap_a ? charmap_g : tilemap_a ? tilemap_g : sf_on ? sf_star_colour : 8'b0;
 assign VGA_B = spr_a ? spr_b : charmap_a ? charmap_b : tilemap_a ? tilemap_b : sf_on ? sf_star_colour : 8'b0;
+`else 
+assign VGA_R = charmap_a ? charmap_r : spr_a ? spr_r : tilemap_a ? tilemap_r : sf_on ? sf_star_colour : 8'b0; 
+assign VGA_G = charmap_a ? charmap_g : spr_a ? spr_g : tilemap_a ? tilemap_g : sf_on ? sf_star_colour : 8'b0;
+assign VGA_B = charmap_a ? charmap_b : spr_a ? spr_b : tilemap_a ? tilemap_b : sf_on ? sf_star_colour : 8'b0;
+`endif
 `endif
 
 // Music player

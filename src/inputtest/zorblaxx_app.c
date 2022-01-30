@@ -156,7 +156,10 @@ void update_scroller()
 void intro_loop()
 {
 
-	clear_bgcolor(0);
+	clear_bgcolor(transparent_char);
+	clear_tilemap();
+	tilemap_offset_x = 0;
+	scroller_pos = 0;
 
 	// Start intro music loop
 	play_music_if(const_music_maintheme, 1);
@@ -164,7 +167,7 @@ void intro_loop()
 	// Setup starfield layer speeds
 	enable_starfield();
 	set_starfield_speed_x(0);
-	set_starfield_speed_y(-0.5f);
+	set_starfield_speed_y(-64);
 
 	// Setup title sprites
 	unsigned char title_sprite = 16;
@@ -329,7 +332,7 @@ void game_loop()
 			if (scroll_speed != scroll_speed_last)
 			{
 				scroll_speed_last = scroll_speed;
-				set_starfield_speed_y(scroll_speed * -0.02f);
+				set_starfield_speed_y(-scroll_speed * 4);
 			}
 
 			// Track player button press

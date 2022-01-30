@@ -4,7 +4,7 @@ CURRENTDIR=$(pwd)
 
 # Compile C code
 cd src/$PROJECT
-make clean
+#make clean
 make all
 cd $CURRENTDIR
 
