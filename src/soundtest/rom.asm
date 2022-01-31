@@ -10,6 +10,10 @@
 ;--------------------------------------------------------
 	.globl _main
 	.globl _app_main
+	.globl _cosf
+	.globl _sinf
+	.globl _set_starfield_speed_y
+	.globl _set_starfield_speed_x
 	.globl _enable_starfield
 	.globl _play_sound
 	.globl _handle_ps2
@@ -97,12 +101,18 @@ _time::
 ; code
 ;--------------------------------------------------------
 	.area _CODE
-;os.c:35: void app_main()
+;os.c:37: void app_main()
 ;	---------------------------------
 ; Function app_main
 ; ---------------------------------
 _app_main::
-;os.c:37: chram_size = chram_cols * chram_rows;
+	push	ix
+	ld	ix,#0
+	add	ix,sp
+	ld	hl, #-7
+	add	hl, sp
+	ld	sp, hl
+;os.c:39: chram_size = chram_cols * chram_rows;
 	ld	hl,#_chram_rows + 0
 	ld	e, (hl)
 	ld	hl,#_chram_cols + 0
@@ -110,56 +120,65 @@ _app_main::
 	ld	l, #0x00
 	ld	d, l
 	ld	b, #0x08
-00161$:
+00169$:
 	add	hl, hl
-	jr	NC,00162$
+	jr	NC,00170$
 	add	hl, de
-00162$:
-	djnz	00161$
+00170$:
+	djnz	00169$
 	ld	(_chram_size), hl
-;os.c:38: clear_chars(0);
+;os.c:40: clear_chars(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_clear_chars
 	inc	sp
-;os.c:39: enable_starfield();
+;os.c:41: enable_starfield();
 	call	_enable_starfield
-;os.c:41: for (unsigned char s = 0; s < const_sound_sample_used; s++)
-	ld	c, #0x00
-00116$:
-	ld	a, c
+;os.c:43: for (unsigned char s = 0; s < const_sound_sample_used; s++)
+	ld	l, #0x00
+00119$:
+	ld	a, l
 	sub	a, #0x04
 	jr	NC,00101$
-;os.c:43: write_stringf("%d: Play ", 0xFF, 5, 5 + (s * 2), s + 1);
-	ld	b, c
-	inc	b
-	ld	a, c
+;os.c:45: write_stringf("%d: Play ", 0xFF, 5, 5 + (s * 2), s + 1);
+	ld	e, l
+	inc	e
+	ld	a, l
 	add	a, a
 	add	a, #0x05
-	ld	d, a
-	push	bc
-	ld	c, d
-	push	bc
-	ld	de, #0x05ff
-	push	de
-	ld	hl, #___str_0
+	ld	c, a
 	push	hl
+	ld	a, e
+	push	af
+	inc	sp
+	ld	d, c
+	ld	e,#0x05
+	push	de
+	ld	a, #0xff
+	push	af
+	inc	sp
+	ld	bc, #___str_0
+	push	bc
 	call	_write_stringf
 	ld	hl, #6
 	add	hl, sp
 	ld	sp, hl
-	pop	bc
-;os.c:41: for (unsigned char s = 0; s < const_sound_sample_used; s++)
-	inc	c
-	jr	00116$
+	pop	hl
+;os.c:43: for (unsigned char s = 0; s < const_sound_sample_used; s++)
+	inc	l
+	jr	00119$
 00101$:
-;os.c:48: unsigned char play_wait = 0;
+;os.c:50: unsigned char play_wait = 0;
 	ld	c, #0x00
-;os.c:50: while (1)
-	ld	de, #0x0000
-00113$:
-;os.c:52: vblank = CHECK_BIT(input0, INPUT_VBLANK);
+;os.c:54: bool star_x = 1;
+	ld	-3 (ix), #0x01
+;os.c:56: while (1)
+	xor	a, a
+	ld	-2 (ix), a
+	ld	-1 (ix), a
+00116$:
+;os.c:58: vblank = CHECK_BIT(input0, INPUT_VBLANK);
 	ld	a,(#_input0 + 0)
 	and	a, #0x10
 	ld	b, a
@@ -167,17 +186,16 @@ _app_main::
 	cp	a, b
 	rla
 	ld	(_vblank+0), a
-;os.c:54: if (VBLANK_RISING)
+;os.c:60: if (VBLANK_RISING)
 	ld	iy, #_vblank
 	bit	0, 0 (iy)
-	jr	Z,00110$
+	jp	Z, 00113$
 	ld	iy, #_vblank_last
 	bit	0, 0 (iy)
-	jr	NZ,00110$
-;os.c:56: write_stringf("frame %3d", 0xFF, 0, 29, frame);
-	ld	b, e
+	jp	NZ, 00113$
+;os.c:62: write_stringf("frame %3d", 0xFF, 0, 29, frame);
+	ld	b, -2 (ix)
 	push	bc
-	push	de
 	push	bc
 	inc	sp
 	ld	a, #0x1d
@@ -193,38 +211,37 @@ _app_main::
 	ld	hl, #6
 	add	hl, sp
 	ld	sp, hl
-	pop	de
 	pop	bc
-;os.c:57: frame++;
-	inc	de
-;os.c:59: if (play_wait > 0)
+;os.c:63: frame++;
+	inc	-2 (ix)
+	jr	NZ,00171$
+	inc	-1 (ix)
+00171$:
+;os.c:65: if (play_wait > 0)
 	ld	a, c
 	or	a, a
 	jr	Z,00107$
-;os.c:61: play_wait--;
+;os.c:67: play_wait--;
 	dec	c
-	jr	00110$
+	jr	00108$
 00107$:
-;os.c:65: handle_ps2();
+;os.c:71: handle_ps2();
 	push	bc
-	push	de
 	call	_handle_ps2
-	pop	de
 	pop	bc
-;os.c:66: if (kbd_pressed)
+;os.c:72: if (kbd_pressed)
 	ld	a,(#_kbd_pressed + 0)
 	or	a, a
-	jr	Z,00110$
-;os.c:68: unsigned char s = kbd_ascii - 49;
+	jr	Z,00108$
+;os.c:74: unsigned char s = kbd_ascii - 49;
 	ld	a,(#_kbd_ascii + 0)
 	add	a, #0xcf
-;os.c:69: if (s < const_sound_sample_used)
+;os.c:75: if (s < const_sound_sample_used)
 	ld	b, a
 	sub	a, #0x04
-	jr	NC,00110$
-;os.c:71: write_stringf("playing %2d", 0xFF, 5, 20, s);
+	jr	NC,00108$
+;os.c:77: write_stringf("playing %2d", 0xFF, 5, 20, s);
 	push	bc
-	push	de
 	push	bc
 	inc	sp
 	ld	de, #0x1405
@@ -238,24 +255,106 @@ _app_main::
 	ld	hl, #6
 	add	hl, sp
 	ld	sp, hl
-	pop	de
-	pop	bc
-;os.c:72: play_sound(s);
-	push	de
-	push	bc
 	inc	sp
 	call	_play_sound
 	inc	sp
-	pop	de
-;os.c:73: play_wait = 15;
+;os.c:79: play_wait = 15;
 	ld	c, #0x0f
+00108$:
+;os.c:84: if (star_x)
+	bit	0, -3 (ix)
+	jr	Z,00110$
+;os.c:86: signed short x = sinf(time) * 100;
+	push	bc
+	ld	hl, (_time + 2)
+	push	hl
+	ld	hl, (_time)
+	push	hl
+	call	_sinf
+	pop	af
+	pop	af
+	push	de
+	push	hl
+	ld	hl, #0x42c8
+	push	hl
+	ld	hl, #0x0000
+	push	hl
+	call	___fsmul
+	pop	af
+	pop	af
+	pop	af
+	pop	af
+	push	de
+	push	hl
+	call	___fs2sint
+	pop	af
+	ex	(sp),hl
+	call	_set_starfield_speed_x
+	pop	af
+	pop	bc
+	jr	00111$
 00110$:
-;os.c:86: vblank_last = vblank;
+;os.c:91: signed short y = cosf(time) * 100;
+	push	bc
+	ld	hl, (_time + 2)
+	push	hl
+	ld	hl, (_time)
+	push	hl
+	call	_cosf
+	pop	af
+	pop	af
+	push	de
+	push	hl
+	ld	hl, #0x42c8
+	push	hl
+	ld	hl, #0x0000
+	push	hl
+	call	___fsmul
+	pop	af
+	pop	af
+	pop	af
+	pop	af
+	push	de
+	push	hl
+	call	___fs2sint
+	pop	af
+	ex	(sp),hl
+	call	_set_starfield_speed_y
+	ld	hl, #0x3d4c
+	ex	(sp),hl
+	ld	hl, #0xcccd
+	push	hl
+	ld	hl, (_time + 2)
+	push	hl
+	ld	hl, (_time)
+	push	hl
+	call	___fsadd
+	pop	af
+	pop	af
+	pop	af
+	pop	af
+	ld	-7 (ix), l
+	ld	-6 (ix), h
+	ld	-5 (ix), e
+	ld	-4 (ix), d
+	ld	de, #_time
+	ld	hl, #2
+	add	hl, sp
+	ld	bc, #4
+	ldir
+	pop	bc
+00111$:
+;os.c:96: star_x = !star_x;
+	ld	a, -3 (ix)
+	xor	a, #0x01
+	ld	-3 (ix), a
+00113$:
+;os.c:99: vblank_last = vblank;
 	ld	a,(#_vblank + 0)
 	ld	iy, #_vblank_last
 	ld	0 (iy), a
-;os.c:88: }
-	jp	00113$
+;os.c:101: }
+	jp	00116$
 ___str_0:
 	.ascii "%d: Play "
 	.db 0x00
@@ -265,13 +364,13 @@ ___str_1:
 ___str_2:
 	.ascii "playing %2d"
 	.db 0x00
-;os.c:91: void main()
+;os.c:104: void main()
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;os.c:93: app_main();
-;os.c:94: }
+;os.c:106: app_main();
+;os.c:107: }
 	jp	_app_main
 	.area _CODE
 	.area _INITIALIZER

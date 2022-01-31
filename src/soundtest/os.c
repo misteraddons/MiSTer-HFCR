@@ -23,10 +23,12 @@
 #include "../shared/ps2.h"
 #include "../shared/sprite.h"
 #include "../shared/sound.h"
+#include "../shared/music.h"
 #include "../shared/tilemap.h"
 #include "../shared/starfield.h"
 #include "sprite_images.h"
 #include "sound_samples.h"
+#include "music_tracks.h"
 #include <math.h>
 #include <float.h>
 
@@ -46,6 +48,10 @@ void app_main()
 	unsigned short frame = 0;
 
 	unsigned char play_wait = 0;
+
+	// play_music(const_music_gameover, 1);
+
+	bool star_x = 1;
 
 	while (1)
 	{
@@ -75,12 +81,19 @@ void app_main()
 				}
 			}
 
-			// time += 0.05f;
-			// signed short x = sinf(time) * 100;
-			// signed short y = cosf(time) * 100;
+			if (star_x)
+			{
+				signed short x = sinf(time) * 100;
+				set_starfield_speed_x(x);
+			}
+			else
+			{
+				signed short y = cosf(time) * 100;
+				set_starfield_speed_y(y);
+				time += 0.05f;
+			}
 
-			// set_starfield_speed_x(x);
-			// set_starfield_speed_y(y);
+			star_x = !star_x;
 		}
 
 		vblank_last = vblank;

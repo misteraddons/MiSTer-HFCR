@@ -75,6 +75,7 @@
     <ClCompile Include="sim\sim_console.cpp" />
     <ClCompile Include="sim\sim_input.cpp" />
     <ClCompile Include="sim\sim_video.cpp" />
+    <ClCompile Include="sim_audio.cpp" />
     <ClCompile Include="sim_main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -85,6 +86,7 @@
     <ClInclude Include="sim\sim_console.h" />
     <ClInclude Include="sim\sim_input.h" />
     <ClInclude Include="sim\sim_video.h" />
+    <ClInclude Include="sim_audio.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="font.hex">

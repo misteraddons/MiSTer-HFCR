@@ -15,6 +15,7 @@
 #include "sim_console.h"
 #include "sim_bus.h"
 #include "sim_video.h"
+#include "sim_audio.h"
 #include "sim_input.h"
 #include "sim_clock.h"
 
@@ -85,33 +86,22 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 	return main_time;
 }
 
+int clk_sys_freq = 24000000;
 SimClock clk_sys(1);
 
-#define DEBUG_AUDIO
-#define DEBUG_AUDIO_TO_FILE
-
-#ifdef DEBUG_AUDIO
 // Audio
-const unsigned short audio_debug_max_samples = 500;
-double audio_debug_positions[audio_debug_max_samples];
-double audio_debug_wave_l[audio_debug_max_samples];
-double audio_debug_wave_r[audio_debug_max_samples];
-int audio_debug_pos;
-SimClock clk_audio(544);
-#ifdef DEBUG_AUDIO_TO_FILE
-ofstream audioFile;
+// -----
+//#define DISABLE_AUDIO
+#define DEBUG_AUDIO_TO_FILE
+#ifndef DISABLE_AUDIO
+SimAudio audio(clk_sys_freq, false);
 #endif
-#endif
-
 
 // Reset simulation variables and clocks
 void resetSim() {
 	main_time = 0;
 	top->reset = 1;
 	clk_sys.Reset();
-#ifdef DEBUG_AUDIO
-	clk_audio.Reset();
-#endif
 }
 
 int verilate() {
@@ -139,22 +129,10 @@ int verilate() {
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
-#ifdef DEBUG_AUDIO_TO_FILE
+#ifndef DISABLE_AUDIO
 		if (clk_sys.IsRising())
 		{
-			clk_audio.Tick();
-			if (clk_audio.IsRising()) {
-				// Output audio
-				float audio_l = top->AUDIO_L;
-				audio_l /= 65000.0f;
-				//unsigned char audio_8 = audio_l;
-				//if (audio_l > 0) {
-				//	audio_8 = audio_l >> 8;
-				//	//console.AddLog("%d %d",audio_l, audio_8);
-				//}
-				//audioFile.write((const char*)&audio_8, 1);
-				audioFile.write((const char*)&audio_l, sizeof(float));
-			}
+			audio.Clock(top->AUDIO_L, top->AUDIO_R);
 		}
 #endif
 
@@ -207,15 +185,8 @@ int main(int argc, char** argv, char** env) {
 	//bus.ioctl_din = &top->ioctl_din;
 	input.ps2_key = &top->ps2_key;
 
-#ifdef DEBUG_AUDIO
-	for (int c = 0; c < audio_debug_max_samples; c++) {
-		audio_debug_wave_l[c] = 0.5f;
-		audio_debug_wave_r[c] = 0.5f;
-	}
-#endif
-#ifdef DEBUG_AUDIO_TO_FILE
-	// Setup Audio output stream
-	audioFile.open("audio.wav", ios::binary);
+#ifndef DISABLE_AUDIO
+	audio.Initialise();
 #endif
 
 	// Set up input module
@@ -380,34 +351,37 @@ int main(int argc, char** argv, char** env) {
 		ImGui::End();
 
 
-#ifdef DEBUG_AUDIO
+#ifndef DISABLE_AUDIO
 
 		ImGui::Begin(windowTitle_Audio);
 		ImGui::SetWindowPos(windowTitle_Audio, ImVec2(windowX, windowHeight), ImGuiCond_Once);
 		ImGui::SetWindowSize(windowTitle_Audio, ImVec2(windowWidth, 250), ImGuiCond_Once);
 
-		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
-		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
-		ImGui::ProgressBar(vol_l + 0.5, ImVec2(200, 16), 0); ImGui::SameLine();
-		ImGui::ProgressBar(vol_r + 0.5, ImVec2(200, 16), 0);
+		
+		//float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
+		//float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
+		//ImGui::ProgressBar(vol_l + 0.5f, ImVec2(200, 16), 0); ImGui::SameLine();
+		//ImGui::ProgressBar(vol_r + 0.5f, ImVec2(200, 16), 0);
 
+		int ticksPerSec = (24000000 / 60);
 		if (run_enable) {
-			audio_debug_pos++;
-			if (audio_debug_pos == audio_debug_max_samples) { audio_debug_pos = 0; }
-			audio_debug_wave_l[audio_debug_pos] = vol_l + 0.5f;
-			audio_debug_wave_r[audio_debug_pos] = vol_r + 0.5f;
-			audio_debug_positions[audio_debug_pos] = (double)audio_debug_pos / (double)audio_debug_max_samples;
+			audio.CollectDebug((signed short)top->AUDIO_L, (signed short)top->AUDIO_R);
 		}
-
+		int channelWidth = (windowWidth / 2)  -16;
 		ImPlot::CreateContext();
-		if (ImPlot::BeginPlot("Audio Wave Plot", ImVec2(windowWidth, 220), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoTitle)) {
-
-			ImPlot::SetupAxes("T", "A", ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel);
-			ImPlot::SetupAxesLimits(0, 1, 0.25, 0.75, ImPlotCond_Once);
-			ImPlot::PlotLine("", audio_debug_positions, audio_debug_wave_l, audio_debug_pos);
+		if (ImPlot::BeginPlot("Audio - L", ImVec2(channelWidth, 220), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoTitle)) {
+			ImPlot::SetupAxes("T", "A", ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickMarks, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickMarks);
+			ImPlot::SetupAxesLimits(0, 1, -1, 1, ImPlotCond_Once);
+			ImPlot::PlotStairs("", audio.debug_positions, audio.debug_wave_l, audio.debug_max_samples, audio.debug_pos);
 			ImPlot::EndPlot();
 		}
-		//ImPlot::ShowDemoWindow();
+		ImGui::SameLine();
+		if (ImPlot::BeginPlot("Audio - R", ImVec2(channelWidth, 220), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoTitle)) {
+			ImPlot::SetupAxes("T", "A", ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickMarks, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickMarks);
+			ImPlot::SetupAxesLimits(0, 1, -1, 1, ImPlotCond_Once);
+			ImPlot::PlotStairs("", audio.debug_positions, audio.debug_wave_r, audio.debug_max_samples, audio.debug_pos);
+			ImPlot::EndPlot();
+		}
 		ImPlot::DestroyContext();
 		ImGui::End();
 #endif
@@ -473,10 +447,7 @@ int main(int argc, char** argv, char** env) {
 	// Clean up before exit
 	// --------------------
 
-#ifdef DEBUG_AUDIO_TO_FILE
-	audioFile.close();
-#endif
-
+	audio.CleanUp();
 	video.CleanUp();
 	input.CleanUp();
 

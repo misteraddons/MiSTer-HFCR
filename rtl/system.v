@@ -647,12 +647,10 @@ sound #(.ROM_WIDTH(SOUND_ROM_WIDTH)) sound (
 `endif 
 
 // Mix audio (badly)
-wire signed [15:0] music_signed = { 2'b0, music_audio_out, 4'b0 };
+wire signed [15:0] music_signed = { 1'b0, music_audio_out, 5'b0 };
 wire signed [15:0] audio_signed = { 1'b0, (snd_audio_out + 12'b100000000000), 3'b0 } + 16'b1100000000000000;
-
 assign AUDIO_L =  audio_signed + music_signed;
 assign AUDIO_R = AUDIO_L;
-
 
 // MEMORY
 // ------
