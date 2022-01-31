@@ -16,6 +16,8 @@
     Version: 1.0
     Date: 25-9-2019 */
 
+`timescale 1ns / 1ps
+
 module jtframe_resync(
     input         clk,
     input         pxl_cen,

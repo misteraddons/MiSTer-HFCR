@@ -31,6 +31,8 @@
 // See the parameter definition below to alter the needed parameters when
 // instantiating the module
 
+`timescale 1ns / 1ps
+
 module jtframe_vtimer(
     input               clk,
     input               pxl_cen,

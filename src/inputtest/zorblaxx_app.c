@@ -636,8 +636,17 @@ void game_loop()
 	}
 }
 
+void quit_zorblaxx()
+{
+	stop_music();
+	clear_tilemap();
+	clear_chars(0);
+	clear_sprites();
+}
+
 void app_zorblaxx()
 {
+	pleaseStop = false;
 	setup_variables();
 	stop_music();
 
@@ -647,6 +656,7 @@ void app_zorblaxx()
 		clear_sprites();
 		if (pleaseStop)
 		{
+			quit_zorblaxx();
 			return;
 		}
 
@@ -662,6 +672,7 @@ void app_zorblaxx()
 		clear_sprites();
 		if (pleaseStop)
 		{
+			quit_zorblaxx();
 			return;
 		}
 

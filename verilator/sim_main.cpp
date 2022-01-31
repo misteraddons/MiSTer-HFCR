@@ -2,6 +2,7 @@
 #include "Vemu.h"
 
 #include "imgui.h"
+#include "implot.h"
 #ifndef _MSC_VER
 #include <stdio.h>
 #include <SDL.h>
@@ -39,6 +40,7 @@ const char* windowTitle = "Verilator Sim: Aznable";
 const char* windowTitle_Control = "Simulation control";
 const char* windowTitle_DebugLog = "Debug log";
 const char* windowTitle_Video = "VGA output";
+const char* windowTitle_Audio = "Audio output";
 bool showDebugLog = true;
 DebugConsole console;
 MemoryEditor mem_edit;
@@ -72,7 +74,7 @@ const int input_menu = 12;
 #define VGA_SCALE_X vga_scale
 #define VGA_SCALE_Y vga_scale
 SimVideo video(VGA_WIDTH, VGA_HEIGHT, VGA_ROTATE);
-float vga_scale = 3.0;
+float vga_scale = 2.5;
 
 // Verilog module
 // --------------
@@ -85,12 +87,20 @@ double sc_time_stamp() {	// Called by $time in Verilog.
 
 SimClock clk_sys(1);
 
-//#define DEBUG_AUDIO
+#define DEBUG_AUDIO
+#define DEBUG_AUDIO_TO_FILE
 
 #ifdef DEBUG_AUDIO
 // Audio
-SimClock clk_audio(2205);
+const unsigned short audio_debug_max_samples = 500;
+double audio_debug_positions[audio_debug_max_samples];
+double audio_debug_wave_l[audio_debug_max_samples];
+double audio_debug_wave_r[audio_debug_max_samples];
+int audio_debug_pos;
+SimClock clk_audio(544);
+#ifdef DEBUG_AUDIO_TO_FILE
 ofstream audioFile;
+#endif
 #endif
 
 
@@ -129,18 +139,22 @@ int verilate() {
 			if (clk_sys.clk) { bus.AfterEval(); }
 		}
 
-#ifdef DEBUG_AUDIO
-		clk_audio.Tick();
-		if (clk_audio.IsRising()) {
-			// Output audio
-			unsigned short audio_l = top->AUDIO_L;
-			unsigned char audio_8 = audio_l;
-			if (audio_l > 0) {
-				audio_8 = audio_l >> 8;
-				//console.AddLog("%d %d",audio_l, audio_8);
+#ifdef DEBUG_AUDIO_TO_FILE
+		if (clk_sys.IsRising())
+		{
+			clk_audio.Tick();
+			if (clk_audio.IsRising()) {
+				// Output audio
+				float audio_l = top->AUDIO_L;
+				audio_l /= 65000.0f;
+				//unsigned char audio_8 = audio_l;
+				//if (audio_l > 0) {
+				//	audio_8 = audio_l >> 8;
+				//	//console.AddLog("%d %d",audio_l, audio_8);
+				//}
+				//audioFile.write((const char*)&audio_8, 1);
+				audioFile.write((const char*)&audio_l, sizeof(float));
 			}
-			//audioFile.write((const char*)&audio_8, 1);
-			audioFile.write((const char*)&audio_l, 2);
 		}
 #endif
 
@@ -192,6 +206,12 @@ int main(int argc, char** argv, char** env) {
 	input.ps2_key = &top->ps2_key;
 
 #ifdef DEBUG_AUDIO
+	for (int c = 0; c < audio_debug_max_samples; c++) {
+		audio_debug_wave_l[c] = 0.5f;
+		audio_debug_wave_r[c] = 0.5f;
+	}
+#endif
+#ifdef DEBUG_AUDIO_TO_FILE
 	// Setup Audio output stream
 	audioFile.open("audio.wav", ios::binary);
 #endif
@@ -338,29 +358,57 @@ int main(int argc, char** argv, char** env) {
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__soundrom__DOT__mem, 64000, 0);
 		//ImGui::End();
 
+		int windowX = 550;
+		int windowWidth = (VGA_WIDTH * VGA_SCALE_X) + 24;
+		int windowHeight = (VGA_HEIGHT * VGA_SCALE_Y) + 90;
+
 		// Video window
 		ImGui::Begin(windowTitle_Video);
-		ImGui::SetWindowPos(windowTitle_Video, ImVec2(550, 0), ImGuiCond_Once);
-		ImGui::SetWindowSize(windowTitle_Video, ImVec2((VGA_WIDTH * VGA_SCALE_X) + 24, (VGA_HEIGHT * VGA_SCALE_Y) + 114), ImGuiCond_Once);
+		ImGui::SetWindowPos(windowTitle_Video, ImVec2(windowX, 0), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Video, ImVec2(windowWidth, windowHeight), ImGuiCond_Once);
 
-		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8);
+		ImGui::SliderFloat("Zoom", &vga_scale, 1, 8); ImGui::SameLine();
 		ImGui::SliderInt("Rotate", &video.output_rotate, -1, 1); ImGui::SameLine();
 		ImGui::Checkbox("Flip V", &video.output_vflip);
 		ImGui::Text("main_time: %d frame_count: %d sim FPS: %f", main_time, video.count_frame, video.stats_fps);
 		//ImGui::Text("pixel: %06d line: %03d", video.count_pixel, video.count_line);
 
-#ifdef DEBUG_AUDIO
-		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
-		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
-		ImGui::ProgressBar(vol_l + 0.5, ImVec2(200, 16), 0); ImGui::SameLine();
-		ImGui::ProgressBar(vol_r + 0.5, ImVec2(200, 16), 0);
-#endif
-
 		// Draw VGA output
 		ImGui::Image(video.texture_id, ImVec2(video.output_width * VGA_SCALE_X, video.output_height * VGA_SCALE_Y));
 		ImGui::End();
 
+
+#ifdef DEBUG_AUDIO
+
+		ImGui::Begin(windowTitle_Audio);
+		ImGui::SetWindowPos(windowTitle_Audio, ImVec2(windowX, windowHeight), ImGuiCond_Once);
+		ImGui::SetWindowSize(windowTitle_Audio, ImVec2(windowWidth, 250), ImGuiCond_Once);
+
+		float vol_l = ((signed short)(top->AUDIO_L) / 256.0f) / 256.0f;
+		float vol_r = ((signed short)(top->AUDIO_R) / 256.0f) / 256.0f;
+		ImGui::ProgressBar(vol_l + 0.5, ImVec2(200, 16), 0); ImGui::SameLine();
+		ImGui::ProgressBar(vol_r + 0.5, ImVec2(200, 16), 0);
+
+		audio_debug_pos++;
+		if (audio_debug_pos == audio_debug_max_samples) { audio_debug_pos = 0; }
+		audio_debug_wave_l[audio_debug_pos] = vol_l + 0.5f;
+		audio_debug_wave_r[audio_debug_pos] = vol_r + 0.5f;
+		audio_debug_positions[audio_debug_pos] = (double)audio_debug_pos / (double)audio_debug_max_samples;
+		ImPlot::CreateContext();
+		if (ImPlot::BeginPlot("Audio Wave Plot", ImVec2(windowWidth, 220), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoTitle)) {
+
+			ImPlot::SetupAxes("T", "A", ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_NoLabel);
+			ImPlot::SetupAxesLimits(0, 1, 0.25, 0.75, ImPlotCond_Once);
+			ImPlot::PlotLine("", audio_debug_positions, audio_debug_wave_l, audio_debug_pos);
+			ImPlot::EndPlot();
+		}
+		//ImPlot::ShowDemoWindow();
+		ImPlot::DestroyContext();
+		ImGui::End();
+#endif
+
 		video.UpdateTexture();
+
 
 		// Pass inputs to sim
 
@@ -420,7 +468,7 @@ int main(int argc, char** argv, char** env) {
 	// Clean up before exit
 	// --------------------
 
-#ifdef DEBUG_AUDIO
+#ifdef DEBUG_AUDIO_TO_FILE
 	audioFile.close();
 #endif
 

@@ -150,9 +150,15 @@ system system(
 	.ps2_key(ps2_key),
 	.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
 	.timestamp(timestamp),
-	.AUDIO_L(AUDIO_L),
-	.AUDIO_R(AUDIO_R)
+	.AUDIO_L(audio_l_signed),
+	.AUDIO_R(audio_r_signed)
 );
+
+wire signed [15:0] audio_l_signed;
+wire signed [15:0] audio_r_signed;
+
+assign AUDIO_L = audio_l_signed[15] ? (~audio_l_signed)+1'b1 :  audio_l_signed;
+assign AUDIO_R = audio_r_signed[15] ? (~audio_r_signed)+1'b1 :  audio_r_signed;
 
 endmodule 
 

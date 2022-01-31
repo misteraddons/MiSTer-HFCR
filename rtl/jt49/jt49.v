@@ -21,6 +21,8 @@
 
     */
 
+`timescale 1ns / 1ps
+
 module jt49 ( // note that input ports are not multiplexed
     input            rst_n,
     input            clk,    // signal on positive edge

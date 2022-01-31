@@ -1,5 +1,5 @@
 OPTIMIZE="-O3 --x-assign fast --x-initial fast --noassert"
-WARNINGS="-Wno-TIMESCALEMOD"
+#WARNINGS="-Wno-TIMESCALEMOD"
 DEFINES="+define+SIMULATION=1 "
 readarray -t DEFINE_LINES < ../src/$1/.define
 for i in "${DEFINE_LINES[@]}"

@@ -347,32 +347,34 @@ _app_main::
 	jr	00120$
 ;os.c:115: default:
 00119$:
-;os.c:119: loader("INPUTTESTER.AZN");
+;os.c:118: app_zorblaxx();
+	call	_app_zorblaxx
+;os.c:120: loader("INPUTTESTER.AZN");
 	ld	hl, #___str_2
 	push	hl
 	call	_loader
 	pop	af
-;os.c:120: start_inputtester_digital();
+;os.c:121: start_inputtester_digital();
 	call	_start_inputtester_digital
-;os.c:125: }
+;os.c:126: }
 00120$:
-;os.c:127: hsync_last = hsync;
+;os.c:128: hsync_last = hsync;
 	ld	a,(#_hsync + 0)
 	ld	iy, #_hsync_last
 	ld	0 (iy), a
-;os.c:128: vsync_last = vsync;
+;os.c:129: vsync_last = vsync;
 	ld	a,(#_vsync + 0)
 	ld	iy, #_vsync_last
 	ld	0 (iy), a
-;os.c:129: hblank_last = hblank;
+;os.c:130: hblank_last = hblank;
 	ld	a,(#_hblank + 0)
 	ld	iy, #_hblank_last
 	ld	0 (iy), a
-;os.c:130: vblank_last = vblank;
+;os.c:131: vblank_last = vblank;
 	ld	a,(#_vblank + 0)
 	ld	iy, #_vblank_last
 	ld	0 (iy), a
-;os.c:132: }
+;os.c:133: }
 	jp	00122$
 ___str_0:
 	.ascii "SNEK.AZN"
@@ -383,13 +385,13 @@ ___str_1:
 ___str_2:
 	.ascii "INPUTTESTER.AZN"
 	.db 0x00
-;os.c:135: void main()
+;os.c:136: void main()
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;os.c:137: app_main();
-;os.c:138: }
+;os.c:138: app_main();
+;os.c:139: }
 	jp	_app_main
 	.area _CODE
 	.area _INITIALIZER
