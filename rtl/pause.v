@@ -30,7 +30,7 @@
  0002 - 2021-08-28 -	Add optional output of dim_video signal (currently used by Galaga)
 ============================================================================
 */
-`timescale 1ns / 1ps
+`timescale 1ps / 1ps
 
 module pause #(
 	parameter						RW=8,						// Width of red channel

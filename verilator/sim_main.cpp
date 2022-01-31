@@ -164,7 +164,9 @@ int verilate() {
 			video.Clock(top->VGA_HB, top->VGA_VB, top->VGA_HS, top->VGA_VS, colour);
 		}
 
-		main_time++;
+		if (clk_sys.IsRising()) {
+			main_time++;
+		}
 		return 1;
 	}
 
@@ -389,11 +391,14 @@ int main(int argc, char** argv, char** env) {
 		ImGui::ProgressBar(vol_l + 0.5, ImVec2(200, 16), 0); ImGui::SameLine();
 		ImGui::ProgressBar(vol_r + 0.5, ImVec2(200, 16), 0);
 
-		audio_debug_pos++;
-		if (audio_debug_pos == audio_debug_max_samples) { audio_debug_pos = 0; }
-		audio_debug_wave_l[audio_debug_pos] = vol_l + 0.5f;
-		audio_debug_wave_r[audio_debug_pos] = vol_r + 0.5f;
-		audio_debug_positions[audio_debug_pos] = (double)audio_debug_pos / (double)audio_debug_max_samples;
+		if (run_enable) {
+			audio_debug_pos++;
+			if (audio_debug_pos == audio_debug_max_samples) { audio_debug_pos = 0; }
+			audio_debug_wave_l[audio_debug_pos] = vol_l + 0.5f;
+			audio_debug_wave_r[audio_debug_pos] = vol_r + 0.5f;
+			audio_debug_positions[audio_debug_pos] = (double)audio_debug_pos / (double)audio_debug_max_samples;
+		}
+
 		ImPlot::CreateContext();
 		if (ImPlot::BeginPlot("Audio Wave Plot", ImVec2(windowWidth, 220), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoTitle)) {
 

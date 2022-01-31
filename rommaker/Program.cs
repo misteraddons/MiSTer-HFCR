@@ -86,10 +86,10 @@ namespace rommaker
 
             }
 
-            while (trackData.Count < musicRomLength)
-            {
-                trackData.Add(0);
-            }
+            //while (trackData.Count < musicRomLength)
+            //{
+            //    trackData.Add(0);
+            //}
 
             builder.AppendLine("#endif");
             File.WriteAllText(MusicSourcePath + ".h", builder.ToString());
@@ -140,6 +140,7 @@ namespace rommaker
             builder.AppendLine("#define const_sound_sample_max 32");
             builder.AppendLine("extern unsigned long sound_sample_address[const_sound_sample_max];");
             builder.AppendLine("extern unsigned long sound_sample_length[const_sound_sample_max];");
+            builder.AppendLine($"#define const_sound_sample_used {samples.Length}");
 
             foreach (string sample in samples)
             {

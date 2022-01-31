@@ -19,7 +19,7 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-`timescale 1ns / 1ps
+`timescale 1ps / 1ps
 
 module dpram #(
 	parameter address_width = 10,

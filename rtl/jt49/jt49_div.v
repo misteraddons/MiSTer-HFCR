@@ -22,7 +22,7 @@
     */
 
 
-`timescale 1ns / 1ps
+`timescale 1ps / 1ps
 
 module jt49_div #(parameter W=12 )(   
     (* direct_enable *) input cen,

@@ -28,7 +28,7 @@
 // 2 -> 21.8
 // 3 -> 13.4
 
-`timescale 1ns / 1ps
+`timescale 1ps / 1ps
 
 module jt49_exp(
     input            clk,

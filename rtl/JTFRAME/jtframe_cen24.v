@@ -21,7 +21,7 @@
 
 // Modifed by Jim Gregory - @mrjimmystones to remove redundant signals and add 2Mhz enable
 
-`timescale 1ns / 1ps
+`timescale 1ps / 1ps
 
 module jtframe_cen24(
     input   clk,    // 24 MHz
