@@ -91,8 +91,7 @@ SimClock clk_sys(1);
 
 // Audio
 // -----
-//#define DISABLE_AUDIO
-#define DEBUG_AUDIO_TO_FILE
+#define DISABLE_AUDIO
 #ifndef DISABLE_AUDIO
 SimAudio audio(clk_sys_freq, false);
 #endif
@@ -447,7 +446,9 @@ int main(int argc, char** argv, char** env) {
 	// Clean up before exit
 	// --------------------
 
+#ifndef DISABLE_AUDIO
 	audio.CleanUp();
+#endif 
 	video.CleanUp();
 	input.CleanUp();
 

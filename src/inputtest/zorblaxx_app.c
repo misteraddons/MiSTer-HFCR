@@ -650,6 +650,8 @@ void app_zorblaxx()
 	setup_variables();
 	stop_music();
 
+	CLEAR_BIT(video_ctl,0); // Set charmap to high priority
+
 	while (1)
 	{
 		clear_chars(0);

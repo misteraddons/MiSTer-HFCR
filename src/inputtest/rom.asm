@@ -52,6 +52,7 @@
 	.globl _analog_r
 	.globl _analog_l
 	.globl _joystick
+	.globl _video_ctl
 	.globl _input0
 ;--------------------------------------------------------
 ; special function registers
@@ -61,6 +62,7 @@
 ;--------------------------------------------------------
 	.area _DATA
 _input0	=	0x8000
+_video_ctl	=	0x8001
 _joystick	=	0x8100
 _analog_l	=	0x8200
 _analog_r	=	0x8300
@@ -347,8 +349,6 @@ _app_main::
 	jr	00120$
 ;os.c:115: default:
 00119$:
-;os.c:118: app_zorblaxx();
-	call	_app_zorblaxx
 ;os.c:120: loader("INPUTTESTER.AZN");
 	ld	hl, #___str_2
 	push	hl
