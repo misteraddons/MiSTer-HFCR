@@ -1,0 +1,1 @@
+bitstream_reverse.exe ".\src\fpga\output_files\ap_core.rbf" "aznable.rbf_r"
