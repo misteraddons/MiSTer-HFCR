@@ -17,8 +17,8 @@ cp -r src/$TARGETPROJ $TARGETDIR/src/$TARGETPROJ/
 cp -r src/shared $TARGETDIR/src/shared/
 cp -r rtl/* $TARGETDIR/rtl/
 cp -r sys/* $TARGETDIR/sys/
-cp -r verilator/sim_main.cpp $TARGETDIR/verilator/
-cp -r verilator/sim/* $TARGETDIR/verilator/sim/
+cp -r targets/verilator/sim_main.cpp $TARGETDIR/verilator/
+cp -r targets/verilator/sim/* $TARGETDIR/verilator/sim/
 
 # Remove resource working folders
 rm -r $TARGETDIR/resources/$TARGETPROJ/sprites/res/
