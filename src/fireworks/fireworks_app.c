@@ -38,7 +38,7 @@
 const unsigned char x_divisor = 16;
 const unsigned char y_divisor = 16;
 
-const char *credits_text = "8-BITS WORTH OF FOLLOWERS MEANS AN 8-BIT DEMO!!!  CHEERS :)       ";
+const char *credits_text = "8-BITS WORTH OF FOLLOWERS MEANS AN 8-BIT DEMO!!!  CHEERS :)                            ";
 unsigned char credits_index[100];
 unsigned char credits_pos = 0;
 unsigned char credits_len;
@@ -78,7 +78,7 @@ void app_main()
 			fire_timer--;
 			if (fire_timer == 0)
 			{
-				unsigned short x = rand_ushort(1000, 4800);
+				unsigned short x = rand_ushort(1200, 5500);
 				unsigned short y = rand_ushort(1000, 2000);
 			
 				unsigned char t = rand_uchar(0, max_spark_type);
