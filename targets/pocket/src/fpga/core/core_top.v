@@ -484,7 +484,7 @@ jtframe_cen24 divider
 	.cen2(ce_2)
 );
 
-wire [15:0] joystick_l_0 = { 8'b0, cont1_key[5], cont1_key[4], cont1_key[0], cont1_key[1], cont1_key[2], cont1_key[3] };
+wire [15:0] joystick_l_0 = { 2'b0, cont1_key[15:14], cont1_key[9:4], cont1_key[0], cont1_key[1], cont1_key[2], cont1_key[3] };
 
 system system(
 	.clk_24(clk_core_24),
@@ -512,8 +512,8 @@ system system(
 	//.ps2_key(ps2_key),
 	//.ps2_mouse({ps2_mouse_ext,7'b0,ps2_mouse}),
 	//.timestamp(timestamp)
-	// .AUDIO_L(AUDIO_L),
-	// .AUDIO_R(AUDIO_R)
+	.AUDIO_L(aznable_sound_l),
+    .AUDIO_R(aznable_sound_r)
 );
 
 
@@ -546,22 +546,38 @@ always @(posedge audgen_mclk) begin
     aud_mclk_divider <= aud_mclk_divider + 1'b1;
 end
 
-// shift out audio data as I2S 
-// 32 total bits per channel, but only 16 active bits at the start and then 16 dummy bits
-//
-    reg     [4:0]   audgen_lrck_cnt;    
-    reg             audgen_lrck;
-    reg             audgen_dac;
-always @(negedge audgen_sclk) begin
-    audgen_dac <= 1'b0;
-    // 48khz * 64
-    audgen_lrck_cnt <= audgen_lrck_cnt + 1'b1;
-    if(audgen_lrck_cnt == 31) begin
-        // switch channels
-        audgen_lrck <= ~audgen_lrck;
-        
-    end 
-end
+    // Synchronize audio samples coming from the core
+    wire [15:0] aznable_sound_l;
+    wire [15:0] aznable_sound_r;
+    wire [31:0] aznable_sample_data; //! Audio data : 16bits left channel + 16bits right channel
+    wire [31:0] audgen_sample_data;
+    assign aznable_sample_data = { aznable_sound_l, aznable_sound_r };
+    synch_3 #(.WIDTH(32)) sync_sound (aznable_sample_data ,audgen_sample_data, audgen_sclk);
+
+    reg  [31:0] audgen_sampshift;
+    reg  [4:0]  audgen_lrck_cnt;
+    reg         audgen_lrck;
+    reg         audgen_dac;
+    always @(negedge audgen_sclk) begin
+        // Output the next bit
+        audgen_dac <= audgen_sampshift[31];
+        // 48khz * 64
+        audgen_lrck_cnt <= audgen_lrck_cnt + 1'b1;
+        if(audgen_lrck_cnt == 31) begin
+            // Switch channels
+            audgen_lrck <= ~audgen_lrck;
+            // Reload sample shifter
+            if(~audgen_lrck) begin
+                audgen_sampshift <= audgen_sample_data;
+            end
+        end
+        else begin
+            // Only shift for 16 clocks per channel
+            if(audgen_lrck_cnt < 16) begin
+                audgen_sampshift <= {audgen_sampshift[30:0], 1'b0};
+            end
+        end
+    end
 ///////////////////////////////////////////////
 
 
