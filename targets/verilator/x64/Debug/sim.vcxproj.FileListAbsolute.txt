@@ -1,1 +1,0 @@
-C:\repos\Aznable\verilator\x64\Debug\sim.exe
