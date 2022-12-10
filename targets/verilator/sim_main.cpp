@@ -284,9 +284,9 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("CHROM Editor");
 		//mem_edit.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
 		//ImGui::End();
-		//ImGui::Begin("WKRAM Editor");
-		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
-		//ImGui::End();
+		ImGui::Begin("WKRAM Editor");
+		mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
+		ImGui::End();
 		//ImGui::Begin("CHRAM Editor");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();

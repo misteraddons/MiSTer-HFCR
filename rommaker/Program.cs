@@ -400,7 +400,7 @@ namespace rommaker
             int size = 16;
             int slicesX = img.Width / size;
             int slicesY = img.Height / size;
-
+            Console.WriteLine(slicesX + " - " + slicesY);
             for (int ys = 0; ys < slicesY; ys++)
             {
                 for (int xs = 0; xs < slicesX; xs++)

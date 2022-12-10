@@ -9,12 +9,12 @@ make all
 cd $CURRENTDIR
 
 # Compile verilator code
-cd verilator
+cd targets/verilator
 ./verilate.sh $PROJECT
 cd $CURRENTDIR
 
 # Build target locations
-TARGETS=( verilator rtl )
+TARGETS=( targets/verilator rtl )
 
 # Hexify rom and font and copy to build targets
 for TARGET in "${TARGETS[@]}"; do
