@@ -1,0 +1,2 @@
+C:\repos\Aznable\verilator\x64\Release\sim.exe
+C:\repos\Aznable\targets\verilator\x64\Release\sim.exe

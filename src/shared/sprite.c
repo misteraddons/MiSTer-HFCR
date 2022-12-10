@@ -33,6 +33,7 @@ bool spr_collide[const_sprite_max];
 unsigned char spr_palette_index[const_sprite_max];
 unsigned char spr_index[const_sprite_max];
 unsigned char spr_size[const_sprite_max];
+unsigned char spr_flip[const_sprite_max];
 
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
 
