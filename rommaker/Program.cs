@@ -13,7 +13,9 @@ namespace rommaker
         static string TilemapRomPath => $@"{resourceOutputPath}tilemap.bin";
 
         static string TilemapPath => $@"{resourcePath}tilemap\tilemap.png";
+
         static string TilemapExtractPath => $@"{resourcePath}tilemap\tilemap_extract.png";
+
         static string TilemapSourcePath => $@"{sourcePath}tilemap_indexes";
 
         static string SpriteRomPath => $@"{resourceOutputPath}sprite.bin";
@@ -41,6 +43,7 @@ namespace rommaker
         static string SoundSourcePath => $@"{sourcePath}sound_samples";
 
         static readonly int PaletteMax = 4;
+
         static readonly int PaletteIndexMax = 32;
 
         static readonly List<List<Color>> Palettes = new();
@@ -260,7 +263,7 @@ namespace rommaker
                         spriteSourceItems.Add($"sprite_palette_{name}", $"{paletteIndex}");
                         spriteSourceItems.Add($"sprite_size_{name}", $"{gi}");
                         spriteSourceItems.Add($"sprite_pixelsize_{name}", $"{g}");
-                        spriteSourceItems.Add($"sprite_halfpixelsize_{name}", $"{g/2}");
+                        spriteSourceItems.Add($"sprite_halfpixelsize_{name}", $"{g / 2}");
 
                         for (int ys = 0; ys < slicesY; ys++)
                         {
@@ -441,11 +444,9 @@ namespace rommaker
                     }
                 }
             }
-
             streamWriter.Dispose();
 
             Console.WriteLine($"Tilemap created.  Unique colours={colours.Keys.Count}");
-
         }
 
         static void ExtractTilemapRom()
@@ -463,7 +464,6 @@ namespace rommaker
             int slicesY = img.Height / size;
 
             // Find unique tiles in image
-
             int[,] tileIndexes = new int[slicesX, slicesY];
 
             Dictionary<string, Tile> tiles = new();
@@ -474,8 +474,6 @@ namespace rommaker
             tiles.Add(transTile.Hash, transTile);
 
             int nextTileIndex = 1;
-
-
 
             for (int ys = 0; ys < slicesY; ys++)
             {
@@ -495,10 +493,7 @@ namespace rommaker
                             Color c = img.GetPixel(x, y);
                             ushort a = (ushort)(c.A == 255 ? 1 : 0);
                             if (a == 1) { nonTransparent = true; }
-                            ushort color = (ushort)((c.R / 8) |
-                                                   ((c.G / 8) << 5) |
-                                                   ((c.B / 8) << 10) |
-                                                     a << 15);
+                            ushort color = (ushort)((c.R / 8) | ((c.G / 8) << 5) | ((c.B / 8) << 10) | a << 15);
                             tile.Color[x - xmin][y - ymin] = color;
                             if (colours.ContainsKey(color))
                             {
@@ -555,7 +550,7 @@ namespace rommaker
 
             streamWriter.Dispose();
 
-            Console.WriteLine($"Tilemap created.  Next tile index={nextTileIndex} Total tiles={tiles.Count} Dropped Transparent={droppedTransparent } Dropped Duplicate={droppedDuplicate} Unique colours={colours.Keys.Count}");
+            Console.WriteLine($"Tilemap created.  Next tile index={nextTileIndex} Total tiles={tiles.Count} Dropped Transparent={droppedTransparent} Dropped Duplicate={droppedDuplicate} Unique colours={colours.Keys.Count}");
 
 
 
@@ -643,7 +638,6 @@ namespace rommaker
             sourcePath = $@"{rootPath}src\{currentProject}\";
 
             CreateSpriteRom();
-
             if (File.Exists(TilemapPath))
             {
                 CreateTilemapRom();
@@ -652,7 +646,6 @@ namespace rommaker
             {
                 ExtractTilemapRom();
             }
-
             CreateMusicRom();
             CreateSoundRom();
         }
