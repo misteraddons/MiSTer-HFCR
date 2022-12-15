@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace tileripper.Models
+namespace keshiki.Models
 {
     public class SerializedBitmap
     {

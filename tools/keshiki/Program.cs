@@ -1,4 +1,4 @@
-namespace tileripper
+namespace keshiki
 {
     internal static class Program
     {

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tileripper", "tileripper.csproj", "{D478B879-F5CE-4A45-9A64-C81DA16FD2B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "keshiki", "keshiki.csproj", "{D478B879-F5CE-4A45-9A64-C81DA16FD2B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

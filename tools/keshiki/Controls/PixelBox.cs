@@ -1,4 +1,4 @@
-﻿namespace tileripper.Controls
+﻿namespace keshiki.Controls
 {
     using System.Drawing.Drawing2D;
     using System.Windows.Forms;

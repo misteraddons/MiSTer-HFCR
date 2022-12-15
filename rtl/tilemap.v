@@ -35,6 +35,7 @@ module tilemap #(
 	input		[8:0]	hcnt,
 	input		[8:0]	vcnt,
 	input				hblank,
+	input				vblank,
 
 	input		[1:0]	addr,
 	input		[7:0]	data_in,
@@ -73,8 +74,10 @@ reg [9:0] tilemap_pos_y;
 
 // Current tilemap scroll offsets
 /* verilator lint_off WIDTH */
-wire signed [9:0] tilemap_offset_x = $signed(tilemapreg[0]); // Convert scroll control x register to signed
-wire signed [9:0] tilemap_offset_y = $signed(tilemapreg[1]); // Convert scroll control y register to signed
+reg signed [9:0] tilemap_offset_x;
+reg signed [9:0] tilemap_offset_y;
+// wire signed [9:0] tilemap_offset_x = $signed(tilemapreg[0]); // Convert scroll control x register to signed
+// wire signed [9:0] tilemap_offset_y = $signed(tilemapreg[1]); // Convert scroll control y register to signed
 /* verilator lint_on WIDTH */
 
 // Tilemap read machine state
@@ -116,14 +119,14 @@ localparam TM_CLEAR_DONE = 2;
 // Tilemap clear control
 reg [2:0]	tilemap_clear_state;
 
-reg [8:0] hcnt_last;
-reg 	  hblank_last;
-
 //`define TM_DEBUG
 
 always @(posedge clk) begin
+	reg hblank_last;
+	reg vblank_last;
 
 	hblank_last <= hblank;
+	vblank_last <= vblank;
 
 	if(reset)
 	begin
@@ -228,12 +231,25 @@ always @(posedge clk) begin
 			TM_CTL_IDLE:
 			begin
 				tilemap_ctl_cycles <= 16'b0;
-				hcnt_last <= hcnt;
-				if(hcnt == 9'd395 && hcnt_last == 9'd394)
+
+				// Update tilemap position just after vsync
+				if(!vblank && vblank_last)
+				begin
+					/* verilator lint_off WIDTH */
+					tilemap_offset_x <= $signed(tilemapreg[0]); // Convert scroll control x register to signed
+					tilemap_offset_y <= $signed(tilemapreg[1]); // Convert scroll control y register to signed
+					/* verilator lint_on WIDTH */
+
+					//$display("Tilemap offset: %d/%d x: %d > %d  Y: %d > %d ", hcnt, vcnt, tilemap_offset_x, $signed(tilemapreg[0]), tilemap_offset_y, $signed(tilemapreg[1]));
+
+				end
+
+				if(!hblank && hblank_last)
 				begin
 					// When end of HBLANK is reached, reset tilemap read state
 					tilemap_read_state <= 2'b0;
 					tilemap_read_cycles <= 16'b0;
+					//$display("READCYCLES: %d = %d", vcnt, tilemap_read_cycles);
 				end
 				else
 				begin
@@ -243,8 +259,10 @@ always @(posedge clk) begin
 						2'b00:
 						begin
 							// - Calculate next pixel lookup address
-							tilemap_pos_x = $signed($signed((hcnt == 9'd395 ? 9'd0 : hcnt + 9'd1)) + TILEMAP_BORDER) + $signed(tilemap_offset_x);
-							tilemap_pos_y = $signed($signed((vcnt == 9'd255 ? 9'd0 : vcnt)) + TILEMAP_BORDER) + $signed(tilemap_offset_y);
+							// tilemap_pos_x = $signed($signed((hcnt == 9'd395 ? 9'd0 : hcnt + 9'd1)) + TILEMAP_BORDER) + $signed(tilemap_offset_x);
+							// tilemap_pos_y = $signed($signed((vcnt == 9'd255 ? 9'd0 : vcnt)) + TILEMAP_BORDER) + $signed(tilemap_offset_y);
+							tilemap_pos_x = $signed($signed((hcnt == 9'd395 ? 9'd0 : hcnt + 9'd1)) + TILEMAP_BORDER) + tilemap_offset_x;
+							tilemap_pos_y = $signed($signed((vcnt == 9'd255 ? 9'd0 : vcnt)) + TILEMAP_BORDER) + tilemap_offset_y;
 							// - Set tilemapram lookup address
 							tilemapram_addr <= { tilemap_pos_y[8:4], tilemap_pos_x[8:4] };
 							// Set colour output for previous ROM lookup

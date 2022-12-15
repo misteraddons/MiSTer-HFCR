@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
-using tileripper.Models;
+using keshiki.Models;
 
-namespace tileripper.Controls
+namespace keshiki.Controls
 {
     public class TilePalette : Panel
     {
@@ -38,6 +38,8 @@ namespace tileripper.Controls
 
         public int Columns { get; set; } = 6;
 
+        public int TileSize { get; set; } = 48;
+
         internal void AddTile(Tile tile)
         {
             int nextY = Icons.Count / Columns;
@@ -46,17 +48,23 @@ namespace tileripper.Controls
             {
                 InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor,
                 Parent = this,
-                Top = nextY * 33,
-                Left = nextX * 33,
-                Width = 32,
-                Height = 32
+                Top = nextY * (TileSize+1),
+                Left = nextX * (TileSize + 1),
+                Width = TileSize,
+                Height = TileSize,
+                Tag = tile
             };
             icon.Image = tile.Bitmap.GetBitmap();
             icon.Parent = this;
             icon.SizeMode = PictureBoxSizeMode.StretchImage;
+            icon.Click += Icon_Click;
             Icons.Add(tile.Index, icon);
             this.Controls.Add(icon);
         }
 
+        private void Icon_Click(object? sender, EventArgs e)
+        {
+            SelectedTile = (Tile)((PixelBox)sender).Tag;
+        }
     }
 }

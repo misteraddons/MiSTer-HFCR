@@ -10,37 +10,37 @@ namespace rommaker
 {
     class Program
     {
-        static string TilemapRomPath => $@"{resourceOutputPath}tilemap.bin";
+        static string TilemapRomPath => $@"{ResourcePath}tilemap.bin";
 
-        static string TilemapPath => $@"{resourcePath}tilemap\tilemap.png";
+        static string TilemapPath => $@"{ResourcePath}tilemap\tilemap.png";
 
-        static string TilemapExtractPath => $@"{resourcePath}tilemap\tilemap_extract.png";
+        static string TilemapExtractPath => $@"{ResourcePath}tilemap\tilemap_extract.png";
 
-        static string TilemapSourcePath => $@"{sourcePath}tilemap_indexes";
+        static string TilemapSourcePath => $@"{SourcePath}tilemap_indexes";
 
-        static string SpriteRomPath => $@"{resourceOutputPath}sprite.bin";
+        static string SpriteRomPath => $@"{ResourcePath}sprite.bin";
 
-        static string SpritePath => $@"{resourcePath}sprites\";
+        static string SpritePath => $@"{ResourcePath}sprites\";
 
-        static string PalettePath => $@"{resourceOutputPath}palette.bin";
+        static string PalettePath => $@"{ResourcePath}palette.bin";
 
-        static string SpriteSourcePath => $@"{sourcePath}sprite_images";
+        static string SpriteSourcePath => $@"{SourcePath}sprite_images";
 
-        static string MusicPath => $@"{resourcePath}music\";
+        static string MusicPath => $@"{ResourcePath}music\";
 
-        static string MusicTrackListPath => $@"{resourcePath}music\tracks.txt";
+        static string MusicTrackListPath => $@"{ResourcePath}music\tracks.txt";
 
-        static string MusicRomPath => $@"{resourceOutputPath}music.bin";
+        static string MusicRomPath => $@"{ResourcePath}music.bin";
 
-        static string MusicSourcePath => $@"{sourcePath}music_tracks";
+        static string MusicSourcePath => $@"{SourcePath}music_tracks";
 
-        static string SoundPath => $@"{resourcePath}sound\";
+        static string SoundPath => $@"{ResourcePath}sound\";
 
-        static string SoundListPath => $@"{resourcePath}sound\samples.txt";
+        static string SoundListPath => $@"{ResourcePath}sound\samples.txt";
 
-        static string SoundRomPath => $@"{resourceOutputPath}sound.bin";
+        static string SoundRomPath => $@"{ResourcePath}sound.bin";
 
-        static string SoundSourcePath => $@"{sourcePath}sound_samples";
+        static string SoundSourcePath => $@"{SourcePath}sound_samples";
 
         static readonly int PaletteMax = 4;
 
@@ -621,21 +621,17 @@ namespace rommaker
             }
         }
 
+        static string SourcePath { get; set; }
 
-        static string resourcePath;
-        static string sourcePath;
-        static string resourceOutputPath;
+        static string ResourcePath { get; set; }
 
         static void Main(string[] args)
         {
-            string rootPath = @"..\..\..\..\";
+            string rootPath = @"..\..\..\..\..\";
             string currentProject = File.ReadAllText(rootPath + "CURRENT_PROJECT");
 
-            resourceOutputPath = $@"{rootPath}resources\";
-            resourcePath = $@"{resourceOutputPath}{currentProject}\";
-            resourceOutputPath = resourcePath;
-
-            sourcePath = $@"{rootPath}src\{currentProject}\";
+            ResourcePath = $@"{rootPath}resources\{currentProject}\";
+            SourcePath = $@"{rootPath}src\{currentProject}\";
 
             CreateSpriteRom();
             if (File.Exists(TilemapPath))
