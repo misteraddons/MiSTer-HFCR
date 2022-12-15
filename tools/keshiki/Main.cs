@@ -1,11 +1,9 @@
-using Newtonsoft.Json;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
-using System.Text;
-using System.Windows.Forms;
+using keshiki.Controls;
 using keshiki.Models;
+using Newtonsoft.Json;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Text;
 
 namespace keshiki
 {
@@ -32,11 +30,13 @@ namespace keshiki
 
         private string TilemapSourcePath => $@"{SourcePath}tilemap_indexes";
 
-        private Bitmap sceneBitmap;
+        private string CollisionSourcePath => $@"{SourcePath}collision_boxes";
 
-        private int sceneScale = 3;
+        private Bitmap SceneBitmap { get; set; }
 
-        private int sceneCellSize;
+        private int SceneScale { get; set; } = 4;
+
+        private int SceneCellSize { get; set; }
 
         Scene scene;
 
@@ -69,6 +69,7 @@ namespace keshiki
             }
             streamWriter.Dispose();
 
+            // Create tilemap include
             StringBuilder builder = new();
             builder.AppendLine("#ifndef TILEMAP_INDEXES_H");
             builder.AppendLine("#define TILEMAP_INDEXES_H");
@@ -100,6 +101,53 @@ namespace keshiki
             builder.AppendLine("#endif");
             File.WriteAllText(TilemapSourcePath + ".c", builder.ToString());
 
+            // Create collision include
+            builder = new();
+            builder.AppendLine("#ifndef COLLISION_BOXES_H");
+            builder.AppendLine("#define COLLISION_BOXES_H");
+            builder.AppendLine($"#define const_collision_boxes_max {scene.Collision.Count}");
+            builder.AppendLine("extern unsigned short collision_box_l[const_collision_boxes_max];");
+            builder.AppendLine("extern unsigned short collision_box_t[const_collision_boxes_max];");
+            builder.AppendLine("extern unsigned short collision_box_r[const_collision_boxes_max];");
+            builder.AppendLine("extern unsigned short collision_box_b[const_collision_boxes_max];");
+            builder.AppendLine("#endif");
+            File.WriteAllText(CollisionSourcePath + ".h", builder.ToString());
+
+            builder = new StringBuilder();
+            builder.AppendLine("#ifndef COLLISION_BOXES_C");
+            builder.AppendLine("#define COLLISION_BOXES_C");
+            builder.AppendLine("#include \"collision_boxes.h\"");
+            builder.Append("unsigned short collision_box_l[const_collision_boxes_max] = { ");
+            for (int i = 0; i < scene.Collision.Count; i++)
+            {
+                builder.Append(scene.Collision[i].Left);
+                if (i < scene.Collision.Count - 1) { builder.Append(", "); }
+            }
+            builder.AppendLine(" };");
+            builder.Append("unsigned short collision_box_t[const_collision_boxes_max] = { ");
+            for (int i = 0; i < scene.Collision.Count; i++)
+            {
+                builder.Append(scene.Collision[i].Top);
+                if (i < scene.Collision.Count - 1) { builder.Append(", "); }
+            }
+            builder.AppendLine(" };");
+            builder.Append("unsigned short collision_box_r[const_collision_boxes_max] = { ");
+            for (int i = 0; i < scene.Collision.Count; i++)
+            {
+                builder.Append(scene.Collision[i].Right);
+                if (i < scene.Collision.Count - 1) { builder.Append(", "); }
+            }
+            builder.AppendLine(" };");
+            builder.Append("unsigned short collision_box_b[const_collision_boxes_max] = { ");
+            for (int i = 0; i < scene.Collision.Count; i++)
+            {
+                builder.Append(scene.Collision[i].Bottom);
+                if (i < scene.Collision.Count - 1) { builder.Append(", "); }
+            }
+            builder.AppendLine(" };");
+
+            builder.AppendLine("#endif");
+            File.WriteAllText(CollisionSourcePath + ".c", builder.ToString());
         }
 
         private static string GetBitmapHash(Bitmap bitmap)
@@ -118,20 +166,32 @@ namespace keshiki
         private void LoadScene(string sceneName)
         {
             scene = JsonConvert.DeserializeObject<Scene>(File.ReadAllText($"{TileSourcePath}{sceneName}.json"));
-            sceneCellSize = scene.CellSize * sceneScale;
-            pic_Cell.Size = new Size(sceneCellSize, sceneCellSize);
-            BuildBitmap();
-
-            Palette.Clear();
-            foreach (Tile tile in scene.Tiles)
-            {
-                Palette.AddTile(tile);
-            }
+            if (scene.Collision == null) { scene.Collision = new List<CollisionBox>(); }
+            SceneCellSize = scene.CellSize * SceneScale;
+            RefreshBitmap();
+            RefreshPalette();
+            RefreshCollision();
         }
 
-        private void BuildBitmap()
+        private void RefreshPalette()
         {
-            sceneBitmap = new Bitmap(scene.CellSize * scene.CellsX, scene.CellSize * scene.CellsY);
+            Palette.Clear();
+            foreach (Tile tile in scene.Tiles) { Palette.AddTile(tile); }
+        }
+
+        private void RefreshCollision()
+        {
+            lst_Collision.Items.Clear();
+            foreach (var box in scene.Collision)
+            {
+                lst_Collision.Items.Add(box);
+            }
+
+        }
+
+        private void RefreshBitmap()
+        {
+            SceneBitmap = new Bitmap(scene.CellSize * scene.CellsX, scene.CellSize * scene.CellsY);
             for (int y = 0; y < scene.CellsY; y++)
             {
                 for (int x = 0; x < scene.CellsX; x++)
@@ -139,7 +199,9 @@ namespace keshiki
                     DrawCell(x, y);
                 }
             }
-            pic_Scene.Image = sceneBitmap;
+            SceneBitmap = new Bitmap(SceneBitmap, new Size(SceneBitmap.Width, SceneBitmap.Height) * SceneScale);
+            pic_Scene.Image = SceneBitmap;
+
         }
 
         private void DrawCell(int x, int y)
@@ -155,7 +217,7 @@ namespace keshiki
                 int ly = 0;
                 for (int cy = y1; cy < y2; cy++)
                 {
-                    sceneBitmap.SetPixel(cx, cy, cellBitmap.GetPixel(lx, ly));
+                    SceneBitmap.SetPixel(cx, cy, cellBitmap.GetPixel(lx, ly));
                     ly++;
                 }
                 lx++;
@@ -171,12 +233,11 @@ namespace keshiki
                 CellSize = 16,
                 Tiles = new List<Tile>()
             };
-            sceneBitmap = (Bitmap)Image.FromFile(TileSourcePath + scene.Name + ".png");
-            scene.CellsX = sceneBitmap.Width / scene.CellSize;
-            scene.CellsY = sceneBitmap.Height / scene.CellSize;
+            SceneBitmap = (Bitmap)Image.FromFile(TileSourcePath + scene.Name + ".png");
+            scene.CellsX = SceneBitmap.Width / scene.CellSize;
+            scene.CellsY = SceneBitmap.Height / scene.CellSize;
             scene.Cells = new Cell[scene.CellsY, scene.CellsX];
-            sceneCellSize = scene.CellSize * sceneScale;
-            pic_Cell.Size = new Size(sceneCellSize, sceneCellSize);
+            SceneCellSize = scene.CellSize * SceneScale;
             Palette.Clear();
 
             Dictionary<string, int> tiles = new();
@@ -190,7 +251,7 @@ namespace keshiki
                 for (int x = 0; x < scene.CellsX; x++)
                 {
                     Rectangle rect = new(x * scene.CellSize, y * scene.CellSize, scene.CellSize, scene.CellSize);
-                    Bitmap cellBitmap = sceneBitmap.Clone(rect, PixelFormat.Format32bppArgb);
+                    Bitmap cellBitmap = SceneBitmap.Clone(rect, PixelFormat.Format32bppArgb);
                     string hash = GetBitmapHash(cellBitmap);
                     scene.Cells[y, x] = new Cell();
                     if (tiles.ContainsKey(hash))
@@ -207,14 +268,15 @@ namespace keshiki
                     }
                 }
             }
-            BuildBitmap();
-            pic_Scene.Image = sceneBitmap;
-            pic_Scene.Size = sceneBitmap.Size * (int)sceneScale;
+            RefreshBitmap();
+            pic_Scene.Image = SceneBitmap;
+            pic_Scene.Top = 4;
+            pic_Scene.Left = 4;
+            pic_Scene.Size = SceneBitmap.Size;
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-
             pic_Cell.Parent = pic_Scene;
             pic_Cell.BackColor = Color.Transparent;
 
@@ -228,17 +290,67 @@ namespace keshiki
             }
             Save();
 
-            pic_Scene.Image = sceneBitmap;
-            pic_Scene.Size = sceneBitmap.Size * (int)sceneScale;
+            pic_Scene.Image = SceneBitmap;
+            pic_Scene.Size = SceneBitmap.Size * (int)SceneScale;
+
+            SetEditMode(EditMode.Tiles);
 
         }
 
+
+        private int mouseX { get; set; }
+        private int mouseY { get; set; }
+        private int mouseCellX { get; set; }
+        private int mouseCellY { get; set; }
+
+        private void pic_Cell_MouseMove(object sender, MouseEventArgs e)
+        {
+            mouseX = (((PictureBox)sender).Left + e.X) / SceneScale;
+            mouseY = (((PictureBox)sender).Top + e.Y) / SceneScale;
+            mouseCellX = mouseX / scene.CellSize;
+            mouseCellY = mouseY / scene.CellSize;
+            MouseHover();
+        }
         private void pic_Scene_MouseMove(object sender, MouseEventArgs e)
         {
-            int x = (int)((e.X - ((PictureBox)sender).ClientRectangle.Left) / sceneCellSize);
-            int y = (int)((e.Y - ((PictureBox)sender).ClientRectangle.Top) / sceneCellSize);
-            pic_Cell.Left = (int)(x * sceneCellSize);
-            pic_Cell.Top = (int)(y * sceneCellSize);
+            mouseX = (e.X - ((PictureBox)sender).ClientRectangle.Left) / SceneScale;
+            mouseY = (e.Y - ((PictureBox)sender).ClientRectangle.Top) / SceneScale;
+            mouseCellX = mouseX / scene.CellSize;
+            mouseCellY = mouseY / scene.CellSize;
+            MouseHover();
+        }
+
+        private void MouseHover()
+        {
+            switch (Interaction)
+            {
+                case InteractMode.TileSelect:
+                    pic_Cell.Left = (int)(mouseCellX * SceneCellSize);
+                    pic_Cell.Top = (int)(mouseCellY * SceneCellSize);
+                    break;
+
+                case InteractMode.CollisionBoxBegin:
+                    pic_Cell.Left = (int)(mouseX) * SceneScale;
+                    pic_Cell.Top = (int)(mouseY) * SceneScale;
+                    txt_Collision.Text = $"{mouseX}/{mouseY}";
+                    break;
+
+                case InteractMode.CollisionBoxDraw:
+
+                    DrawBoxW = Math.Abs(mouseX - DrawBoxX);
+                    DrawBoxH = Math.Abs(mouseY - DrawBoxY);
+                    ActiveBox.Left = (mouseX > DrawBoxX) ? DrawBoxX : mouseX;
+                    ActiveBox.Top = (mouseY > DrawBoxY) ? DrawBoxY : mouseY;
+                    ActiveBox.Right = ActiveBox.Left + DrawBoxW;
+                    ActiveBox.Bottom = ActiveBox.Top + DrawBoxH;
+                    pic_Cell.Left = ActiveBox.Left * SceneScale;
+                    pic_Cell.Top = ActiveBox.Top * SceneScale;
+                    pic_Cell.Width = DrawBoxW * SceneScale;
+                    pic_Cell.Height = DrawBoxH * SceneScale;
+
+                    txt_Collision.Text = $"{mouseX}/{mouseY} > {DrawBoxW}/{DrawBoxH}";
+                    break;
+            }
         }
 
         private void btn_Save_Click(object sender, EventArgs e)
@@ -248,33 +360,235 @@ namespace keshiki
 
         private void pic_Cell_Click(object sender, EventArgs e)
         {
-            Cell_Click(sender, e);
+            SceneClick(sender, e);
         }
 
-        private void Cell_Click(object sender, EventArgs e)
+        private void SceneClick(object sender, EventArgs e)
         {
             MouseEventArgs me = (MouseEventArgs)e;
-            int x = (int)((me.X + pic_Cell.Left) / sceneCellSize);
-            int y = (int)((me.Y + pic_Cell.Top) / sceneCellSize);
-            if (me.Button == MouseButtons.Left)
+
+            switch (Interaction)
             {
-                if (Palette.SelectedTile != null)
-                {
-                    scene.Cells[y, x].TileIndex = Palette.SelectedTile.Index;
-                    DrawCell(x, y);
-                    pic_Scene.Image = sceneBitmap;
-                }
+                case InteractMode.TileSelect:
+
+                    if (me.Button == MouseButtons.Left)
+                    {
+                        if (Palette.SelectedTile != null)
+                        {
+                            scene.Cells[mouseCellY, mouseCellX].TileIndex = Palette.SelectedTile.Index;
+                            RefreshBitmap();
+                        }
+                    }
+                    if (me.Button == MouseButtons.Right)
+                    {
+                        Palette.SelectedTile = scene.GetTile(scene.Cells[mouseCellY, mouseCellX].TileIndex);
+
+                    }
+                    break;
+
+                case InteractMode.CollisionBoxBegin:
+                    if (me.Button == MouseButtons.Left)
+                    {
+                        DrawBoxX = mouseX;
+                        DrawBoxY = mouseY;
+                        DrawBoxW = 0;
+                        DrawBoxH = 0;
+                        ActiveBox = new CollisionBox();
+                        Interaction = InteractMode.CollisionBoxDraw;
+                    }
+                    if (me.Button == MouseButtons.Right)
+                    {
+                        Interaction = InteractMode.None;
+                        HideCell();
+                        ShowCollision();
+                    }
+                    break;
+
+                case InteractMode.CollisionBoxDraw:
+                    if (me.Button == MouseButtons.Left)
+                    {
+                        Interaction = InteractMode.None;
+                        scene.AddCollisionBox(ActiveBox);
+                        ShowCollision();
+                        HideCell();
+                        RefreshCollision();
+                    }
+                    if (me.Button == MouseButtons.Right)
+                    {
+                        Interaction = InteractMode.None;
+                        HideCell();
+                        ShowCollision();
+                    }
+                    break;
             }
-            if (me.Button == MouseButtons.Right)
-            {
-                Palette.SelectedTile = scene.GetTile(scene.Cells[y, x].TileIndex);
-            }
+
         }
+
+        private void HideCell()
+        {
+            pic_Cell.Visible = false;
+        }
+
+        private int DrawBoxX { get; set; }
+
+        private int DrawBoxY { get; set; }
+
+        private int DrawBoxW { get; set; }
+
+        private int DrawBoxH { get; set; }
+
+        private CollisionBox ActiveBox { get; set; }
 
 
         private void btn_Extract_Click(object sender, EventArgs e)
         {
             Extract(txt_SceneName.Text);
+        }
+
+        enum EditMode
+        {
+            Tiles,
+            Collision
+        }
+
+        enum InteractMode
+        {
+            None,
+            TileSelect,
+            CollisionBoxBegin,
+            CollisionBoxDraw,
+        }
+
+        private EditMode Mode = EditMode.Tiles;
+        private InteractMode Interaction;
+
+        private void tabs_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var tab = tabs.SelectedTab;
+            if (tab.Text == "Tiles") { SetEditMode(EditMode.Tiles); }
+            if (tab.Text == "Collision") { SetEditMode(EditMode.Collision); }
+        }
+
+        private void SetEditMode(EditMode mode)
+        {
+            Mode = mode;
+            switch (mode)
+            {
+                case EditMode.Tiles:
+                    HideCollision();
+                    ShowCell(images.Images[0], new Size(SceneCellSize, SceneCellSize));
+                    Interaction = InteractMode.TileSelect;
+                    break;
+                case EditMode.Collision:
+                    ShowCollision();
+                    Interaction = InteractMode.None;
+                    HideCell();
+                    break;
+            }
+        }
+
+        private void ShowCell(Image image, Size size)
+        {
+            pic_Cell.Image = image;
+            pic_Cell.Visible = true;
+            pic_Cell.Size = size;
+        }
+
+        private void ShowCollision()
+        {
+            HideCollision();
+            if (scene.Collision == null) { scene.Collision = new List<CollisionBox>(); }
+            foreach (var box in scene.Collision)
+            {
+                int imageIndex = (box == ActiveBox) ? 2 : 1;
+                Image image = images.Images[imageIndex];
+                PixelBox b = new()
+                {
+                    Parent = pic_Scene,
+                    Left = box.Left * SceneScale,
+                    Top = box.Top * SceneScale,
+                    Width = (box.Right - box.Left) * SceneScale,
+                    Height = (box.Bottom - box.Top) * SceneScale,
+                    Image = image,
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    InterpolationMode = InterpolationMode.NearestNeighbor
+                };
+                pic_Scene.Controls.Add(b);
+                CollisionBoxes.Add(b);
+            }
+        }
+
+        List<PixelBox> CollisionBoxes = new List<PixelBox>();
+
+        private void HideCollision()
+        {
+            foreach (var box in CollisionBoxes)
+            {
+                pic_Scene.Controls.Remove(box);
+                box.Dispose();
+            }
+            CollisionBoxes.Clear();
+        }
+
+        private void btn_AddCollision_Click(object sender, EventArgs e)
+        {
+            Interaction = InteractMode.CollisionBoxBegin;
+            ShowCell(images.Images[2], new Size(4, 4));
+            lst_Collision.SelectedIndices.Clear();
+        }
+
+        private void pic_Scene_MouseClick(object sender, MouseEventArgs e)
+        {
+            SceneClick(sender, e);
+        }
+
+
+        private bool CollisionBoxUpdating { get; set; }
+
+        private void lst_Collision_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lst_Collision.SelectedIndices.Count != 0)
+            {
+                CollisionBoxUpdating = true;
+                ActiveBox = (CollisionBox)lst_Collision.SelectedItem;
+                txt_CollisionBox_Left.Value = ActiveBox.Left;
+                txt_CollisionBox_Top.Value = ActiveBox.Top;
+                txt_CollisionBox_Right.Value = ActiveBox.Right;
+                txt_CollisionBox_Bottom.Value = ActiveBox.Bottom;
+                ShowCollision();
+                CollisionBoxUpdating = false;
+            }
+        }
+
+
+        private void UpdateCollisionBox()
+        {
+            ActiveBox.Left = (int)txt_CollisionBox_Left.Value;
+            ActiveBox.Top = (int)txt_CollisionBox_Top.Value;
+            ActiveBox.Right = (int)txt_CollisionBox_Right.Value;
+            ActiveBox.Bottom = (int)txt_CollisionBox_Bottom.Value;
+            var box = scene.Collision.Where(x => x == ActiveBox).FirstOrDefault();
+            ShowCollision();
+            RefreshCollision();
+        }
+
+        private void txt_CollisionBox_Left_ValueChanged(object sender, EventArgs e)
+        {
+            if (!CollisionBoxUpdating) UpdateCollisionBox();
+        }
+        private void txt_CollisionBox_Top_ValueChanged(object sender, EventArgs e)
+        {
+            if (!CollisionBoxUpdating) UpdateCollisionBox();
+        }
+
+        private void txt_CollisionBox_Right_ValueChanged(object sender, EventArgs e)
+        {
+            if (!CollisionBoxUpdating) UpdateCollisionBox();
+        }
+
+        private void txt_CollisionBox_Bottom_ValueChanged(object sender, EventArgs e)
+        {
+            if (!CollisionBoxUpdating) UpdateCollisionBox();
         }
     }
 }

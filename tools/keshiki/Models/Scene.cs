@@ -1,4 +1,6 @@
-﻿namespace keshiki.Models
+﻿using Microsoft.VisualBasic;
+
+namespace keshiki.Models
 {
     public class Scene
     {
@@ -15,9 +17,28 @@
 
         public List<Tile> Tiles { get; set; }
 
+        public List<CollisionBox> Collision { get; set; }
+
         public Tile GetTile(int tileIndex)
         {
             return Tiles.FirstOrDefault(x => x.Index == tileIndex);
+        }
+
+        public void AddCollisionBox(CollisionBox box)
+        {
+            Collision.Add(box);
+        }
+
+        public void AddCollisionBox(int x, int y, int w, int h)
+        {
+            CollisionBox box = new CollisionBox()
+            {
+                Left = x,
+                Top = y,
+                Right = x + w,
+                Bottom = y + h
+            };
+            Collision.Add(box);
         }
     }
 }
