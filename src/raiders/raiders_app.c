@@ -34,8 +34,16 @@ unsigned short player_x = 32;
 unsigned short player_y = 180;
 unsigned char player_moving = 0;
 unsigned char player_sprite_index = 1;
-unsigned char player_sprite_anim_timer = 0;
-unsigned char player_sprite_anim_dir = 1;
+
+#define const_player_anim_idle 0
+#define const_player_anim_walk 1
+#define const_player_anim_run 2
+#define const_player_anim_punch 3
+
+unsigned char player_anim = const_player_anim_idle;
+unsigned char player_anim_timer = 0;
+unsigned char player_anim_dir = 0;
+unsigned char player_anim_locked = 0;
 
 bool input_left = 0;
 bool input_left_last = 0;
@@ -47,6 +55,8 @@ bool input_down = 0;
 bool input_down_last = 0;
 bool input_a;
 bool input_a_last = 0;
+bool input_b;
+bool input_b_last = 0;
 
 signed char x_off = 0;
 signed char y_off = -2;
@@ -62,11 +72,13 @@ void basic_input()
 	input_left_last = input_left;
 	input_right_last = input_right;
 	input_a_last = input_a;
+	input_b_last = input_b;
 	input_up = CHECK_BIT(joystick[0], 3);
 	input_down = CHECK_BIT(joystick[0], 2);
 	input_left = CHECK_BIT(joystick[0], 1);
 	input_right = CHECK_BIT(joystick[0], 0);
 	input_a = CHECK_BIT(joystick[0], 4);
+	input_b = CHECK_BIT(joystick[0], 5);
 }
 
 void update_section(unsigned char lx, unsigned char rx, unsigned char ty, unsigned char by)
@@ -207,117 +219,163 @@ void app_main()
 		if (VBLANK_RISING)
 		{
 			// Reset timer
-			timer[0] = 0;
+			// timer[0] = 0;
 
 			basic_input();
 
 			player_moving = 0;
+			if (player_anim != 0)
+			{
+				player_anim_timer++;
+			}
+			else
+			{
+				if (player_anim_timer > 0)
+				{
+					player_anim_timer--;
+				}
+			}
+
 			unsigned player_speed = input_a ? 3 : 1;
-			if (input_left)
-			{
-				set_sprite_mirror(player_sprite, 1);
-				unsigned short new_player_x = player_x - player_speed;
-				if (player_aabb_check(new_player_x, player_y) == 255)
-				{
-					player_moving = 1;
-					player_x = new_player_x;
-				}
-			}
-			if (input_right)
-			{
-				set_sprite_mirror(player_sprite, 0);
-				unsigned short new_player_x = player_x + player_speed;
-				if (player_aabb_check(new_player_x, player_y) == 255)
-				{
-					player_moving = 1;
-					player_x = new_player_x;
-				}
-			}
 
-			if (input_up)
+			if (!player_anim_locked)
 			{
-				unsigned short new_player_y = player_y - player_speed;
-				if (player_aabb_check(player_x, new_player_y) == 255)
+				if (input_b && player_anim_timer == 0)
 				{
-					player_moving = 1;
-
-					player_y = new_player_y;
+					player_anim = const_player_anim_punch;
+					player_sprite_index = 8;
+					player_anim_locked = 1;
+					player_anim_timer = 0;
 				}
-			}
-			if (input_down)
-			{
-				unsigned short new_player_y = player_y + player_speed;
-				if (player_aabb_check(player_x, new_player_y) == 255)
+				else
 				{
-					player_moving = 1;
 
-					player_y = new_player_y;
-				}
-			}
-
-			if (player_moving)
-			{
-				player_sprite_anim_timer++;
-				if (player_sprite_anim_timer == 4)
-				{
-					player_sprite_anim_timer = 0;
-					if (player_speed == 1)
+					if (input_left)
 					{
-						if (player_sprite_index > 2)
+						set_sprite_mirror(player_sprite, 1);
+						unsigned short new_player_x = player_x - player_speed;
+						if (player_aabb_check(new_player_x, player_y) == 255)
 						{
-							player_sprite_index = 1;
+							player_moving = 1;
+							player_x = new_player_x;
 						}
-						if (player_sprite_anim_dir == 1)
+					}
+					if (input_right)
+					{
+						set_sprite_mirror(player_sprite, 0);
+						unsigned short new_player_x = player_x + player_speed;
+						if (player_aabb_check(new_player_x, player_y) == 255)
 						{
-							player_sprite_index++;
+							player_moving = 1;
+							player_x = new_player_x;
 						}
-						else
+					}
+
+					if (input_up)
+					{
+						unsigned short new_player_y = player_y - player_speed;
+						if (player_aabb_check(player_x, new_player_y) == 255)
 						{
-							player_sprite_index--;
+							player_moving = 1;
+
+							player_y = new_player_y;
 						}
-						if (player_sprite_index == 2 || player_sprite_index == 0)
+					}
+					if (input_down)
+					{
+						unsigned short new_player_y = player_y + player_speed;
+						if (player_aabb_check(player_x, new_player_y) == 255)
 						{
-							if (player_sprite_anim_dir == 1)
-							{
-								player_sprite_anim_dir = 0;
-							}
-							else
-							{
-								player_sprite_anim_dir = 1;
-							}
+							player_moving = 1;
+
+							player_y = new_player_y;
+						}
+					}
+					if (player_moving)
+					{
+						player_anim = player_speed == 1 ? const_player_anim_walk : const_player_anim_run;
+
+						// Handle scrolling
+						scroll_x = ((x_off * 16) + tilemap_offset_x);
+						signed short scroll_offset = player_x - scroll_x;
+
+						if (scroll_offset > 180 && scroll_x < scroll_x_max)
+						{
+							unsigned short scroll_avail = scroll_x_max - scroll_x;
+							tilemap_offset_x += scroll_avail > player_speed ? player_speed : scroll_avail;
+							update_tilemap();
+						}
+						if (scroll_x > 0 && scroll_offset < 140)
+						{
+							tilemap_offset_x -= scroll_x > player_speed ? player_speed : scroll_x;
+							update_tilemap();
 						}
 					}
 					else
 					{
-						player_sprite_index = (player_sprite_index == 3) ? 1 : 3;
+						player_anim = const_player_anim_idle;
 					}
 				}
-
-				// Handle scrolling
-				scroll_x = ((x_off * 16) + tilemap_offset_x);
-				signed short scroll_offset = player_x - scroll_x;
-
-				if (scroll_offset > 180 && scroll_x < scroll_x_max)
-				{
-					unsigned short scroll_avail = scroll_x_max - scroll_x;
-					tilemap_offset_x += scroll_avail > player_speed ? player_speed : scroll_avail;
-					update_tilemap();
-				}
-				if (scroll_x > 0 && scroll_offset < 140)
-				{
-					tilemap_offset_x -= scroll_x > player_speed ? player_speed : scroll_x;
-					update_tilemap();
-				}
 			}
-			else
+
+			switch (player_anim)
 			{
+			case const_player_anim_idle:
 				player_sprite_index = 1;
+				break;
+			case const_player_anim_walk:
+				if (player_sprite_index > 2)
+				{
+					player_sprite_index = 0;
+				}
+				if (player_anim_timer >= 4)
+				{
+					player_anim_timer = 0;
+					if (player_anim_dir == 0)
+					{
+						player_sprite_index++;
+						if (player_sprite_index == 2)
+						{
+							player_anim_dir = 1;
+						}
+					}
+					else
+					{
+						player_sprite_index--;
+						if (player_sprite_index == 0)
+						{
+							player_anim_dir = 0;
+						}
+					}
+				}
+				break;
+			case const_player_anim_run:
+				if (player_anim_timer >= 4)
+				{
+					player_anim_timer = 0;
+					player_sprite_index = player_sprite_index == 1 ? 3 : 1;
+				}
+				break;
+			case const_player_anim_punch:
+				if (player_anim_timer >= 3)
+				{
+					player_sprite_index++;
+					if (player_sprite_index == 10)
+					{
+						player_anim = const_player_anim_idle;
+						player_anim_locked = 0;
+					}else{
+						player_anim_timer = 0;
+					}
+				}
+				break;
 			}
+
 			draw_player_sprite();
 			update_sprites();
 
-			unsigned short t = GET_TIMER;
-			write_stringf_ushort("%4d", 0xFF, 2, 10, t);
+			// unsigned short t = GET_TIMER;
+			// write_stringf_ushort("%4d", 0xFF, 2, 10, t);
 		}
 
 		vblank_last = vblank;
