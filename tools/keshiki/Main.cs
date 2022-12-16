@@ -34,7 +34,7 @@ namespace keshiki
 
         private Bitmap SceneBitmap { get; set; }
 
-        private int SceneScale { get; set; } = 4;
+        private int SceneScale { get; set; } = 3;
 
         private int SceneCellSize { get; set; }
 
@@ -226,13 +226,20 @@ namespace keshiki
 
         private void Extract(string filename)
         {
-
-            scene = new Scene
+            if (scene == null)
             {
-                Name = filename,
-                CellSize = 16,
-                Tiles = new List<Tile>()
-            };
+                scene = new Scene
+                {
+                    Name = filename,
+                    CellSize = 16,
+                    Tiles = new List<Tile>()
+                };
+            }
+            else
+            {
+                scene.Name = filename;
+                scene.Tiles.Clear();
+            }
             SceneBitmap = (Bitmap)Image.FromFile(TileSourcePath + scene.Name + ".png");
             scene.CellsX = SceneBitmap.Width / scene.CellSize;
             scene.CellsY = SceneBitmap.Height / scene.CellSize;

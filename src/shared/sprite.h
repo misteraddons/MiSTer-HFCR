@@ -28,6 +28,7 @@ extern unsigned char spr_y_l[];
 extern unsigned char spr_y_h[];
 extern bool spr_on[];
 extern bool spr_collide[];
+extern bool spr_mirror[];
 extern unsigned char spr_palette_index[];
 extern unsigned char spr_index[];
 extern unsigned char spr_size[];
@@ -39,6 +40,8 @@ extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
 extern void update_sprites();
 
 extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char size, unsigned char collide);
+
+extern void set_sprite_mirror(unsigned char sprite, unsigned char value);
 
 extern void clear_sprites();
 

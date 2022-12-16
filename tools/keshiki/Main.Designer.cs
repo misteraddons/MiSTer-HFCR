@@ -192,6 +192,8 @@ namespace keshiki
             // 
             // label3
             // 
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(267, 506);
             this.label3.Name = "label3";
@@ -201,6 +203,8 @@ namespace keshiki
             // 
             // txt_CollisionBox_Bottom
             // 
+            this.txt_CollisionBox_Bottom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_CollisionBox_Bottom.Location = new System.Drawing.Point(267, 523);
             this.txt_CollisionBox_Bottom.Maximum = new decimal(new int[] {
             1024,
@@ -214,6 +218,8 @@ namespace keshiki
             // 
             // label4
             // 
+            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(202, 506);
             this.label4.Name = "label4";
@@ -223,6 +229,8 @@ namespace keshiki
             // 
             // txt_CollisionBox_Right
             // 
+            this.txt_CollisionBox_Right.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_CollisionBox_Right.Location = new System.Drawing.Point(202, 523);
             this.txt_CollisionBox_Right.Maximum = new decimal(new int[] {
             1024,
@@ -236,6 +244,8 @@ namespace keshiki
             // 
             // label2
             // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(68, 506);
             this.label2.Name = "label2";
@@ -245,6 +255,8 @@ namespace keshiki
             // 
             // txt_CollisionBox_Top
             // 
+            this.txt_CollisionBox_Top.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_CollisionBox_Top.Location = new System.Drawing.Point(68, 523);
             this.txt_CollisionBox_Top.Maximum = new decimal(new int[] {
             1024,
@@ -258,6 +270,8 @@ namespace keshiki
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(3, 506);
             this.label1.Name = "label1";
@@ -267,6 +281,8 @@ namespace keshiki
             // 
             // txt_CollisionBox_Left
             // 
+            this.txt_CollisionBox_Left.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txt_CollisionBox_Left.Location = new System.Drawing.Point(3, 523);
             this.txt_CollisionBox_Left.Maximum = new decimal(new int[] {
             1024,

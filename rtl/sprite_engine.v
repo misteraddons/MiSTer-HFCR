@@ -114,6 +114,7 @@ reg	 		 [SPRITE_POSITION_WIDTH-1:0]	spr_size;		// Size of sprite in pixels (alwa
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_x;			// Sprite X position
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_y;			// Sprite Y position 
 reg					spr_enable;								// Sprite visibility enabled
+reg					spr_mirror;								// Sprite X mirror enabled
 reg					spr_collide;							// Sprite collision enabled
 reg			 [1:0]	spr_palette_index;						// Sprite palette index
 reg			 [5:0]	spr_image_index;						// Sprite image index
@@ -442,6 +443,8 @@ begin
 			spr_size <= (spriteram_data_out[3:2] == 2'd2 ? spr_size_8x8 :
 								spriteram_data_out[3:2] == 2'd1 ? spr_size_16x16 :
 								spriteram_data_out[3:2] == 2'd0 ? spr_size_32x32 : {SPRITE_POSITION_WIDTH{1'b0}});
+			// Read mirror bit from sprite RAM
+			spr_mirror <= spriteram_data_out[1];
 			// Read Y upper 1 bit from sprite RAM
 			spr_y[8] <= spriteram_data_out[0];
 			// Increment sprite RAM address
@@ -469,7 +472,7 @@ begin
 			//$display("CASVAL->SE_CHECK_Y: spr_index=%d  y: %d", spr_index, spr_y);
 `endif
 			//// If this sprite is enabled and current line is within sprite Y area
-			if(spr_enable==1'b1 && spr_active_y >= spr_y && spr_active_y <= spr_y + spr_size)
+			if(spr_enable == 1'b1 && spr_active_y >= spr_y && spr_active_y <= spr_y + spr_size)
 			begin
 `ifdef CASVAL_DEBUG
 				$display("SE_CHECK_Y PASSED: spr_index=%d", spr_index);
@@ -500,7 +503,6 @@ begin
 `endif
 			// Read image index 6 bits from sprite RAM
 			spr_image_index <= spriteram_data_out[7:2];
-			
 			// Read X upper 1 bit from sprite RAM
 			spr_x[8] <= spriteram_data_out[0];
 			// Increment sprite RAM address
@@ -541,19 +543,19 @@ begin
 			case(spr_size)
 				spr_size_32x32:
 				begin
-					sprom_addr <= spr_rom_offset + { spr_image_index[3:0], 10'b0} + { spr_rom_y_offset[7:0], 5'b0};
+					sprom_addr <= spr_rom_offset + { spr_image_index[3:0], 10'b0} + { spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 14'd32 : 14'd0);
 				end
 				spr_size_16x16: 
 				begin
-					sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 8'b0} + { spr_rom_y_offset[8:0], 4'b0};
+					sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 8'b0} + { spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 14'd16 : 14'd0);
 				end
 				default:
 				begin
-					// Default to 8x8
-					sprom_addr <= spr_rom_offset + { 2'b0, spr_image_index[5:0], 6'b0} + { spr_rom_y_offset[9:0], 3'b0};
+					// Default to 8x8s
+					sprom_addr <= spr_rom_offset + { 2'b0, spr_image_index[5:0], 6'b0} + { spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 14'd8 : 14'd0);
 				end
 			endcase
-					 	
+
 			// Reset sprite pixel index and count
 		 	spr_pixel_index <= {SPRITE_SIZE_WIDTH+1{1'b0}};
 
@@ -584,7 +586,7 @@ begin
 				// Setup palette address to read pixel colour
 				palrom_addr <= {spr_palette_index, spriterom_data_out[4:0],1'b0};
 				// Increment sprite ROM address
-				sprom_addr <= sprom_addr + 1'b1;
+				sprom_addr <= sprom_addr + (spr_mirror ? -14'b1 : 14'b1);
 				// Disable line buffer write
 				spritelbram_wr <= 1'b0;
 

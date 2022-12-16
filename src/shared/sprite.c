@@ -33,7 +33,7 @@ bool spr_collide[const_sprite_max];
 unsigned char spr_palette_index[const_sprite_max];
 unsigned char spr_index[const_sprite_max];
 unsigned char spr_size[const_sprite_max];
-unsigned char spr_flip[const_sprite_max];
+bool spr_mirror[const_sprite_max];
 
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
 
@@ -78,7 +78,13 @@ void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned c
 	spr_collide[sprite] = collide;
 	spr_palette_index[sprite] = palette_index;
 	spr_size[sprite] = size;
-	spr_highbits[sprite] = 1 << 7 | collide << 6 | palette_index << 4 | size << 2;
+	spr_highbits[sprite] = 1 << 7 | collide << 6 | palette_index << 4 | size << 2 | spr_mirror[sprite] << 1;
+}
+
+void set_sprite_mirror(unsigned char sprite, unsigned char value)
+{
+	spr_mirror[sprite] = value;
+	spr_highbits[sprite] ^= (-value ^ spr_highbits[sprite]) & (1UL << 1);
 }
 
 void clear_sprites()
