@@ -25,4 +25,6 @@
 // Method headers
 extern void app_main();
 
+extern unsigned short scroll_x;
+
 #endif

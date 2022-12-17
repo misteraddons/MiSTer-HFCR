@@ -1,6 +1,7 @@
 using keshiki.Controls;
 using keshiki.Models;
 using Newtonsoft.Json;
+using System.DirectoryServices.ActiveDirectory;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Text;
@@ -554,8 +555,10 @@ namespace keshiki
 
         private void lst_Collision_SelectedIndexChanged(object sender, EventArgs e)
         {
+            btn_DeleteBox.Enabled = false;
             if (lst_Collision.SelectedIndices.Count != 0)
             {
+                btn_DeleteBox.Enabled = true;
                 CollisionBoxUpdating = true;
                 ActiveBox = (CollisionBox)lst_Collision.SelectedItem;
                 txt_CollisionBox_Left.Value = ActiveBox.Left;
@@ -596,6 +599,13 @@ namespace keshiki
         private void txt_CollisionBox_Bottom_ValueChanged(object sender, EventArgs e)
         {
             if (!CollisionBoxUpdating) UpdateCollisionBox();
+        }
+
+        private void btn_DeleteBox_Click(object sender, EventArgs e)
+        {
+            scene.Collision.Remove(ActiveBox);
+            RefreshCollision();
+            ShowCollision();
         }
     }
 }

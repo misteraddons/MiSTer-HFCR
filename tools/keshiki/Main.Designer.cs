@@ -54,6 +54,7 @@ namespace keshiki
             this.btn_AddCollision = new System.Windows.Forms.Button();
             this.lst_Collision = new System.Windows.Forms.ListBox();
             this.images = new System.Windows.Forms.ImageList(this.components);
+            this.btn_DeleteBox = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pic_Scene)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pic_Cell)).BeginInit();
             this.scroll_Scene.SuspendLayout();
@@ -84,7 +85,7 @@ namespace keshiki
             this.txt_SceneName.Name = "txt_SceneName";
             this.txt_SceneName.Size = new System.Drawing.Size(413, 23);
             this.txt_SceneName.TabIndex = 2;
-            this.txt_SceneName.Text = "cave";
+            this.txt_SceneName.Text = "waterfront_mall";
             // 
             // pic_Cell
             // 
@@ -171,6 +172,7 @@ namespace keshiki
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.btn_DeleteBox);
             this.tabPage2.Controls.Add(this.label3);
             this.tabPage2.Controls.Add(this.txt_CollisionBox_Bottom);
             this.tabPage2.Controls.Add(this.label4);
@@ -335,6 +337,17 @@ namespace keshiki
             this.images.Images.SetKeyName(1, "cell_solid.png");
             this.images.Images.SetKeyName(2, "cell_active.png");
             // 
+            // btn_DeleteBox
+            // 
+            this.btn_DeleteBox.Enabled = false;
+            this.btn_DeleteBox.Location = new System.Drawing.Point(251, 6);
+            this.btn_DeleteBox.Name = "btn_DeleteBox";
+            this.btn_DeleteBox.Size = new System.Drawing.Size(75, 23);
+            this.btn_DeleteBox.TabIndex = 11;
+            this.btn_DeleteBox.Text = "Delete Box";
+            this.btn_DeleteBox.UseVisualStyleBackColor = true;
+            this.btn_DeleteBox.Click += new System.EventHandler(this.btn_DeleteBox_Click);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -389,5 +402,6 @@ namespace keshiki
         private NumericUpDown txt_CollisionBox_Bottom;
         private Label label4;
         private NumericUpDown txt_CollisionBox_Right;
+        private Button btn_DeleteBox;
     }
 }

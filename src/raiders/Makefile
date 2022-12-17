@@ -1,2 +1,2 @@
-DEFINES=-DPROJECT_NAME=fireworks
+DEFINES=-DPROJECT_NAME=raiders
 include ../shared/Makefile

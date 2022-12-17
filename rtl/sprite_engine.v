@@ -543,16 +543,19 @@ begin
 			case(spr_size)
 				spr_size_32x32:
 				begin
-					sprom_addr <= spr_rom_offset + { spr_image_index[3:0], 10'b0} + { spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 14'd32 : 14'd0);
+					if(SPRITE_ROM_WIDTH > 16)
+						sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-16{1'b0}}, spr_image_index[5:0], 10'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
+					else
+						sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 10'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
 				end
 				spr_size_16x16: 
 				begin
-					sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 8'b0} + { spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 14'd16 : 14'd0);
+					sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_image_index[5:0], 8'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 16 :0);
 				end
 				default:
 				begin
 					// Default to 8x8s
-					sprom_addr <= spr_rom_offset + { 2'b0, spr_image_index[5:0], 6'b0} + { spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 14'd8 : 14'd0);
+					sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-12{1'b0}}, spr_image_index[5:0], 6'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 8 : 0);
 				end
 			endcase
 
@@ -586,7 +589,7 @@ begin
 				// Setup palette address to read pixel colour
 				palrom_addr <= {spr_palette_index, spriterom_data_out[4:0],1'b0};
 				// Increment sprite ROM address
-				sprom_addr <= sprom_addr + (spr_mirror ? -14'b1 : 14'b1);
+				sprom_addr <= sprom_addr + (spr_mirror ? -1 : 1);
 				// Disable line buffer write
 				spritelbram_wr <= 1'b0;
 

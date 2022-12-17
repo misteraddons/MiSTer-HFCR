@@ -406,7 +406,7 @@ wire		spritecollisionram_data_out_cpu;
 `ifndef DISABLE_SPRITES
 localparam SPRITE_POSITION_WIDTH = 9;
 localparam SPRITE_RAM_WIDTH = 7;
-localparam SPRITE_ROM_WIDTH = 14;
+localparam SPRITE_ROM_WIDTH = 16;
 localparam SPRITE_COLRAM_WIDTH = 5;
 wire [SPRITE_ROM_WIDTH-1:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
