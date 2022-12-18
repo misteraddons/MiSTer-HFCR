@@ -117,7 +117,7 @@ reg					spr_enable;								// Sprite visibility enabled
 reg					spr_mirror;								// Sprite X mirror enabled
 reg					spr_collide;							// Sprite collision enabled
 reg			 [1:0]	spr_palette_index;						// Sprite palette index
-reg			 [5:0]	spr_image_index;						// Sprite image index
+reg			 [6:0]	spr_image_index;						// Sprite image index
 localparam   [SPRITE_POSITION_WIDTH-1:0]	spr_border_size = 32; // Sprite screen border width
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_active_y;	// Current active sprite engine Y
 reg			 [SPRITE_SIZE_WIDTH:0]			spr_pixel_index;// Current sprite X pixel
@@ -501,8 +501,8 @@ begin
 `ifdef CASVAL_DEBUG
 			$display("CASVAL->SE_READ_X_UPPER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
 `endif
-			// Read image index 6 bits from sprite RAM
-			spr_image_index <= spriteram_data_out[7:2];
+			// Read image index 7 bits from sprite RAM
+			spr_image_index <= spriteram_data_out[7:1];
 			// Read X upper 1 bit from sprite RAM
 			spr_x[8] <= spriteram_data_out[0];
 			// Increment sprite RAM address

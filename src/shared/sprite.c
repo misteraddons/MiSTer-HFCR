@@ -79,11 +79,9 @@ void swap(unsigned char s1, unsigned char s2)
 	spr_order[s2] = o;
 }
 
-void update_sprites()
+void sort_sprites()
 {
-
 	unsigned char sprite1 = 0;
-
 	while (true)
 	{
 		if (spr_y[spr_order[sprite1 + 1]] < spr_y[spr_order[sprite1]])
@@ -104,7 +102,10 @@ void update_sprites()
 		if (sprite1 == sprite_max - 1)
 			break;
 	}
+}
 
+void update_sprites()
+{
 	unsigned char s = 0;
 	for (unsigned char i = 0; i < sprite_max; i++)
 	{
@@ -112,9 +113,9 @@ void update_sprites()
 		if (spr_on[sprite])
 		{
 			// Set sprite properties
-			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];   // Enabled (1 bit) + Collide (1 bit) + Size (2 bits) + Palette Index (2 bits) + Position Y (upper 2 bits)
+			spriteram[s++] = spr_highbits[sprite] | spr_y_h[sprite];   // Enabled (1 bit) + Collide (1 bit) + Palette Index (2 bits) + Size (2 bits) + Mirror (1 bit) + Position Y (upper 1 bit)
 			spriteram[s++] = spr_y_l[sprite];						   // Position Y (lower 8 bits)
-			spriteram[s++] = spr_index[sprite] << 2 | spr_x_h[sprite]; // Sprite Index (6 bits) + Position X (upper 2 bits)
+			spriteram[s++] = spr_index[sprite] << 1 | spr_x_h[sprite]; // Sprite Index (7 bits) + Position X (upper 1 bit)
 			spriteram[s++] = spr_x_l[sprite];						   // Position X (lower 8 bits)
 		}
 		else

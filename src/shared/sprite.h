@@ -37,6 +37,8 @@ extern void set_sprite_position_y(unsigned char sprite, unsigned short y);
 
 extern void init_sprites();
 
+extern void sort_sprites();
+
 extern void update_sprites();
 
 extern void enable_sprite(unsigned char sprite, unsigned char palette_index, unsigned char size, unsigned char collide);

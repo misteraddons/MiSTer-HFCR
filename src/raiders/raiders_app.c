@@ -30,8 +30,6 @@
 #include "raiders_scene.h"
 #include "raiders_characters.h"
 
-int logo_sprite = 0;
-
 bool input_left = 0;
 bool input_left_last = 0;
 bool input_right = 0;
@@ -49,6 +47,8 @@ bool input_x_last = 0;
 
 signed char x_off = 0;
 signed char y_off = -2;
+
+int logo_sprite = const_character_max;
 
 // Track joypad 1 directions and start for menu control
 void basic_input()
@@ -162,16 +162,14 @@ void update_tilemap()
 #define const_character_sprite_palette sprite_palette_alex
 #define const_character_sprite_size sprite_size_alex
 
+unsigned char ai_mode[const_character_max];
+
 void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 	clear_chars(0);
 	init_sprites();
 	clear_sprites();
-
-	enable_sprite(logo_sprite, sprite_palette_logos, sprite_size_logos, 0);
-	set_sprite_position(logo_sprite, 30, 32);
-	spr_index[logo_sprite] = sprite_index_logos_first;
 
 	// Set player position
 	character_x[0] = 40;
@@ -183,13 +181,19 @@ void app_main()
 	character_x[1] = 200;
 	character_y[1] = 130;
 	enable_sprite(const_character_first_sprite_index + 1, const_character_sprite_palette, const_character_sprite_size, 0);
-	character_sprite_offset[1] = sprite_index_ninja_first;
+	character_sprite_offset[1] = sprite_index_ninjablack_first;
+	ai_mode[1] = 1;
 
 	// Set enemy position
 	character_x[2] = 250;
 	character_y[2] = 170;
 	enable_sprite(const_character_first_sprite_index + 2, const_character_sprite_palette, const_character_sprite_size, 0);
-	character_sprite_offset[2] = sprite_index_ninja_first;
+	character_sprite_offset[2] = sprite_index_ninjared_first;
+	ai_mode[2] = 0;
+
+	// AI modes
+	// 0 - get near the player but hang back
+	// 1 - get in close to the player
 
 	for (unsigned char c = 0; c < const_character_max; c++)
 	{
@@ -198,16 +202,31 @@ void app_main()
 		character_frame[c] = 1;
 	}
 
+	// unsigned short x = 48;
+	// unsigned char y = 48;
+	// for (unsigned char s = const_character_max; s < sprite_max; s++)
+	// {
+	// 	enable_sprite(s, sprite_palette_logos, sprite_size_logos, 0);
+	// 	set_sprite_position(s, x, y);
+	// 	spr_index[s] = sprite_index_logos_first + 1;
+	// 	x += 32;
+	// 	if (x > 280)
+	// 	{
+	// 		x = 48;
+	// 		y += 32;
+	// 	}
+	// }
+
 	update_section(0, screen_width, 0, const_tilemap_index_y_max - y_off);
 	tilemap_offset_x = 0;
 	tilemap_offset_y = 0;
 	scroll_x_max = (const_tilemap_index_x_max * 16) - 320;
 
 	// Shift collision boxes to match scene offset
-	for (unsigned char c = 0; c < const_collision_boxes_max; c++)
+	for (unsigned char b = 0; b < const_collision_boxes_max; b++)
 	{
-		collision_box_t[c] -= y_off * 16;
-		collision_box_b[c] -= y_off * 16;
+		collision_box_t[b] -= y_off * 16;
+		collision_box_b[b] -= y_off * 16;
 	}
 
 	while (1)
@@ -310,18 +329,28 @@ void app_main()
 				}
 			}
 
+			// unsigned short tp1 = GET_TIMER;
+
 			for (unsigned char c = 1; c < const_character_max; c++)
 			{
+				unsigned char min_dist = 30;
+				unsigned char run_dist = 60;
+				if (ai_mode[c] == 1)
+				{
+					min_dist = 15;
+					run_dist = 30;
+				}
+
 				signed short player_cpu_off = character_x[0] - character_x[c];
 				unsigned char anim = const_character_idle;
 				if (player_cpu_off != 0)
 				{
 					unsigned short d = abs(player_cpu_off);
-					if (d > 16)
+					signed char s = sign_short_as_char(player_cpu_off);
+					set_sprite_mirror(const_character_first_sprite_index + c, s == 1 ? 0 : 1);
+					if (d > min_dist)
 					{
-						signed char s = sign_short_as_char(player_cpu_off);
-						set_sprite_mirror(const_character_first_sprite_index + c, s == 1 ? 0 : 1);
-						if (d > 64)
+						if (d > run_dist)
 						{
 							anim = const_character_run;
 							character_x[c] += s * 3;
@@ -335,13 +364,21 @@ void app_main()
 				}
 				character_anim[c] = anim;
 			}
+			// unsigned short tai = GET_TIMER;
 
 			update_characters();
+			// unsigned short tc = GET_TIMER;
+
+			sort_sprites();
+			// unsigned short tss = GET_TIMER;
 
 			update_sprites();
-
-			unsigned short t = GET_TIMER;
-			write_stringf_ushort("%4d", 0b00111000, 0, 0, t);
+			// unsigned short tsu = GET_TIMER;
+			// write_stringf_ushort("player         %4d", 0xFF, 0, 0, tp1);
+			// write_stringf_ushort("ai             %4d", 0xFF, 0, 1, tai - tp1);
+			// write_stringf_ushort("characters     %4d", 0xFF, 0, 2, tc - tai);
+			// write_stringf_ushort("sort sprites   %4d", 0xFF, 0, 3, tss - tc);
+			// write_stringf_ushort("update sprites %4d", 0, 0, 4, tsu - tss);
 		}
 
 		vblank_last = vblank;

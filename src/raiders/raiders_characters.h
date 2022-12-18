@@ -45,7 +45,7 @@ extern unsigned char character_anim_locked[];
 #define const_character_kick 4
 #define const_character_kick_rate 6
 
-#define const_character_first_sprite_index 1
+#define const_character_first_sprite_index 0
 
 extern void update_characters();
 
