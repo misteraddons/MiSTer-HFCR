@@ -58,6 +58,7 @@ void update_characters()
 			if (character_frame[c] > 2)
 			{
 				character_frame[c] = 0;
+				character_anim_dir[c] = 0;
 			}
 			if (character_anim_timer[c] >= const_character_walk_rate)
 			{
