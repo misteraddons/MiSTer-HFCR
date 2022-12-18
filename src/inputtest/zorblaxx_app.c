@@ -237,8 +237,7 @@ void intro_loop()
 					unsigned short sy = (title_y / y_divisor) + (y * 16);
 					for (unsigned char x = 0; x < 8; x++)
 					{
-						spr_y_h[title_sprite] = sy >> 8;
-						spr_y_l[title_sprite] = (unsigned char)sy;
+						set_sprite_position_y(title_sprite, sy);
 						title_sprite++;
 					}
 				}

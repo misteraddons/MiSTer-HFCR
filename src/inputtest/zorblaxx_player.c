@@ -105,8 +105,7 @@ void move_player_to_target()
 			player_y += player_y_diff;
 		}
 		unsigned short y = player_y / y_divisor;
-		spr_y_h[player_sprite] = y >> 8;
-		spr_y_l[player_sprite] = (unsigned char)y;
+		set_sprite_position_y(player_sprite, y);
 	}
 	else
 	{

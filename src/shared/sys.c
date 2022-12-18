@@ -57,3 +57,12 @@ signed char rand_schar(signed char lower, signed char upper)
 {
 	return (rand() % (upper - lower + 1)) + lower;
 }
+
+signed char sign_short_as_char(signed short value)
+{
+	if (value > 0)
+		return 1;
+	if (value < 0)
+		return -1;
+	return 0;
+}

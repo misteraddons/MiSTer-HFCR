@@ -21,6 +21,7 @@
 #include "../shared/ui.h"
 #include "../shared/sprite.h"
 #include "sprite_images.h"
+#include "raiders_scene.h"
 #include "raiders_characters.h"
 
 unsigned char character_anim[const_character_max];
@@ -32,7 +33,7 @@ unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
 unsigned char character_anim_locked[const_character_max];
 
-void update_characters(unsigned short scroll_x)
+void update_characters()
 {
 	for (unsigned char c = 0; c < const_character_max; c++)
 	{
@@ -47,6 +48,7 @@ void update_characters(unsigned short scroll_x)
 				character_anim_timer[c]--;
 			}
 		}
+
 		switch (character_anim[c])
 		{
 		case const_character_idle:
@@ -99,6 +101,7 @@ void update_characters(unsigned short scroll_x)
 					character_anim_timer[c] = 0;
 				}
 			}
+			break;
 		case const_character_kick:
 			if (character_anim_timer[c] >= const_character_kick_rate)
 			{
@@ -126,6 +129,5 @@ void update_characters(unsigned short scroll_x)
 			y--;
 		}
 		set_sprite_position(player_sprite, x, y + 32);
-		write_stringf("%d", 0xFF, 0, c, spr_index[player_sprite]);
 	}
 }

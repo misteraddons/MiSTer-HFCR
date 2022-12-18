@@ -24,6 +24,8 @@
 
 #define const_sprite_max 32
 unsigned char sprite_max = const_sprite_max;
+unsigned short spr_x[const_sprite_max];
+unsigned short spr_y[const_sprite_max];
 unsigned char spr_x_l[const_sprite_max];
 unsigned char spr_x_h[const_sprite_max];
 unsigned char spr_y_l[const_sprite_max];
@@ -35,10 +37,14 @@ unsigned char spr_index[const_sprite_max];
 unsigned char spr_size[const_sprite_max];
 bool spr_mirror[const_sprite_max];
 
+unsigned char spr_order[const_sprite_max];
+
 unsigned char spr_highbits[const_sprite_max]; // Temp cache of high bits excluding upper 2 Y bits
 
 void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y)
 {
+	spr_x[sprite] = x;
+	spr_y[sprite] = y;
 	spr_x_h[sprite] = x >> 8;
 	spr_x_l[sprite] = (unsigned char)x;
 	spr_y_h[sprite] = y >> 8;
@@ -46,15 +52,63 @@ void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short 
 }
 void set_sprite_position_x(unsigned char sprite, unsigned short x)
 {
+	spr_x[sprite] = x;
 	spr_x_h[sprite] = x >> 8;
 	spr_x_l[sprite] = (unsigned char)x;
 }
 
-void update_sprites()
+void set_sprite_position_y(unsigned char sprite, unsigned short y)
 {
-	unsigned char s = 0;
+	spr_y[sprite] = y;
+	spr_y_h[sprite] = y >> 8;
+	spr_y_l[sprite] = (unsigned char)y;
+}
+
+void init_sprites()
+{
 	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 	{
+		spr_order[sprite] = sprite;
+	}
+}
+
+void swap(unsigned char s1, unsigned char s2)
+{
+	unsigned char o = spr_order[s1];
+	spr_order[s1] = spr_order[s2];
+	spr_order[s2] = o;
+}
+
+void update_sprites()
+{
+
+	unsigned char sprite1 = 0;
+
+	while (true)
+	{
+		if (spr_y[spr_order[sprite1 + 1]] < spr_y[spr_order[sprite1]])
+		{
+			unsigned char sprite2 = sprite1;
+
+			while (true)
+			{
+				swap(sprite2, sprite2 + 1);
+				if (sprite2 == 0)
+					break;
+				sprite2--;
+				if (spr_y[spr_order[sprite2 + 1]] >= spr_y[spr_order[sprite2]])
+					break;
+			}
+		}
+		sprite1++;
+		if (sprite1 == sprite_max - 1)
+			break;
+	}
+
+	unsigned char s = 0;
+	for (unsigned char i = 0; i < sprite_max; i++)
+	{
+		unsigned char sprite = spr_order[i];
 		if (spr_on[sprite])
 		{
 			// Set sprite properties

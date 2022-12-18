@@ -20,7 +20,7 @@
 #ifndef RAIDERS_CHARACTERS_H
 #define RAIDERS_CHARACTERS_H
 
-#define const_character_max 2
+#define const_character_max 3
 
 extern unsigned char character_anim[];
 extern unsigned char character_frame[];
@@ -47,6 +47,6 @@ extern unsigned char character_anim_locked[];
 
 #define const_character_first_sprite_index 1
 
-extern void update_characters(unsigned short scroll_x);
+extern void update_characters();
 
 #endif

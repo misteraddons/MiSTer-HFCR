@@ -284,9 +284,9 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("CHROM Editor");
 		//mem_edit.DrawContents(top->emu__DOT__system__DOT__chrom__DOT__mem, 2048, 0);
 		//ImGui::End();
-		ImGui::Begin("WKRAM Editor");
-		mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
-		ImGui::End();
+		//ImGui::Begin("WKRAM Editor");
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__wkram__DOT__mem, 16384, 0);
+		//ImGui::End();
 		//ImGui::Begin("CHRAM Editor");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__chram__DOT__mem, 2048, 0);
 		//ImGui::End();
@@ -297,7 +297,7 @@ int main(int argc, char** argv, char** env) {
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
 		//ImGui::Begin("Sprite RAM");
-		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 96, 0);
+		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 128, 0);
 		//ImGui::End();
 		//ImGui::Begin("Sprite Linebuffer RAM");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);

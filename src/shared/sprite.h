@@ -22,10 +22,6 @@
 #define SPRITE_H
 
 extern unsigned char sprite_max;
-extern unsigned char spr_x_l[];
-extern unsigned char spr_x_h[];
-extern unsigned char spr_y_l[];
-extern unsigned char spr_y_h[];
 extern bool spr_on[];
 extern bool spr_collide[];
 extern bool spr_mirror[];
@@ -36,6 +32,10 @@ extern unsigned char spr_size[];
 extern void set_sprite_position(unsigned char sprite, unsigned short x, unsigned short y);
 
 extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
+
+extern void set_sprite_position_y(unsigned char sprite, unsigned short y);
+
+extern void init_sprites();
 
 extern void update_sprites();
 

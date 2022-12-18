@@ -107,5 +107,6 @@ extern unsigned short rand_ushort(unsigned short lower, unsigned short upper);
 
 extern signed char rand_schar(signed char lower, signed char upper);
 
+extern signed char sign_short_as_char(signed short value);
 
 #endif

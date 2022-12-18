@@ -27,6 +27,7 @@
 #include "raiders_app.h"
 #include "tilemap_indexes.h"
 #include "collision_boxes.h"
+#include "raiders_scene.h"
 #include "raiders_characters.h"
 
 int logo_sprite = 0;
@@ -48,9 +49,6 @@ bool input_x_last = 0;
 
 signed char x_off = 0;
 signed char y_off = -2;
-unsigned short scroll_x;
-unsigned short scroll_x_max;
-unsigned char scroll_speed = 1;
 
 // Track joypad 1 directions and start for menu control
 void basic_input()
@@ -161,35 +159,44 @@ void update_tilemap()
 	update_tilemap_offset();
 }
 
+#define const_character_sprite_palette sprite_palette_alex
+#define const_character_sprite_size sprite_size_alex
+
 void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 	clear_chars(0);
+	init_sprites();
 	clear_sprites();
 
-	// enable_sprite(logo_sprite, sprite_palette_logos, sprite_size_logos, 0);
-	// set_sprite_position(logo_sprite, 30, 32);
-	// spr_index[logo_sprite] = sprite_index_logos_first;
-
-	for (unsigned char c = 0; c < const_character_max; c++)
-	{
-		unsigned char player_sprite = const_character_first_sprite_index + c;
-		enable_sprite(player_sprite, sprite_palette_alex, sprite_size_alex, 1);
-		set_sprite_position(player_sprite, character_x[c], character_y[c]);
-		character_frame[c] = 1;
-	}
+	enable_sprite(logo_sprite, sprite_palette_logos, sprite_size_logos, 0);
+	set_sprite_position(logo_sprite, 30, 32);
+	spr_index[logo_sprite] = sprite_index_logos_first;
 
 	// Set player position
 	character_x[0] = 40;
 	character_y[0] = 140;
-	character_sprite_offset[0] = sprite_index_stroudman_first;
-	set_sprite_mirror(const_character_first_sprite_index, 0);
+	enable_sprite(const_character_first_sprite_index, const_character_sprite_palette, const_character_sprite_size, 0);
+	character_sprite_offset[0] = sprite_index_alex_first;
 
 	// Set enemy position
 	character_x[1] = 200;
 	character_y[1] = 130;
-	character_sprite_offset[1] = sprite_index_alex_first;
-	set_sprite_mirror(const_character_first_sprite_index + 1, 1);
+	enable_sprite(const_character_first_sprite_index + 1, const_character_sprite_palette, const_character_sprite_size, 0);
+	character_sprite_offset[1] = sprite_index_ninja_first;
+
+	// Set enemy position
+	character_x[2] = 250;
+	character_y[2] = 170;
+	enable_sprite(const_character_first_sprite_index + 2, const_character_sprite_palette, const_character_sprite_size, 0);
+	character_sprite_offset[2] = sprite_index_ninja_first;
+
+	for (unsigned char c = 0; c < const_character_max; c++)
+	{
+		unsigned char player_sprite = const_character_first_sprite_index + c;
+		set_sprite_position(player_sprite, character_x[c], character_y[c]);
+		character_frame[c] = 1;
+	}
 
 	update_section(0, screen_width, 0, const_tilemap_index_y_max - y_off);
 	tilemap_offset_x = 0;
@@ -210,14 +217,13 @@ void app_main()
 		if (VBLANK_RISING)
 		{
 			// Reset timer
-			// timer[0] = 0;
+			timer[0] = 0;
 
 			basic_input();
 
+			// Player control
 			bool player_moving = 0;
-
 			unsigned player_speed = input_a ? 3 : 1;
-
 			if (!character_anim_locked[0])
 			{
 				if (input_b && character_anim_timer[0] == 0)
@@ -304,13 +310,38 @@ void app_main()
 				}
 			}
 
-			character_anim[1] = const_character_run;
+			for (unsigned char c = 1; c < const_character_max; c++)
+			{
+				signed short player_cpu_off = character_x[0] - character_x[c];
+				unsigned char anim = const_character_idle;
+				if (player_cpu_off != 0)
+				{
+					unsigned short d = abs(player_cpu_off);
+					if (d > 16)
+					{
+						signed char s = sign_short_as_char(player_cpu_off);
+						set_sprite_mirror(const_character_first_sprite_index + c, s == 1 ? 0 : 1);
+						if (d > 64)
+						{
+							anim = const_character_run;
+							character_x[c] += s * 3;
+						}
+						else
+						{
+							anim = const_character_walk;
+							character_x[c] += s;
+						}
+					}
+				}
+				character_anim[c] = anim;
+			}
 
-			update_characters(scroll_x);
+			update_characters();
+
 			update_sprites();
 
-			// unsigned short t = GET_TIMER;
-			// write_stringf_ushort("%4d", 0xFF, 2, 10, t);
+			unsigned short t = GET_TIMER;
+			write_stringf_ushort("%4d", 0b00111000, 0, 0, t);
 		}
 
 		vblank_last = vblank;
