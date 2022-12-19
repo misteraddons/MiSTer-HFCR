@@ -20,9 +20,12 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
+`ifndef SPRITE_ROM_WIDTH
+	`define SPRITE_ROM_WIDTH 16
+`endif
+
 module sprite_engine #(
 	parameter SPRITE_RAM_WIDTH = 7,			
-	parameter SPRITE_ROM_WIDTH = 14,		
 	parameter SPRITE_POSITION_WIDTH = 9,	
 	parameter SPRITE_COLRAM_WIDTH = 5,		
 	parameter SPRITE_SIZE_WIDTH = 5			// Width of sprite size related operations 
@@ -45,7 +48,7 @@ module sprite_engine #(
 	output reg 	[SPRITE_RAM_WIDTH-1:0]	spriteram_addr,
 	output reg 	[SPRITE_COLRAM_WIDTH-1:0]	spritecollisionram_addr,
 	output reg			spritecollisionram_data_in,
-	output reg	[SPRITE_ROM_WIDTH-1:0]	sprom_addr,
+	output reg	[`SPRITE_ROM_WIDTH-1:0]	sprom_addr,
 	output reg 	[7:0]	palrom_addr,
 	output 		[SPRITE_POSITION_WIDTH:0]	spritelbram_rd_addr,
 	output reg	[SPRITE_POSITION_WIDTH:0]	spritelbram_wr_addr,
@@ -86,12 +89,15 @@ localparam SE_STAGE_PIXEL = 13;
 localparam SE_WRITE_PIXEL = 14;
 localparam SE_LINE_COMPLETE = 15;
 
-localparam SE_SETUP_LOAD_8x8_UPPER = 20;
-localparam SE_SETUP_LOAD_8x8_LOWER = 21;
-localparam SE_SETUP_LOAD_16x16_UPPER = 22;
-localparam SE_SETUP_LOAD_16x16_LOWER = 23;
-localparam SE_SETUP_LOAD_32x32_UPPER = 24;
-localparam SE_SETUP_LOAD_32x32_LOWER = 25;
+localparam SE_SETUP_LOAD_8x8_BYTE2 = 20;
+localparam SE_SETUP_LOAD_8x8_BYTE1 = 21;
+localparam SE_SETUP_LOAD_8x8_BYTE0 = 22;
+localparam SE_SETUP_LOAD_16x16_BYTE2 = 23;
+localparam SE_SETUP_LOAD_16x16_BYTE1 = 24;
+localparam SE_SETUP_LOAD_16x16_BYTE0 = 25;
+localparam SE_SETUP_LOAD_32x32_BYTE2 = 26;
+localparam SE_SETUP_LOAD_32x32_BYTE1 = 27;
+localparam SE_SETUP_LOAD_32x32_BYTE0 = 28;
 
 
 // Sprite line buffer has two slots - read and write.  They alternate when hsync goes high.
@@ -121,15 +127,15 @@ reg			 [6:0]	spr_image_index;						// Sprite image index
 localparam   [SPRITE_POSITION_WIDTH-1:0]	spr_border_size = 32; // Sprite screen border width
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_active_y;	// Current active sprite engine Y
 reg			 [SPRITE_SIZE_WIDTH:0]			spr_pixel_index;// Current sprite X pixel
-reg			 [SPRITE_ROM_WIDTH-1:0]			spr_rom_offset; // Offset for current sprite size in image ROM
+reg			 [`SPRITE_ROM_WIDTH-1:0]			spr_rom_offset; // Offset for current sprite size in image ROM
 reg			 [9:0]	spr_rom_y_offset;						// Offset for current sprite Y line in image ROM
 
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_8x8 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd7};
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_16x16 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd15};
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_32x32 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd31};
-reg			 [SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_8x8;
-reg			 [SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_16x16;
-reg			 [SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_8x8;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_16x16;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
 
  //`define CASVAL_DEBUG
  //`define CASVAL_DEBUG_TIMES
@@ -275,87 +281,147 @@ begin
 			spr_linetime_max <= {{SPR_TIMER_WIDTH-1{1'b0}},1'b1};
 `endif
 			// Start loading sprite ROM offsets
-			sprom_addr <= {SPRITE_ROM_WIDTH{1'b0}};
+			sprom_addr <= {`SPRITE_ROM_WIDTH{1'b0}};
 			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_32x32_UPPER;
+			spr_state_next <= SE_SETUP_LOAD_32x32_BYTE2;
 		end
 
-		SE_SETUP_LOAD_32x32_UPPER:
+		SE_SETUP_LOAD_32x32_BYTE2:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_32x32_UPPER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+			$display("CASVAL->SE_SETUP_LOAD_32x32_BYTE2: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
 `endif
-			// Load upper byte of 32x32 image offset
-			spr_rom_offset_32x32[SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[SPRITE_ROM_WIDTH-9:0];
+			// Load byte 2 of 32x32 image offset
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_32x32[`SPRITE_ROM_WIDTH-1:16] <= spriterom_data_out[`SPRITE_ROM_WIDTH-17:0];
+`endif
 			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
 			// Move to next state
 			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_32x32_LOWER;
+			spr_state_next <= SE_SETUP_LOAD_32x32_BYTE1;
 		end
-		SE_SETUP_LOAD_32x32_LOWER:
+		SE_SETUP_LOAD_32x32_BYTE1:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_32x32_LOWER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+			$display("CASVAL->SE_SETUP_LOAD_32x32_BYTE1: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
 `endif
-			// Load lower byte of 32x32 image offset
+			// Load byte 1 of 32x32 image offset
+			
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_32x32[15:8] <= spriterom_data_out;
+`else
+				spr_rom_offset_32x32[`SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[`SPRITE_ROM_WIDTH-9:0];
+`endif
+			// Increment sprite ROM address
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			// Move to next state
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_SETUP_LOAD_32x32_BYTE0;
+		end
+		SE_SETUP_LOAD_32x32_BYTE0:
+		begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_SETUP_LOAD_32x32_BYTE0: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+`endif
+			// Load byte 0 of 32x32 image offset
 			spr_rom_offset_32x32[7:0] <= spriterom_data_out;
 			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
 			// Move to next state
 			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_16x16_UPPER;
-		end
-		
-		SE_SETUP_LOAD_16x16_UPPER:
-		begin
-`ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_16x16_UPPER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
-`endif
-			// Load upper byte of 16x16 image offset
-			spr_rom_offset_16x16[SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[SPRITE_ROM_WIDTH-9:0];
-			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
-			// Move to next state
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_16x16_LOWER;
-		end
-		SE_SETUP_LOAD_16x16_LOWER:
-		begin
-`ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_16x16_LOWER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
-`endif
-			// Load lower byte of 16x16 image offset
-			spr_rom_offset_16x16[7:0] <= spriterom_data_out;
-			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
-			// Move to next state
-			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_8x8_UPPER;
+			spr_state_next <= SE_SETUP_LOAD_16x16_BYTE2;
 		end
 
-		SE_SETUP_LOAD_8x8_UPPER:
+		SE_SETUP_LOAD_16x16_BYTE2:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_8x8_UPPER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+			$display("CASVAL->SE_SETUP_LOAD_16x16_BYTE2: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
 `endif
-			// Load upper byte of 8x8 image offset
-			spr_rom_offset_8x8[SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[SPRITE_ROM_WIDTH-9:0];
+			// Load byte 2 of 16x16 image offset
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_16x16[`SPRITE_ROM_WIDTH-1:16] <= spriterom_data_out[`SPRITE_ROM_WIDTH-17:0];
+`endif
 			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
 			// Move to next state
 			spr_state <= SE_WAIT;
-			spr_state_next <= SE_SETUP_LOAD_8x8_LOWER;
+			spr_state_next <= SE_SETUP_LOAD_16x16_BYTE1;
 		end
-		SE_SETUP_LOAD_8x8_LOWER:
+		SE_SETUP_LOAD_16x16_BYTE1:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_LOAD_8x8_LOWER: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+			$display("CASVAL->SE_SETUP_LOAD_16x16_BYTE1: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
 `endif
-			// Load lower byte of 8x8 image offset
+			// Load byte 1 of 16x16 image offset
+			
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_16x16[15:8] <= spriterom_data_out;
+`else
+				spr_rom_offset_16x16[`SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[`SPRITE_ROM_WIDTH-9:0];
+`endif
+			// Increment sprite ROM address
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			// Move to next state
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_SETUP_LOAD_16x16_BYTE0;
+		end
+		SE_SETUP_LOAD_16x16_BYTE0:
+		begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_SETUP_LOAD_16x16_BYTE0: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+`endif
+			// Load byte 0 of 16x16 image offset
+			spr_rom_offset_16x16[7:0] <= spriterom_data_out;
+			// Increment sprite ROM address
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			// Move to next state
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_SETUP_LOAD_8x8_BYTE2;
+		end
+
+		SE_SETUP_LOAD_8x8_BYTE2:
+		begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_SETUP_LOAD_8x8_BYTE2: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+`endif
+			// Load byte 2 of 8x8 image offset
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_8x8[`SPRITE_ROM_WIDTH-1:16] <= spriterom_data_out[`SPRITE_ROM_WIDTH-17:0];
+`endif
+			// Increment sprite ROM address
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			// Move to next state
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_SETUP_LOAD_8x8_BYTE1;
+		end
+		SE_SETUP_LOAD_8x8_BYTE1:
+		begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_SETUP_LOAD_8x8_BYTE1: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+`endif
+			// Load byte 1 of 8x8 image offset
+			
+`ifdef SPRITE_ROM_WIDTH_16PLUS
+				spr_rom_offset_8x8[15:8] <= spriterom_data_out;
+`else
+				spr_rom_offset_8x8[`SPRITE_ROM_WIDTH-1:8] <= spriterom_data_out[`SPRITE_ROM_WIDTH-9:0];
+`endif
+			// Increment sprite ROM address
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			// Move to next state
+			spr_state <= SE_WAIT;
+			spr_state_next <= SE_SETUP_LOAD_8x8_BYTE0;
+		end
+		SE_SETUP_LOAD_8x8_BYTE0:
+		begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_SETUP_LOAD_8x8_BYTE0: addr=%x  dout=%x", sprom_addr, spriterom_data_out);
+`endif
+			// Load byte 0 of 8x8 image offset
 			spr_rom_offset_8x8[7:0] <= spriterom_data_out;
 			// Increment sprite ROM address
-			sprom_addr <= sprom_addr + {{SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
+			sprom_addr <= sprom_addr + {{`SPRITE_ROM_WIDTH-1{1'b0}},1'b1};
 			// Move to next state
 			spr_state <= SE_IDLE;
 		end
@@ -543,19 +609,19 @@ begin
 			case(spr_size)
 				spr_size_32x32:
 				begin
-					if(SPRITE_ROM_WIDTH > 16)
-						sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-16{1'b0}}, spr_image_index[5:0], 10'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
+					if(`SPRITE_ROM_WIDTH > 16)
+						sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-16{1'b0}}, spr_image_index[5:0], 10'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
 					else
-						sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 10'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
+						sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 10'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 32 : 0);
 				end
 				spr_size_16x16: 
 				begin
-					sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_image_index[5:0], 8'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 16 :0);
+					sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_image_index[5:0], 8'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 16 :0);
 				end
 				default:
 				begin
 					// Default to 8x8s
-					sprom_addr <= spr_rom_offset + { {SPRITE_ROM_WIDTH-12{1'b0}}, spr_image_index[5:0], 6'b0} + { {SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 8 : 0);
+					sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-12{1'b0}}, spr_image_index[5:0], 6'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 8 : 0);
 				end
 			endcase
 

@@ -65,7 +65,6 @@ void basic_input()
 	input_x = CHECK_BIT(joystick[0], 6);
 }
 
-
 unsigned char player_aabb_check(unsigned short x, unsigned short y)
 {
 	unsigned short l = x + 6;
@@ -126,6 +125,7 @@ void app_main()
 	scene_offset_x = 0;
 	scene_offset_y = -2;
 	init_scene();
+
 
 	while (1)
 	{

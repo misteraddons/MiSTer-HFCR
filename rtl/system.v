@@ -406,9 +406,8 @@ wire		spritecollisionram_data_out_cpu;
 `ifndef DISABLE_SPRITES
 localparam SPRITE_POSITION_WIDTH = 9;
 localparam SPRITE_RAM_WIDTH = 7;
-localparam SPRITE_ROM_WIDTH = 16;
 localparam SPRITE_COLRAM_WIDTH = 5;
-wire [SPRITE_ROM_WIDTH-1:0]	sprom_addr;
+wire [`SPRITE_ROM_WIDTH-1:0]	sprom_addr;
 wire [7:0]	spriterom_data_out;
 wire [SPRITE_RAM_WIDTH-1:0]	spriteram_addr;
 wire [7:0]	spriteram_data_out;
@@ -422,7 +421,6 @@ wire [15:0]	spritelbram_data_in;
 wire [15:0]	spritelbram_data_out;
 sprite_engine #(
 	.SPRITE_RAM_WIDTH(SPRITE_RAM_WIDTH),
-	.SPRITE_ROM_WIDTH(SPRITE_ROM_WIDTH),
 	.SPRITE_POSITION_WIDTH(SPRITE_POSITION_WIDTH),
 	.SPRITE_COLRAM_WIDTH(SPRITE_COLRAM_WIDTH)
 ) comet
@@ -863,7 +861,7 @@ dpram #(SPRITE_POSITION_WIDTH+1,16) spritelbram
 );
 
 // Sprite ROM - 0x11000 - 0x11800 (0x1000 / 4096 bytes)
-dpram #(SPRITE_ROM_WIDTH,8, "sprite.hex") spriterom
+dpram #(`SPRITE_ROM_WIDTH,8, "sprite.hex") spriterom
 (
 	.clock_a(clk_24),
 	.address_a(sprom_addr),
@@ -872,7 +870,7 @@ dpram #(SPRITE_ROM_WIDTH,8, "sprite.hex") spriterom
 	.q_a(spriterom_data_out),
 
 	.clock_b(clk_24),
-	.address_b(dn_addr[SPRITE_ROM_WIDTH-1:0]),
+	.address_b(dn_addr[`SPRITE_ROM_WIDTH-1:0]),
 	.wren_b(spriterom_wr),
 	.data_b(dn_data),
 	.q_b()

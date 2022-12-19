@@ -6,7 +6,7 @@ readarray -t DEFINE_LINES < ../../src/$1/.define
 for i in "${DEFINE_LINES[@]}"
 do
 	if ! [[ $i == //* ]]; then
-		DEFINES+="+define+$i=1 "
+		DEFINES+="+define+$i "
 	fi
 done
 echo "verilator -cc --compiler msvc $DEFINES $WARNINGS $OPTIMIZE"

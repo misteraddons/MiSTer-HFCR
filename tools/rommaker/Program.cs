@@ -222,11 +222,12 @@ namespace rommaker
                 {
                     int g = groups[gi];
                     int index = 0;
-                    ushort groupStartPos = (ushort)(pos + (groups.Length * 2));
+                    ulong groupStartPos = (ushort)(pos + (groups.Length * 2));
                     byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
                     Console.WriteLine($"Starting image group {g} at {groupStartPos}");
-                    spriteStreamWriter.Write(groupStartBytes[1]); // Write start point for size group
-                    spriteStreamWriter.Write(groupStartBytes[0]); // Write start point for size group
+                    spriteStreamWriter.Write(groupStartBytes[2]); // Write byte 2 of start point for size group
+                    spriteStreamWriter.Write(groupStartBytes[1]); // Write byte 1 of start point for size group
+                    spriteStreamWriter.Write(groupStartBytes[0]); // Write byte 0 of start point for size group
 
                     MemoryStream groupStream = new();
                     ushort groupLen = 0;
