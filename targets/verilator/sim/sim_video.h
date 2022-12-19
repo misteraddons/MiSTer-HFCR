@@ -35,6 +35,7 @@ public:
 
 	SimVideo(int width, int height, int rotate);
 	~SimVideo();
+	void Capture();
 	void UpdateTexture();
 	void CleanUp();
 	void StartFrame();

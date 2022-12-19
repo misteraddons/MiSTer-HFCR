@@ -28,6 +28,8 @@ unsigned char character_anim[const_character_max];
 unsigned char character_frame[const_character_max];
 unsigned short character_x[const_character_max];
 unsigned short character_y[const_character_max];
+signed char character_move_x[const_character_max];
+signed char character_move_y[const_character_max];
 unsigned char character_sprite_offset[const_character_max];
 unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
@@ -37,6 +39,13 @@ void update_characters()
 {
 	for (unsigned char c = 0; c < const_character_max; c++)
 	{
+		// Handle character movement
+		character_x[c] += character_move_x[c];
+		character_y[c] += character_move_y[c];
+
+
+
+		// Handle character animations
 		if (character_anim[c] != 0)
 		{
 			character_anim_timer[c]++;

@@ -103,6 +103,7 @@
     <ClInclude Include="sim\sim_input.h" />
     <ClInclude Include="sim\sim_video.h" />
     <ClInclude Include="sim\sim_audio.h" />
+    <ClInclude Include="sim\screengrab.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="font.hex">

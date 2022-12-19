@@ -163,6 +163,87 @@ void update_tilemap()
 #define const_character_sprite_size sprite_size_alex
 
 unsigned char ai_mode[const_character_max];
+#define const_ai_first 1
+#define const_ai_max const_character_max - 1
+unsigned char ai_last = const_ai_max + const_ai_first;
+unsigned char ai_active = 0;
+
+void update_ai()
+{
+	unsigned ai_char = ai_active + const_ai_first;
+
+	unsigned char min_dist_x = 30;
+	unsigned char min_dist_y = 30;
+	unsigned char run_dist_x = 60;
+	unsigned char run_dist_y = 60;
+	if (ai_mode[ai_char] == 1)
+	{
+		min_dist_x = 15;
+		run_dist_x = 30;
+		min_dist_y = 4;
+		run_dist_y = 25;
+	}
+
+	bool walk = false;
+	bool run = false;
+	signed char move_x = 0;
+	signed char move_y = 0;
+
+	signed short player_cpu_off_x = character_x[0] - character_x[ai_char];
+	if (player_cpu_off_x != 0)
+	{
+		unsigned short dx = abs(player_cpu_off_x);
+		signed char sx = sign_short_as_char(player_cpu_off_x);
+		set_sprite_mirror(const_character_first_sprite_index + ai_char, sx == 1 ? 0 : 1);
+		if (dx > min_dist_x)
+		{
+			if (dx > run_dist_x)
+			{
+				run = true;
+				move_x = sx * 2;
+			}
+			else
+			{
+				walk = true;
+				move_x = sx;
+			}
+		}
+	}
+
+	if (!run)
+	{
+		signed char player_cpu_off_y = character_y[0] - character_y[ai_char];
+		if (player_cpu_off_y != 0)
+		{
+			unsigned short dy = abs(player_cpu_off_y);
+			signed char sy = sign_short_as_char(player_cpu_off_y);
+			if (dy > min_dist_y)
+			{
+				if (dy > run_dist_y)
+				{
+					run = true;
+					move_y = sy * 2;
+				}
+				else
+				{
+					walk = true;
+					move_y = sy;
+				}
+			}
+		}
+	}
+
+	character_move_x[ai_char] = move_x;
+	character_move_y[ai_char] = move_y;
+	character_anim[ai_char] = run ? const_character_run : walk ? const_character_walk
+															   : const_character_idle;
+
+	ai_active++;
+	if (ai_active == const_ai_max)
+	{
+		ai_active = 0;
+	}
+}
 
 void app_main()
 {
@@ -173,20 +254,20 @@ void app_main()
 
 	// Set player position
 	character_x[0] = 40;
-	character_y[0] = 140;
+	character_y[0] = 130;
 	enable_sprite(const_character_first_sprite_index, const_character_sprite_palette, const_character_sprite_size, 0);
 	character_sprite_offset[0] = sprite_index_alex_first;
 
 	// Set enemy position
 	character_x[1] = 200;
-	character_y[1] = 130;
+	character_y[1] = 115;
 	enable_sprite(const_character_first_sprite_index + 1, const_character_sprite_palette, const_character_sprite_size, 0);
 	character_sprite_offset[1] = sprite_index_ninjablack_first;
 	ai_mode[1] = 1;
 
 	// Set enemy position
 	character_x[2] = 250;
-	character_y[2] = 170;
+	character_y[2] = 150;
 	enable_sprite(const_character_first_sprite_index + 2, const_character_sprite_palette, const_character_sprite_size, 0);
 	character_sprite_offset[2] = sprite_index_ninjared_first;
 	ai_mode[2] = 0;
@@ -201,21 +282,6 @@ void app_main()
 		set_sprite_position(player_sprite, character_x[c], character_y[c]);
 		character_frame[c] = 1;
 	}
-
-	// unsigned short x = 48;
-	// unsigned char y = 48;
-	// for (unsigned char s = const_character_max; s < sprite_max; s++)
-	// {
-	// 	enable_sprite(s, sprite_palette_logos, sprite_size_logos, 0);
-	// 	set_sprite_position(s, x, y);
-	// 	spr_index[s] = sprite_index_logos_first + 1;
-	// 	x += 32;
-	// 	if (x > 280)
-	// 	{
-	// 		x = 48;
-	// 		y += 32;
-	// 	}
-	// }
 
 	update_section(0, screen_width, 0, const_tilemap_index_y_max - y_off);
 	tilemap_offset_x = 0;
@@ -243,6 +309,8 @@ void app_main()
 			// Player control
 			bool player_moving = 0;
 			unsigned player_speed = input_a ? 3 : 1;
+			signed char player_move_x = 0;
+			signed char player_move_y = 0;
 			if (!character_anim_locked[0])
 			{
 				if (input_b && character_anim_timer[0] == 0)
@@ -270,7 +338,7 @@ void app_main()
 						if (player_aabb_check(new_player_x, character_y[0]) == 255)
 						{
 							player_moving = 1;
-							character_x[0] = new_player_x;
+							player_move_x = -player_speed;
 						}
 					}
 					if (input_right)
@@ -280,7 +348,7 @@ void app_main()
 						if (player_aabb_check(new_player_x, character_y[0]) == 255)
 						{
 							player_moving = 1;
-							character_x[0] = new_player_x;
+							player_move_x = player_speed;
 						}
 					}
 
@@ -290,7 +358,7 @@ void app_main()
 						if (player_aabb_check(character_x[0], new_player_y) == 255)
 						{
 							player_moving = 1;
-							character_y[0] = new_player_y;
+							player_move_y = -player_speed;
 						}
 					}
 					if (input_down)
@@ -299,7 +367,7 @@ void app_main()
 						if (player_aabb_check(character_x[0], new_player_y) == 255)
 						{
 							player_moving = 1;
-							character_y[0] = new_player_y;
+							player_move_y = player_speed;
 						}
 					}
 					if (player_moving)
@@ -328,43 +396,12 @@ void app_main()
 					}
 				}
 			}
+			character_move_x[0] = player_move_x;
+			character_move_y[0] = player_move_y;
 
-			// unsigned short tp1 = GET_TIMER;
-
-			for (unsigned char c = 1; c < const_character_max; c++)
-			{
-				unsigned char min_dist = 30;
-				unsigned char run_dist = 60;
-				if (ai_mode[c] == 1)
-				{
-					min_dist = 15;
-					run_dist = 30;
-				}
-
-				signed short player_cpu_off = character_x[0] - character_x[c];
-				unsigned char anim = const_character_idle;
-				if (player_cpu_off != 0)
-				{
-					unsigned short d = abs(player_cpu_off);
-					signed char s = sign_short_as_char(player_cpu_off);
-					set_sprite_mirror(const_character_first_sprite_index + c, s == 1 ? 0 : 1);
-					if (d > min_dist)
-					{
-						if (d > run_dist)
-						{
-							anim = const_character_run;
-							character_x[c] += s * 3;
-						}
-						else
-						{
-							anim = const_character_walk;
-							character_x[c] += s;
-						}
-					}
-				}
-				character_anim[c] = anim;
-			}
-			// unsigned short tai = GET_TIMER;
+			unsigned short tp1 = GET_TIMER;
+			update_ai();
+			unsigned short tai = GET_TIMER;
 
 			update_characters();
 			// unsigned short tc = GET_TIMER;
@@ -375,7 +412,7 @@ void app_main()
 			update_sprites();
 			// unsigned short tsu = GET_TIMER;
 			// write_stringf_ushort("player         %4d", 0xFF, 0, 0, tp1);
-			// write_stringf_ushort("ai             %4d", 0xFF, 0, 1, tai - tp1);
+			write_stringf_ushort("ai             %4d", 0xFF, 0, 1, tai - tp1);
 			// write_stringf_ushort("characters     %4d", 0xFF, 0, 2, tc - tai);
 			// write_stringf_ushort("sort sprites   %4d", 0xFF, 0, 3, tss - tc);
 			// write_stringf_ushort("update sprites %4d", 0, 0, 4, tsu - tss);

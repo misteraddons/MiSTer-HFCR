@@ -1,5 +1,6 @@
 
 #include "sim_video.h"
+#include "screengrab.h"
 
 #include <string>
 
@@ -44,7 +45,7 @@ ImVec4 clear_color = ImVec4(0.25f, 0.35f, 0.40f, 0.80f);
 
 int count_pixel;
 int count_line;
-int count_frame;
+unsigned long count_frame;
 bool last_hblank;
 bool last_vblank;
 bool last_hsync;
@@ -333,6 +334,24 @@ int SimVideo::Initialise(const char* windowTitle) {
 	return 0;
 }
 
+std::wstring s2ws(const std::string& str)
+{
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
+}
+void SimVideo::Capture()
+{
+	char index[7];
+	snprintf(index, 7, "%06u", count_frame);
+	std::wstring indexString = s2ws( index);
+	std::wstring filename = L"capture/cap_";
+	filename.append(indexString);
+	filename.append(L".png");
+	WriteFrameToImage(g_pd3dDeviceContext, texture, filename.c_str());
+}
+
 void SimVideo::UpdateTexture() {
 
 #ifdef WIN32
@@ -342,6 +361,7 @@ void SimVideo::UpdateTexture() {
 	if (frame_ready) {
 		g_pd3dDeviceContext->UpdateSubresource(texture, 0, NULL, output_ptr, output_width * 4, 0);
 	}
+
 	// Rendering
 	ImGui::Render();
 	g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);

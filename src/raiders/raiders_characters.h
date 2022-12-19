@@ -26,6 +26,8 @@ extern unsigned char character_anim[];
 extern unsigned char character_frame[];
 extern unsigned short character_x[];
 extern unsigned short character_y[];
+extern signed char character_move_x[];
+extern signed char character_move_y[];
 extern unsigned char character_sprite_offset[];
 extern unsigned char character_anim_timer[];
 extern unsigned char character_anim_dir[];
