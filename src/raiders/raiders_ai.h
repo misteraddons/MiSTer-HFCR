@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Raiders demo - Scene controller
+	Aznable OS - Raiders demo - Character controller
 
 	Copyright 2022 - Jim Gregory - https://github.com/JimmyStones/
 
@@ -17,17 +17,13 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#ifndef RAIDERS_SCENE_H
-#define RAIDERS_SCENE_H
+#ifndef RAIDERS_AI_H
+#define RAIDERS_AI_H
 
-extern signed char scene_offset_x;
-extern signed char scene_offset_y;
-extern unsigned short scroll_x;
-extern unsigned short scroll_x_max;
-extern unsigned char scroll_speed;
+extern unsigned char ai_mode[];
+extern unsigned char ai_last;
+extern unsigned char ai_active;
 
-extern void init_scene();
-
-extern void update_tilemap();
+extern void update_ai();
 
 #endif

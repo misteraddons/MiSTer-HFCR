@@ -22,6 +22,7 @@
 
 #define const_character_max 3
 
+extern bool character_active[];
 extern unsigned char character_anim[];
 extern unsigned char character_frame[];
 extern unsigned short character_x[];
@@ -49,6 +50,12 @@ extern unsigned char character_anim_locked[];
 
 #define const_character_first_sprite_index 0
 
+extern void activate_character(unsigned char c, unsigned char offset);
+extern void deactivate_character(unsigned char c);
+
 extern void update_characters();
+
+extern void character_start_punch(unsigned char c);
+extern void character_start_kick(unsigned char c);
 
 #endif

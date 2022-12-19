@@ -24,6 +24,7 @@
 #include "raiders_scene.h"
 #include "raiders_characters.h"
 
+bool character_active[const_character_max];
 unsigned char character_anim[const_character_max];
 unsigned char character_frame[const_character_max];
 unsigned short character_x[const_character_max];
@@ -35,15 +36,34 @@ unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
 unsigned char character_anim_locked[const_character_max];
 
+#define const_character_sprite_palette sprite_palette_alex
+#define const_character_sprite_size sprite_size_alex
+
+void activate_character(unsigned char c, unsigned char offset)
+{
+	character_active[c] = true;
+	enable_sprite(const_character_first_sprite_index + c, const_character_sprite_palette, const_character_sprite_size, 0);
+	character_sprite_offset[c] = offset;
+}
+
+void deactivate_character(unsigned char c)
+{
+	character_active[c] = false;
+	spr_on[const_character_first_sprite_index + c] = false;
+}
+
 void update_characters()
 {
 	for (unsigned char c = 0; c < const_character_max; c++)
 	{
+		if (!character_active[c])
+		{
+			continue;
+		}
+
 		// Handle character movement
 		character_x[c] += character_move_x[c];
 		character_y[c] += character_move_y[c];
-
-
 
 		// Handle character animations
 		if (character_anim[c] != 0)
@@ -132,12 +152,31 @@ void update_characters()
 		// Draw character sprite
 		unsigned char player_sprite = const_character_first_sprite_index + c;
 		spr_index[player_sprite] = character_sprite_offset[c] + character_frame[c];
- 		unsigned short x = (character_x[c] - scroll_x) + 32;
+		unsigned short x = (character_x[c] - scroll_x) + 32;
 		unsigned short y = character_y[c];
 		if (character_frame[c] == 2 || character_frame[c] == 3)
 		{
 			y--;
 		}
 		set_sprite_position(player_sprite, x, y + 32);
+
+		// write_stringf("a: %d", 0xFF, 0, c, character_anim[c]);
+		// write_stringf("l: %d", 0xFF, 10, c, character_anim_locked[c]);
+		// write_stringf("t: %d", 0xFF, 20, c, character_anim_timer[c]);
 	}
+}
+
+void character_start_punch(unsigned char c)
+{
+	character_anim[c] = const_character_punch;
+	character_frame[c] = 6;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = 0;
+}
+void character_start_kick(unsigned char c)
+{
+	character_anim[c] = const_character_kick;
+	character_frame[c] = 9;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = 0;
 }
