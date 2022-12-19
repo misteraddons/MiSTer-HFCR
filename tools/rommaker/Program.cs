@@ -193,8 +193,9 @@ namespace rommaker
 
         static void CreateSpriteRom()
         {
+            int p, pi;
 
-            for (int p = 0; p < PaletteMax; p++)
+            for (p = 0; p < PaletteMax; p++)
             {
                 Palettes.Add(new List<Color>());
                 Palettes[p].Add(Color.FromArgb(0, 0, 0, 0));
@@ -222,7 +223,7 @@ namespace rommaker
                 {
                     int g = groups[gi];
                     int index = 0;
-                    ulong groupStartPos = (ushort)(pos + (groups.Length * 2));
+                    ulong groupStartPos = (ushort)(pos + (groups.Length * 3));
                     byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
                     Console.WriteLine($"Starting image group {g} at {groupStartPos}");
                     spriteStreamWriter.Write(groupStartBytes[2]); // Write byte 2 of start point for size group
@@ -282,7 +283,7 @@ namespace rommaker
 
                                         Color c = img.GetPixel(x, y);
                                         // Find colour in palette
-                                        int pi = -1;
+                                        pi = -1;
                                         for (int ci = 0; ci < Palettes[paletteIndex].Count; ci++)
                                         {
                                             if (Palettes[paletteIndex][ci] == c)
@@ -341,12 +342,15 @@ namespace rommaker
             File.WriteAllText(SpriteSourcePath + ".h", builder.ToString());
 
             // Palettes
+             pi = 0;
             foreach (List<Color> palette in Palettes)
             {
+                Console.WriteLine($"PALETTE {pi} - {palette.Count} used");
                 while (palette.Count < PaletteIndexMax)
                 {
                     palette.Add(Color.FromArgb(255, 0, 255, 0));
                 }
+                pi++;
             }
 
             if (File.Exists(PalettePath))
@@ -357,10 +361,10 @@ namespace rommaker
             {
                 using (BinaryWriter paletteWriter = new(paletteStream, Encoding.BigEndianUnicode))
                 {
-                    int pi = 0;
+                     pi = 0;
                     foreach (List<Color> palette in Palettes)
                     {
-                        for (int p = 0; p < palette.Count; p++)
+                        for ( p = 0; p < palette.Count; p++)
                         {
                             ushort a = (ushort)(palette[p].A == 255 ? 1 : 0);
 
@@ -372,7 +376,7 @@ namespace rommaker
                             byte high = (byte)(color >> 8);
                             byte low = (byte)color;
 
-                            // Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
+                            //Console.WriteLine($"PALETTE {pi}: {p} - {palette[p]} - {a} - {color.ToString("X2")} - {high} {low}");
                             paletteWriter.Write(high);
                             paletteWriter.Write(low);
 

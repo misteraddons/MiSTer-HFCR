@@ -23,6 +23,7 @@
 #define const_character_max 3
 
 extern bool character_active[];
+extern signed char character_dir[];
 extern unsigned char character_anim[];
 extern unsigned char character_frame[];
 extern unsigned short character_x[];
@@ -36,17 +37,18 @@ extern unsigned char character_anim_locked[];
 
 #define const_character_idle 0
 
-#define const_character_walk 1
-#define const_character_walk_rate 4
+#define const_character_anim_walk 1
+#define const_character_anim_walk_rate 4
+#define const_character_anim_run 2
+#define const_character_anim_run_rate 4
+#define const_character_anim_oneshot 3
+#define const_character_anim_punch_rate 5
+#define const_character_anim_kick_rate 6
+#define const_character_anim_hit_high_rate 8
+#define const_character_anim_hit_mid_rate 8
 
-#define const_character_run 2
-#define const_character_run_rate 4
-
-#define const_character_punch 3
-#define const_character_punch_rate 5
-
-#define const_character_kick 4
-#define const_character_kick_rate 6
+#define const_character_attack_punch 1
+#define const_character_attack_kick 2
 
 #define const_character_first_sprite_index 0
 
@@ -57,5 +59,7 @@ extern void update_characters();
 
 extern void character_start_punch(unsigned char c);
 extern void character_start_kick(unsigned char c);
+extern void character_start_hit_high(unsigned char c);
+extern void character_start_hit_mid(unsigned char c);
 
 #endif

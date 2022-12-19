@@ -25,8 +25,11 @@
 #include "raiders_characters.h"
 
 bool character_active[const_character_max];
+signed char character_dir[const_character_max];
 unsigned char character_anim[const_character_max];
+unsigned char character_anim_rate[const_character_max];
 unsigned char character_frame[const_character_max];
+unsigned char character_frame_target[const_character_max];
 unsigned short character_x[const_character_max];
 unsigned short character_y[const_character_max];
 signed char character_move_x[const_character_max];
@@ -35,6 +38,9 @@ unsigned char character_sprite_offset[const_character_max];
 unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
 unsigned char character_anim_locked[const_character_max];
+
+unsigned char character_scheduled_attack[const_character_max];
+unsigned char character_scheduled_attack_in[const_character_max];
 
 #define const_character_sprite_palette sprite_palette_alex
 #define const_character_sprite_size sprite_size_alex
@@ -50,6 +56,23 @@ void deactivate_character(unsigned char c)
 {
 	character_active[c] = false;
 	spr_on[const_character_first_sprite_index + c] = false;
+}
+
+void character_anim_oneshot(unsigned char c)
+{
+	if (character_anim_timer[c] >= character_anim_rate[c])
+	{
+		character_frame[c]++;
+		if (character_frame[c] == character_frame_target[c])
+		{
+			character_anim[c] = const_character_idle;
+			character_anim_locked[c] = 0;
+		}
+		else
+		{
+			character_anim_timer[c] = 0;
+		}
+	}
 }
 
 void update_characters()
@@ -83,13 +106,13 @@ void update_characters()
 		case const_character_idle:
 			character_frame[c] = 1;
 			break;
-		case const_character_walk:
+		case const_character_anim_walk:
 			if (character_frame[c] > 2)
 			{
 				character_frame[c] = 0;
 				character_anim_dir[c] = 0;
 			}
-			if (character_anim_timer[c] >= const_character_walk_rate)
+			if (character_anim_timer[c] >= const_character_anim_walk_rate)
 			{
 				character_anim_timer[c] = 0;
 				if (character_anim_dir[c] == 0)
@@ -110,42 +133,15 @@ void update_characters()
 				}
 			}
 			break;
-		case const_character_run:
-			if (character_anim_timer[c] >= const_character_run_rate)
+		case const_character_anim_run:
+			if (character_anim_timer[c] >= const_character_anim_run_rate)
 			{
 				character_anim_timer[c] = 0;
 				character_frame[c] = character_frame[c] == 1 ? 3 : 1;
 			}
 			break;
-		case const_character_punch:
-			if (character_anim_timer[c] >= const_character_punch_rate)
-			{
-				character_frame[c]++;
-				if (character_frame[c] == 8)
-				{
-					character_anim[c] = const_character_idle;
-					character_anim_locked[c] = 0;
-				}
-				else
-				{
-					character_anim_timer[c] = 0;
-				}
-			}
-			break;
-		case const_character_kick:
-			if (character_anim_timer[c] >= const_character_kick_rate)
-			{
-				character_frame[c]++;
-				if (character_frame[c] == 11)
-				{
-					character_anim[c] = const_character_idle;
-					character_anim_locked[c] = 0;
-				}
-				else
-				{
-					character_anim_timer[c] = 0;
-				}
-			}
+		case const_character_anim_oneshot:
+			character_anim_oneshot(c);
 			break;
 		}
 
@@ -160,6 +156,65 @@ void update_characters()
 		}
 		set_sprite_position(player_sprite, x, y + 32);
 
+		// Handle attacks
+
+		if (character_scheduled_attack_in[c] > 0)
+		{
+			character_scheduled_attack_in[c]--;
+			if (character_scheduled_attack_in[c] == 0)
+			{
+				// find characters to hit
+
+				unsigned char s = c + 10;
+				enable_sprite(s, sprite_palette_hit, sprite_size_hit, 0);
+
+				unsigned short hit_x = (character_x[c] - scroll_x);
+				unsigned short hit_y = character_y[c];
+				unsigned char d = character_dir[c];
+				switch (character_scheduled_attack[c])
+				{
+				case const_character_attack_punch:
+					hit_x += d == 1 ? 18 : -2;
+					hit_y += 4;
+					break;
+				case const_character_attack_kick:
+					hit_x += d == 1 ? 20 : -4;
+					hit_y += 12;
+					break;
+				}
+
+				set_sprite_position(s, hit_x + 32, hit_y + 32);
+				spr_index[s] = sprite_index_hit_first;
+
+				// unsigned short cl = character_x[c] + 6;
+				// unsigned short cr = x + 24;
+				// unsigned short ct = y + 26;
+				// unsigned short cb = y + 32;
+
+				// for (int t = 0; t < const_character_max; t++)
+				// {
+				// 	if (t == c)
+				// 	{
+				// 		continue;
+				// 	}
+
+				// 	// for (unsigned char c = 0; c < const_collision_boxes_max; c++)
+				// 	// {
+				// 	// 	if (r < collision_box_l[c] || l > collision_box_r[c])
+				// 	// 	{
+				// 	// 		continue;
+				// 	// 	}
+				// 	// 	if (b < collision_box_t[c] || t > collision_box_b[c])
+				// 	// 	{
+				// 	// 		continue;
+				// 	// 	}
+				// 	// 	return c;
+				// 	// }
+
+				// }
+			}
+		}
+
 		// write_stringf("a: %d", 0xFF, 0, c, character_anim[c]);
 		// write_stringf("l: %d", 0xFF, 10, c, character_anim_locked[c]);
 		// write_stringf("t: %d", 0xFF, 20, c, character_anim_timer[c]);
@@ -168,15 +223,41 @@ void update_characters()
 
 void character_start_punch(unsigned char c)
 {
-	character_anim[c] = const_character_punch;
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_punch_rate;
 	character_frame[c] = 6;
+	character_frame_target[c] = 8;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = 0;
+	character_scheduled_attack[c] = const_character_attack_punch;
+	character_scheduled_attack_in[c] = 2 * const_character_anim_punch_rate;
 }
 void character_start_kick(unsigned char c)
 {
-	character_anim[c] = const_character_kick;
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_kick_rate;
 	character_frame[c] = 9;
+	character_frame_target[c] = 11;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = 0;
+	character_scheduled_attack[c] = const_character_attack_kick;
+	character_scheduled_attack_in[c] = 2 * const_character_anim_kick_rate;
+}
+void character_start_hit_high(unsigned char c)
+{
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_hit_high_rate;
+	character_frame[c] = 12;
+	character_frame_target[c] = 13;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = 0;
+}
+void character_start_hit_mid(unsigned char c)
+{
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_hit_mid_rate;
+	character_frame[c] = 14;
+	character_frame_target[c] = 15;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = 0;
 }

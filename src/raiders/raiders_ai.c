@@ -63,6 +63,7 @@ void update_ai()
 		if (player_cpu_off_x != 0)
 		{
 			signed char sx = sign_short_as_char(player_cpu_off_x);
+			character_dir[ai_char] = sx;
 			set_sprite_mirror(const_character_first_sprite_index + ai_char, sx == 1 ? 0 : 1);
 			if (dx > min_dist_x)
 			{
@@ -102,7 +103,7 @@ void update_ai()
 
 		if (character_anim_timer[ai_char] == 0)
 		{
-			character_anim[ai_char] = run ? const_character_run : walk ? const_character_walk
+			character_anim[ai_char] = run ? const_character_anim_run : walk ? const_character_anim_walk
 																	   : const_character_idle;
 
 			if (dx < 16 && dy < 16)

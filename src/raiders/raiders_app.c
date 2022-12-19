@@ -94,6 +94,21 @@ void app_main()
 	init_sprites();
 	clear_sprites();
 
+	// unsigned char s = 0;
+	// for (unsigned char x = 0; x < 4; x++)
+	// {
+	// 	for (unsigned char y = 0; y < 4; y++)
+	// 	{
+	// 		enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
+	// 		set_sprite_position(s, (x * 32) + 32, (y * 32) + 32);
+	// 		spr_index[s] = s;
+	// 		s++;
+	// 	}
+	// }
+
+	// update_sprites();
+	// return;
+
 	// Set player position
 	character_x[0] = 40;
 	character_y[0] = 130;
@@ -126,7 +141,6 @@ void app_main()
 	scene_offset_y = -2;
 	init_scene();
 
-
 	while (1)
 	{
 		vblank = CHECK_BIT(input0, INPUT_VBLANK);
@@ -148,16 +162,19 @@ void app_main()
 				if (input_b && character_anim_timer[0] == 0)
 				{
 					character_start_punch(0);
+					// character_start_hit_high(0);
 				}
 				else if (input_x && character_anim_timer[0] == 0)
 				{
 					character_start_kick(0);
+					// character_start_hit_mid(0);
 				}
 				else
 				{
 					unsigned char player_sprite = const_character_first_sprite_index;
 					if (input_left)
 					{
+						character_dir[0] = -1;
 						set_sprite_mirror(player_sprite, 1);
 						unsigned short new_player_x = character_x[0] - player_speed;
 						if (player_aabb_check(new_player_x, character_y[0]) == 255)
@@ -168,6 +185,7 @@ void app_main()
 					}
 					if (input_right)
 					{
+						character_dir[0] = 1;
 						set_sprite_mirror(player_sprite, 0);
 						unsigned short new_player_x = character_x[0] + player_speed;
 						if (player_aabb_check(new_player_x, character_y[0]) == 255)
@@ -197,7 +215,7 @@ void app_main()
 					}
 					if (player_moving)
 					{
-						character_anim[0] = player_speed == 1 ? const_character_walk : const_character_run;
+						character_anim[0] = player_speed == 1 ? const_character_anim_walk : const_character_anim_run;
 
 						// Handle scrolling
 						scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
