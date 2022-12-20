@@ -20,9 +20,12 @@
 #ifndef RAIDERS_CHARACTERS_H
 #define RAIDERS_CHARACTERS_H
 
-#define const_character_max 3
+#define const_character_max 4
+
+#define const_character_position_divider 4
 
 extern bool character_active[];
+extern unsigned char character_team[];
 extern signed char character_dir[];
 extern unsigned char character_anim[];
 extern unsigned char character_frame[];
@@ -35,25 +38,30 @@ extern unsigned char character_anim_timer[];
 extern unsigned char character_anim_dir[];
 extern unsigned char character_anim_locked[];
 
-#define const_character_idle 0
+#define const_character_anim_idle 0
 
 #define const_character_anim_walk 1
 #define const_character_anim_walk_rate 4
 #define const_character_anim_run 2
 #define const_character_anim_run_rate 4
 #define const_character_anim_oneshot 3
+
 #define const_character_anim_punch_rate 5
-#define const_character_anim_kick_rate 6
-#define const_character_anim_hit_high_rate 8
-#define const_character_anim_hit_mid_rate 8
+#define const_character_anim_kick_rate 8
+#define const_character_anim_hit_high_rate 6
+#define const_character_anim_hit_mid_rate 6
 
 #define const_character_attack_punch 1
+#define const_character_attack_punch_knockback 4
 #define const_character_attack_kick 2
+#define const_character_attack_kick_knockback 8
 
 #define const_character_first_sprite_index 0
 
-extern void activate_character(unsigned char c, unsigned char offset);
+extern void activate_character(unsigned char c, unsigned char offset, unsigned char team);
 extern void deactivate_character(unsigned char c);
+
+extern void set_character_screen_position(unsigned char c, unsigned short x, unsigned short y);
 
 extern void update_characters();
 

@@ -1,1 +1,1 @@
-ffmpeg\ffmpeg.exe -r 50 -f image2 -s 320x240 -i "capture/cap_%%06d.png" -vcodec libx264 -crf 15 -pix_fmt yuv420p "capture/video.mp4" -y
+ffmpeg\ffmpeg.exe -r 50 -f image2 -i "capture/cap_%%06d.png" -vf scale=640x480:flags=neighbor -vcodec libx264 -crf 15 -pix_fmt yuv420p "capture/video.mp4" -y

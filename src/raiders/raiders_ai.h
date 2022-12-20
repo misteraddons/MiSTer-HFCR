@@ -21,7 +21,6 @@
 #define RAIDERS_AI_H
 
 extern unsigned char ai_mode[];
-extern unsigned char ai_last;
 extern unsigned char ai_active;
 
 extern void update_ai();

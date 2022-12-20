@@ -231,7 +231,7 @@ namespace rommaker
                     spriteStreamWriter.Write(groupStartBytes[0]); // Write byte 0 of start point for size group
 
                     MemoryStream groupStream = new();
-                    ushort groupLen = 0;
+                    ulong groupLen = 0;
                     foreach (string image in Directory.GetFiles(SpritePath, "*.png", SearchOption.TopDirectoryOnly).Where(x => x.Contains($"\\{g}_")))
                     {
                         Bitmap img = new(image);

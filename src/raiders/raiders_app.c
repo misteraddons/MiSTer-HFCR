@@ -87,6 +87,12 @@ unsigned char player_aabb_check(unsigned short x, unsigned short y)
 	return 255;
 }
 
+#define const_player_walk_speed 4
+#define const_player_run_speed 8
+
+#define const_team_player 0
+#define const_team_ai 1
+
 void app_main()
 {
 	chram_size = chram_cols * chram_rows;
@@ -94,80 +100,69 @@ void app_main()
 	init_sprites();
 	clear_sprites();
 
-	// unsigned char s = 0;
-	// for (unsigned char x = 0; x < 4; x++)
-	// {
-	// 	for (unsigned char y = 0; y < 4; y++)
-	// 	{
-	// 		enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
-	// 		set_sprite_position(s, (x * 32) + 32, (y * 32) + 32);
-	// 		spr_index[s] = s;
-	// 		s++;
-	// 	}
-	// }
-
-	// update_sprites();
-	// return;
-
 	// Set player position
-	character_x[0] = 40;
-	character_y[0] = 130;
-	activate_character(0, sprite_index_alex_first);
+	set_character_screen_position(0, 40, 160);
+	activate_character(0, sprite_index_alex_first, const_team_player);
 
 	// Set enemy position
-	character_x[1] = 200;
-	character_y[1] = 115;
-	activate_character(1, sprite_index_ninjablack_first);
-	ai_mode[1] = 1;
+	set_character_screen_position(1, 340, 145);
+	activate_character(1, sprite_index_ninjablack_first, const_team_ai);
+	ai_mode[0] = 1;
 
 	// Set enemy position
-	character_x[2] = 250;
-	character_y[2] = 150;
-	activate_character(2, sprite_index_ninjared_first);
-	ai_mode[2] = 0;
+	set_character_screen_position(2, 360, 175);
+	activate_character(2, sprite_index_ninjared_first, const_team_ai);
+	ai_mode[1] = 2;
+
+	// // Set enemy position
+	// set_character_screen_position(3, 300, 180);
+	// activate_character(3, sprite_index_stroudman_first);
+	// ai_mode[2] = 0;
 
 	// AI modes
-	// 0 - get near the player but hang back
-	// 1 - get in close to the player
-
-	for (unsigned char c = 0; c < const_character_max; c++)
-	{
-		unsigned char player_sprite = const_character_first_sprite_index + c;
-		set_sprite_position(player_sprite, character_x[c], character_y[c]);
-		character_frame[c] = 1;
-	}
+	// 0 - run to far point, walk to near point and hang back
+	// 1 - run in near, walk to closed
+	// 2 - run in close!
 
 	scene_offset_x = 0;
 	scene_offset_y = -2;
 	init_scene();
 
+	update_characters();
+	
 	while (1)
 	{
 		vblank = CHECK_BIT(input0, INPUT_VBLANK);
 
 		if (VBLANK_RISING)
 		{
+			// Update sprites with changes from last frame
+			update_sprites();
+
+			// Update tilemap with changes from last frame
+			update_tilemap();
+
 			// Reset timer
 			timer[0] = 0;
 
+			// Collect player inputs
 			basic_input();
 
 			// Player control
 			bool player_moving = 0;
-			unsigned player_speed = input_a ? 3 : 1;
+			bool run = input_a;
+			unsigned player_speed = run ? const_player_run_speed : const_player_walk_speed;
 			signed char player_move_x = 0;
 			signed char player_move_y = 0;
-			if (!character_anim_locked[0])
+			if (character_anim_locked[0] == 0)
 			{
 				if (input_b && character_anim_timer[0] == 0)
 				{
 					character_start_punch(0);
-					// character_start_hit_high(0);
 				}
 				else if (input_x && character_anim_timer[0] == 0)
 				{
 					character_start_kick(0);
-					// character_start_hit_mid(0);
 				}
 				else
 				{
@@ -215,32 +210,45 @@ void app_main()
 					}
 					if (player_moving)
 					{
-						character_anim[0] = player_speed == 1 ? const_character_anim_walk : const_character_anim_run;
-
-						// Handle scrolling
-						scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
-						signed short scroll_offset = character_x[0] - scroll_x;
-
-						if (scroll_offset > 180 && scroll_x < scroll_x_max)
-						{
-							unsigned short scroll_avail = scroll_x_max - scroll_x;
-							tilemap_offset_x += scroll_avail > player_speed ? player_speed : scroll_avail;
-							update_tilemap();
-						}
-						if (scroll_x > 0 && scroll_offset < 140)
-						{
-							tilemap_offset_x -= scroll_x > player_speed ? player_speed : scroll_x;
-							update_tilemap();
-						}
+						character_anim[0] = run ? const_character_anim_run : const_character_anim_walk;
 					}
 					else
 					{
-						character_anim[0] = const_character_idle;
+						character_anim[0] = const_character_anim_idle;
 					}
 				}
 			}
-			character_move_x[0] = player_move_x;
-			character_move_y[0] = player_move_y;
+			if (!character_anim_locked[0])
+			{
+				character_move_x[0] = player_move_x;
+				character_move_y[0] = player_move_y;
+			}
+
+			// Handle scrolling
+			scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
+			unsigned short focus_x = ((character_x[0] / const_character_position_divider));
+			signed short scroll_offset = focus_x - scroll_x;
+
+			if (scroll_offset > 200 && scroll_x < scroll_x_max)
+			{
+				signed short scroll_amount = scroll_offset - 200;
+				if (scroll_amount > scroll_move_max)
+				{
+					scroll_amount = scroll_move_max;
+				}
+				tilemap_offset_x += scroll_amount;
+			}
+
+			if (scroll_x > 0 && scroll_offset < 140)
+			{
+				signed short scroll_amount = scroll_offset - 140;
+				if (scroll_amount < -scroll_move_max)
+				{
+					scroll_amount = -scroll_move_max;
+				}
+				tilemap_offset_x += scroll_amount;
+				// update_tilemap();
+			}
 
 			// unsigned short tp1 = GET_TIMER;
 
@@ -253,7 +261,6 @@ void app_main()
 			sort_sprites();
 			// unsigned short tss = GET_TIMER;
 
-			update_sprites();
 			// unsigned short tsu = GET_TIMER;
 			// write_stringf_ushort("player         %4d", 0xFF, 0, 0, tp1);
 			// write_stringf_ushort("ai             %4d", 0xFF, 0, 10, tai - tp1);

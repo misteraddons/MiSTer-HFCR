@@ -24,7 +24,7 @@ extern signed char scene_offset_x;
 extern signed char scene_offset_y;
 extern unsigned short scroll_x;
 extern unsigned short scroll_x_max;
-extern unsigned char scroll_speed;
+extern unsigned char scroll_move_max;
 
 extern void init_scene();
 

@@ -365,6 +365,8 @@ void SimVideo::UpdateTexture() {
 	// (D3D11_USAGE_DYNAMIC is for use with map / unmap.) ElectronAsh.
 	if (frame_ready) {
 		g_pd3dDeviceContext->UpdateSubresource(texture, 0, NULL, output_ptr, output_width * 4, 0);
+
+		if (count_frame > 1 && output_capture) { Capture(); }
 	}
 
 	// Rendering

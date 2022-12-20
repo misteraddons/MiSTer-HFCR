@@ -25,6 +25,7 @@
 #include "raiders_characters.h"
 
 bool character_active[const_character_max];
+unsigned char character_team[const_character_max];
 signed char character_dir[const_character_max];
 unsigned char character_anim[const_character_max];
 unsigned char character_anim_rate[const_character_max];
@@ -45,11 +46,12 @@ unsigned char character_scheduled_attack_in[const_character_max];
 #define const_character_sprite_palette sprite_palette_alex
 #define const_character_sprite_size sprite_size_alex
 
-void activate_character(unsigned char c, unsigned char offset)
+void activate_character(unsigned char c, unsigned char offset, unsigned char team)
 {
 	character_active[c] = true;
 	enable_sprite(const_character_first_sprite_index + c, const_character_sprite_palette, const_character_sprite_size, 0);
 	character_sprite_offset[c] = offset;
+	character_team[c] = team;
 }
 
 void deactivate_character(unsigned char c)
@@ -60,19 +62,25 @@ void deactivate_character(unsigned char c)
 
 void character_anim_oneshot(unsigned char c)
 {
-	if (character_anim_timer[c] >= character_anim_rate[c])
+	if (character_anim_timer[c] == 0)
 	{
 		character_frame[c]++;
-		if (character_frame[c] == character_frame_target[c])
+		if (character_frame[c] >= character_frame_target[c])
 		{
-			character_anim[c] = const_character_idle;
-			character_anim_locked[c] = 0;
+			character_anim[c] = const_character_anim_idle;
+			character_anim_timer[c] = character_anim_rate[c];
 		}
 		else
 		{
-			character_anim_timer[c] = 0;
+			character_anim_timer[c] = character_anim_rate[c];
 		}
 	}
+}
+
+void set_character_screen_position(unsigned char c, unsigned short x, unsigned short y)
+{
+	character_x[c] = 32 + (x * const_character_position_divider);
+	character_y[c] = 32 + (y * const_character_position_divider);
 }
 
 void update_characters()
@@ -88,22 +96,37 @@ void update_characters()
 		character_x[c] += character_move_x[c];
 		character_y[c] += character_move_y[c];
 
-		// Handle character animations
-		if (character_anim[c] != 0)
+		// Decrement speed
+		if (character_move_x[c] > 0)
 		{
-			character_anim_timer[c]++;
+			character_move_x[c]--;
 		}
-		else
+		if (character_move_x[c] < 0)
 		{
-			if (character_anim_timer[c] > 0)
+			character_move_x[c]++;
+		}
+		if (character_move_y[c] > 0)
+		{
+			character_move_y[c]--;
+		}
+		if (character_move_y[c] < 0)
+		{
+			character_move_y[c]++;
+		}
+
+		// Handle character animations
+		if (character_anim_timer[c] > 0)
+		{
+			character_anim_timer[c]--;
+			if (character_anim[c] == const_character_anim_idle)
 			{
-				character_anim_timer[c]--;
+				character_anim_locked[c] = 0;
 			}
 		}
 
 		switch (character_anim[c])
 		{
-		case const_character_idle:
+		case const_character_anim_idle:
 			character_frame[c] = 1;
 			break;
 		case const_character_anim_walk:
@@ -112,9 +135,9 @@ void update_characters()
 				character_frame[c] = 0;
 				character_anim_dir[c] = 0;
 			}
-			if (character_anim_timer[c] >= const_character_anim_walk_rate)
+			if (character_anim_timer[c] == 0)
 			{
-				character_anim_timer[c] = 0;
+				character_anim_timer[c] = const_character_anim_walk_rate;
 				if (character_anim_dir[c] == 0)
 				{
 					character_frame[c]++;
@@ -134,9 +157,9 @@ void update_characters()
 			}
 			break;
 		case const_character_anim_run:
-			if (character_anim_timer[c] >= const_character_anim_run_rate)
+			if (character_anim_timer[c] == 0)
 			{
-				character_anim_timer[c] = 0;
+				character_anim_timer[c] = const_character_anim_run_rate;
 				character_frame[c] = character_frame[c] == 1 ? 3 : 1;
 			}
 			break;
@@ -148,13 +171,13 @@ void update_characters()
 		// Draw character sprite
 		unsigned char player_sprite = const_character_first_sprite_index + c;
 		spr_index[player_sprite] = character_sprite_offset[c] + character_frame[c];
-		unsigned short x = (character_x[c] - scroll_x) + 32;
-		unsigned short y = character_y[c];
-		if (character_frame[c] == 2 || character_frame[c] == 3)
+		unsigned short x = (character_x[c] / const_character_position_divider) - scroll_x;
+		unsigned short y = (character_y[c] / const_character_position_divider);
+		if (character_frame[c] == 0 || character_frame[c] == 2 || character_frame[c] == 3)
 		{
 			y--;
 		}
-		set_sprite_position(player_sprite, x, y + 32);
+		set_sprite_position(player_sprite, x, y);
 
 		// Handle attacks
 
@@ -165,11 +188,8 @@ void update_characters()
 			{
 				// find characters to hit
 
-				unsigned char s = c + 10;
-				enable_sprite(s, sprite_palette_hit, sprite_size_hit, 0);
-
-				unsigned short hit_x = (character_x[c] - scroll_x);
-				unsigned short hit_y = character_y[c];
+				unsigned short hit_x = character_x[c] / const_character_position_divider;
+				unsigned short hit_y = character_y[c] / const_character_position_divider;
 				unsigned char d = character_dir[c];
 				switch (character_scheduled_attack[c])
 				{
@@ -183,41 +203,57 @@ void update_characters()
 					break;
 				}
 
-				set_sprite_position(s, hit_x + 32, hit_y + 32);
-				spr_index[s] = sprite_index_hit_first;
+				unsigned short hit_x_max = hit_x + 16;
+				unsigned short hit_y_max = hit_y + 16;
 
-				// unsigned short cl = character_x[c] + 6;
-				// unsigned short cr = x + 24;
-				// unsigned short ct = y + 26;
-				// unsigned short cb = y + 32;
+				for (unsigned char tc = 0; tc < const_character_max; tc++)
+				{
+					if (tc == c || character_team[c] == character_team[tc])
+					{
+						continue;
+					}
 
-				// for (int t = 0; t < const_character_max; t++)
-				// {
-				// 	if (t == c)
-				// 	{
-				// 		continue;
-				// 	}
+					unsigned short l = (character_x[tc] / const_character_position_divider) + 10;
+					unsigned short r = l + 10;
+					unsigned short t = (character_y[tc] / const_character_position_divider) + 8;
+					unsigned short b = t + 16;
+					if (r < hit_x || l > hit_x_max)
+					{
+						continue;
+					}
+					if (b < hit_y || t > hit_y_max)
+					{
+						continue;
+					}
 
-				// 	// for (unsigned char c = 0; c < const_collision_boxes_max; c++)
-				// 	// {
-				// 	// 	if (r < collision_box_l[c] || l > collision_box_r[c])
-				// 	// 	{
-				// 	// 		continue;
-				// 	// 	}
-				// 	// 	if (b < collision_box_t[c] || t > collision_box_b[c])
-				// 	// 	{
-				// 	// 		continue;
-				// 	// 	}
-				// 	// 	return c;
-				// 	// }
+					signed hit_direction = character_x[c] < character_x[tc] ? 1 : -1;
 
-				// }
+					switch (character_scheduled_attack[c])
+					{
+					case const_character_attack_punch:
+						character_start_hit_high(tc);
+						character_move_x[tc] = hit_direction * const_character_attack_punch_knockback;
+						break;
+					case const_character_attack_kick:
+						character_start_hit_mid(tc);
+						character_move_x[tc] = hit_direction * const_character_attack_kick_knockback;
+						break;
+					}
+					character_scheduled_attack[tc] = 0;
+					character_scheduled_attack_in[tc] = 0;
+
+					// write_stringf("HIT %d", 0xFf, 0, c, tc);
+					// unsigned char s = tc + 10;
+					// enable_sprite(s, sprite_palette_hit, sprite_size_hit, 0);
+					// set_sprite_position(s, hit_x, hit_y);
+					// spr_index[s] = sprite_index_hit_first;
+				}
 			}
 		}
-
-		// write_stringf("a: %d", 0xFF, 0, c, character_anim[c]);
-		// write_stringf("l: %d", 0xFF, 10, c, character_anim_locked[c]);
-		// write_stringf("t: %d", 0xFF, 20, c, character_anim_timer[c]);
+		// write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
+		// write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);
+		// write_stringf("t: %3d", 0xFF, 14, c, character_anim_timer[c]);
+		// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
 	}
 }
 
@@ -228,9 +264,9 @@ void character_start_punch(unsigned char c)
 	character_frame[c] = 6;
 	character_frame_target[c] = 8;
 	character_anim_locked[c] = 1;
-	character_anim_timer[c] = 0;
+	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_punch;
-	character_scheduled_attack_in[c] = 2 * const_character_anim_punch_rate;
+	character_scheduled_attack_in[c] = 2 * character_anim_rate[c];
 }
 void character_start_kick(unsigned char c)
 {
@@ -239,25 +275,25 @@ void character_start_kick(unsigned char c)
 	character_frame[c] = 9;
 	character_frame_target[c] = 11;
 	character_anim_locked[c] = 1;
-	character_anim_timer[c] = 0;
+	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_kick;
-	character_scheduled_attack_in[c] = 2 * const_character_anim_kick_rate;
+	character_scheduled_attack_in[c] = 2 * character_anim_rate[c];
 }
 void character_start_hit_high(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_hit_high_rate;
-	character_frame[c] = 12;
-	character_frame_target[c] = 13;
+	character_frame[c] = 14;
+	character_frame_target[c] = 14;
 	character_anim_locked[c] = 1;
-	character_anim_timer[c] = 0;
+	character_anim_timer[c] = character_anim_rate[c];
 }
 void character_start_hit_mid(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_hit_mid_rate;
-	character_frame[c] = 14;
-	character_frame_target[c] = 15;
+	character_frame[c] = 12;
+	character_frame_target[c] = 12;
 	character_anim_locked[c] = 1;
-	character_anim_timer[c] = 0;
+	character_anim_timer[c] = character_anim_rate[c];
 }

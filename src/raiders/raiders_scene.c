@@ -26,8 +26,8 @@ signed char scene_offset_x = 0;
 signed char scene_offset_y = 0;
 unsigned short scroll_x;
 unsigned short scroll_x_max;
-unsigned char scroll_speed = 1;
-unsigned char screen_width = 22;
+unsigned char screen_width = 21;
+unsigned char scroll_move_max = 5;
 
 
 void update_section(unsigned char lx, unsigned char rx, unsigned char ty, unsigned char by)

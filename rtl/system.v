@@ -773,10 +773,14 @@ dpram #(TILEMAP_RAM_WIDTH,8) tilemapram
 // Tilemap ROM (0x1000 / 4096 bytes)
 dpram_w1r2 #(TILEMAP_ROM_WIDTH,8, "tilemap.hex") tilemaprom
 (
-	.clock_a(clk_24),
-	.address_a(dn_addr[TILEMAP_ROM_WIDTH-1:0]),
-	.wren_a(tilemaprom_wr),
-	.data_a(dn_data),
+	.clock_a(),
+	.address_a(),
+	.wren_a(),
+	.data_a(),
+	// .clock_a(clk_24),
+	// .address_a(dn_addr[TILEMAP_ROM_WIDTH-1:0]),
+	// .wren_a(tilemaprom_wr),
+	// .data_a(dn_data),
 
 	.clock_b(clk_24),
 	.address_b(tilemaprom_addr),

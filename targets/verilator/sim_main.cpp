@@ -387,7 +387,6 @@ int main(int argc, char** argv, char** env) {
 
 		video.UpdateTexture();
 
-		if (video.count_frame > 1 && video.output_capture) { video.Capture(); }
 
 
 		// Pass inputs to sim

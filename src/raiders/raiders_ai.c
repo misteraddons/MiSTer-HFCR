@@ -25,31 +25,52 @@
 #include "raiders_ai.h"
 #include "raiders_characters.h"
 
-#define const_ai_first 1
-#define const_ai_max const_character_max - 1
+#define const_ai_first_character 1
+#define const_ai_max 3
 
 unsigned char ai_mode[const_ai_max];
-unsigned char ai_last = const_ai_max + const_ai_first;
+unsigned char ai_attack_timer[const_ai_max];
 unsigned char ai_active = 0;
+
+#define const_ai_walk_speed 3
+#define const_ai_run_speed 6
+
+#define const_ai_dist_far_x 240
+#define const_ai_dist_mid_x 120
+#define const_ai_dist_close_x 60
+
+#define const_ai_dist_far_y 90
+#define const_ai_dist_mid_y 30
+#define const_ai_dist_close_y 10
+
+#define const_ai_range_attack_x 80
+#define const_ai_range_attack_y 16
 
 void update_ai()
 {
-	unsigned ai_char = ai_active + const_ai_first;
+	unsigned ai_char = ai_active + const_ai_first_character;
 	signed char move_x = 0;
 	signed char move_y = 0;
 
-	if (!character_anim_locked[ai_char])
+	if (character_anim_locked[ai_char] == 0)
 	{
-		unsigned char min_dist_x = 30;
-		unsigned char min_dist_y = 30;
-		unsigned char run_dist_x = 60;
-		unsigned char run_dist_y = 60;
+		unsigned char min_dist_x = const_ai_dist_mid_x;
+		unsigned char min_dist_y = const_ai_dist_mid_y;
+		unsigned char run_dist_x = const_ai_dist_far_x;
+		unsigned char run_dist_y = const_ai_dist_far_y;
 		if (ai_mode[ai_active] == 1)
 		{
-			min_dist_x = 15;
-			run_dist_x = 30;
-			min_dist_y = 4;
-			run_dist_y = 25;
+			min_dist_x = const_ai_dist_close_x;
+			run_dist_x = const_ai_dist_mid_x;
+			min_dist_y = const_ai_dist_close_y;
+			run_dist_y = const_ai_dist_mid_y;
+		}
+		if (ai_mode[ai_active] == 2)
+		{
+			min_dist_x = const_ai_dist_close_x;
+			run_dist_x = const_ai_dist_close_x;
+			min_dist_y = const_ai_dist_close_y;
+			run_dist_y = const_ai_dist_close_y;
 		}
 
 		bool walk = false;
@@ -65,18 +86,20 @@ void update_ai()
 			signed char sx = sign_short_as_char(player_cpu_off_x);
 			character_dir[ai_char] = sx;
 			set_sprite_mirror(const_character_first_sprite_index + ai_char, sx == 1 ? 0 : 1);
-			if (dx > min_dist_x)
+			if (dx > run_dist_x)
 			{
-				if (dx > run_dist_x)
-				{
-					run = true;
-					move_x = sx * 2;
-				}
-				else
-				{
-					walk = true;
-					move_x = sx;
-				}
+				run = true;
+				move_x = sx * const_ai_run_speed;
+			}
+			else if (dx > (min_dist_x + 4))
+			{
+				walk = true;
+				move_x = sx * const_ai_walk_speed;
+			}
+			else if (dx < (min_dist_x - 4))
+			{
+				walk = true;
+				move_x = -sx * const_ai_walk_speed;
 			}
 		}
 
@@ -85,48 +108,76 @@ void update_ai()
 			if (player_cpu_off_y != 0)
 			{
 				signed char sy = sign_short_as_char(player_cpu_off_y);
-				if (dy > min_dist_y)
+
+				if (dy > run_dist_y)
 				{
-					if (dy > run_dist_y)
-					{
-						run = true;
-						move_y = sy * 2;
-					}
-					else
-					{
-						walk = true;
-						move_y = sy;
-					}
+					run = true;
+					move_y = sy * const_ai_run_speed;
+				}
+				else if (dy > (min_dist_y + 4))
+				{
+					walk = true;
+					move_y = sy * const_ai_walk_speed;
+				}
+				else if (dy < (min_dist_y - 4))
+				{
+					walk = true;
+					move_y = -sy * const_ai_walk_speed;
 				}
 			}
 		}
 
-		if (character_anim_timer[ai_char] == 0)
+		if (character_anim_locked[ai_char] == 0)
 		{
 			character_anim[ai_char] = run ? const_character_anim_run : walk ? const_character_anim_walk
-																	   : const_character_idle;
-
-			if (dx < 16 && dy < 16)
+																			: const_character_anim_idle;
+			if (character_anim_timer[ai_char] == 0)
 			{
-				unsigned char attack = rand_uchar(0, 1);
-				switch (attack)
+				if (ai_attack_timer[ai_active] == 0)
 				{
-				case 0:
-					character_start_punch(ai_char);
-					break;
-				case 1:
-					character_start_kick(ai_char);
-					break;
+					if (dx < const_ai_range_attack_x && dy < const_ai_range_attack_y)
+					{
+						character_move_x[ai_char] = 0;
+						character_move_y[ai_char] = 0;
+						unsigned char attack = rand_uchar(0, 1);
+						switch (attack)
+						{
+						case 0:
+							character_start_punch(ai_char);
+							break;
+						case 1:
+							character_start_kick(ai_char);
+							break;
+						}
+					}
+					ai_attack_timer[ai_active] = rand_uchar(6, 25);
 				}
 			}
 		}
 	}
-	character_move_x[ai_char] = move_x;
-	character_move_y[ai_char] = move_y;
+	if (!character_anim_locked[0])
+	{
+		character_move_x[ai_char] = move_x;
+		character_move_y[ai_char] = move_y;
+	}
+
+	//write_stringf("ai: attack timer: %3d", 0xFF, 0, ai_active, ai_attack_timer[ai_active]);
 
 	ai_active++;
 	if (ai_active == const_ai_max)
 	{
 		ai_active = 0;
+	}
+
+	// Linearly decrement all attack timers otherwise attacks get slower the more AIs you have
+	for (unsigned char a = 0; a < const_ai_max; a++)
+	{
+		if (character_anim_timer[a + const_ai_first_character] == 0)
+		{
+			if (ai_attack_timer[ai_active] > 0)
+			{
+				ai_attack_timer[ai_active]--;
+			}
+		}
 	}
 }
