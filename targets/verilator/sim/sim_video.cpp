@@ -27,6 +27,7 @@ int output_height = 512;
 int output_rotate = 0;
 bool output_vflip = false;
 bool output_usevsync = 1;
+bool output_capture = false;
 
 uint32_t* output_ptr = NULL;
 unsigned int output_size;
@@ -341,11 +342,15 @@ std::wstring s2ws(const std::string& str)
 	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 	return wstrTo;
 }
+
+unsigned long capture_frame;
+
 void SimVideo::Capture()
 {
+	capture_frame++;
 	char index[7];
-	snprintf(index, 7, "%06u", count_frame);
-	std::wstring indexString = s2ws( index);
+	snprintf(index, 7, "%06u", capture_frame);
+	std::wstring indexString = s2ws(index);
 	std::wstring filename = L"capture/cap_";
 	filename.append(indexString);
 	filename.append(L".png");

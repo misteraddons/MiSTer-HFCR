@@ -19,6 +19,7 @@ public:
 	int output_height;
 	int output_rotate;
 	bool output_vflip;
+	bool output_capture;
 
 	int count_pixel;
 	int count_line;
