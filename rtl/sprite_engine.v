@@ -774,6 +774,12 @@ begin
 		end
 	endcase
 
+	// Failsafe to stop loss of next line if we run out of time when filling the line buffer
+	if(spr_state != SE_IDLE && hcnt == 9'd329)
+	begin
+		spr_state <= SE_LINE_COMPLETE;
+		spritelbram_wr <= 1'b0;
+	end
 
 	if(!pause)
 	begin
