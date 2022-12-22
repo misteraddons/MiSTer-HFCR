@@ -137,9 +137,9 @@ reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_8x8;
 reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_16x16;
 reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
 
- //`define CASVAL_DEBUG
- //`define CASVAL_DEBUG_TIMES
- //`define CASVAL_DEBUG_OUTLINE
+//`define CASVAL_DEBUG
+`define CASVAL_DEBUG_TIMES
+//`define CASVAL_DEBUG_OUTLINE
 
 `ifdef CASVAL_DEBUG_TIMES
 parameter SPR_TIMER_WIDTH = 11;
@@ -269,6 +269,8 @@ begin
 			end
 		endcase
 	end
+
+
 // Sprite engine state machine
 `ifdef CASVAL_DEBUG_TIMES
 	spr_timer_line <= spr_timer_line + 1'b1;
@@ -458,7 +460,7 @@ begin
 			spr_index <= 6'd0;
 
 `ifdef CASVAL_DEBUG_TIMES
-					$display("CASVAL->LEAVING SE_IDLE: vcnt = %d  spr_active_y = %d", vcnt, spr_active_y);
+					$display("CASVAL->LEAVING SE_IDLE: h/v = %d / %d  spr_active_y = %d", hcnt, vcnt, spr_active_y);
 					$display("CASVAL->LEAVING SE_IDLE: spr_timer_idle = %d, spr_linetime_max=%d", spr_timer_idle, spr_linetime_max);
 					spr_timer_line <= {SPR_TIMER_WIDTH{1'b0}};
 `endif
@@ -481,7 +483,9 @@ begin
 			begin
 				// Disable line buffer write
 				spritelbram_wr <= 1'b0;
-
+`ifdef CASVAL_DEBUG_TIMES
+				$display("CASVAL->LINE BUFFER CLEARED:t=%d  h/v = %d/%d  spr_active_y = %d", spr_timer_line, hcnt, vcnt, spr_active_y);
+`endif
 				spr_state <= SE_SETUP_READ_Y;
 			end
 		end
@@ -497,7 +501,7 @@ begin
 		SE_READ_Y_UPPER:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_READ_Y_UPPER: spr: %d  addr=%x  dout=%x", spr_index, spriteram_addr, spriteram_data_out);
+			//$display("CASVAL->SE_READ_Y_UPPER: t=%d  h/v = %d/%d  spr: %d  addr=%x  dout=%x", spr_timer_line, hcnt, vcnt, spr_index, spriteram_addr, spriteram_data_out);
 `endif
 			// Read enable bit from sprite RAM
 			spr_enable <= spriteram_data_out[7];
@@ -521,15 +525,34 @@ begin
 		end
 		SE_READ_Y_LOWER:
 		begin
+			if(spr_enable == 1'b0)
+			begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_READ_Y_LOWER:  spr: %d  addr=%x dout=%x", spr_index, spriteram_addr, spriteram_data_out);
+				$display("CASVAL->SE_DISABLED: t=%d  h/v = %d/%d - spr_index=%d  y: %d", spr_timer_line, hcnt, vcnt, spr_index, spr_y);
 `endif
-			// Read Y lower 8 bits from sprite RAM
-			spr_y[7:0] <= spriteram_data_out;
-			// Increment sprite RAM address
-			spriteram_addr <= spriteram_addr + 1'b1;
-
-			spr_state <= SE_CHECK_Y;
+				// If no then move to next sprite or finish
+				if(spr_index == spr_index_max)
+				begin
+					spr_state <= SE_LINE_COMPLETE;
+				end
+				else
+				begin
+					// Increment sprite index
+					spr_index <= spr_index + 1'd1;
+					spr_state <= SE_SETUP_READ_Y;
+				end
+			end
+			else
+			begin
+`ifdef CASVAL_DEBUG
+				//$display("CASVAL->SE_READ_Y_LOWER: t=%d  h/v = %d/%d  spr: %d  addr=%x dout=%x", spr_timer_line, hcnt, vcnt, spr_index, spriteram_addr, spriteram_data_out);
+`endif
+				// Read Y lower 8 bits from sprite RAM
+				spr_y[7:0] <= spriteram_data_out;
+				// Increment sprite RAM address
+				spriteram_addr <= spriteram_addr + 1'b1;
+				spr_state <= SE_CHECK_Y;
+			end
 		end
 
 		SE_CHECK_Y:
@@ -541,12 +564,13 @@ begin
 			if(spr_enable == 1'b1 && spr_active_y >= spr_y && spr_active_y <= spr_y + spr_size)
 			begin
 `ifdef CASVAL_DEBUG
-				$display("SE_CHECK_Y PASSED: spr_index=%d", spr_index);
+				// $display("CASVAL->SE_CHECK_Y PASSED: t=%d  h/v = %d/%d - spr_index=%d", spr_timer_line, hcnt, vcnt, spr_index);
 `endif
 				spr_state <= SE_READ_X_UPPER;
 			end
 			else
 			begin
+				// $display("CASVAL->SE_CHECK_Y FAILED: t=%d  h/v = %d/%d - spr_index=%d  y: %d", spr_timer_line, hcnt, vcnt, spr_index, spr_y);
 				// If no then move to next sprite or finish
 				if(spr_index == spr_index_max)
 				begin
@@ -556,7 +580,6 @@ begin
 				begin
 					// Increment sprite index
 					spr_index <= spr_index + 1'd1;
-
 					spr_state <= SE_SETUP_READ_Y;
 				end
 			end
@@ -565,7 +588,7 @@ begin
 		SE_READ_X_UPPER:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_READ_X_UPPER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
+			//$display("CASVAL->SE_READ_X_UPPER: t=%d  h/v = %d/%d  addr=%x dout=%x", spr_timer_line, hcnt, vcnt, spriteram_addr, spriteram_data_out);
 `endif
 			// Read image index 7 bits from sprite RAM
 			spr_image_index <= spriteram_data_out[7:1];
@@ -580,7 +603,7 @@ begin
 		SE_READ_X_LOWER:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_READ_X_LOWER:  addr=%x dout=%x", spriteram_addr, spriteram_data_out);
+			//$display("CASVAL->SE_READ_X_LOWER: t=%d  h/v = %d/%d  addr=%x dout=%x", spr_timer_line, hcnt, vcnt, spriteram_addr, spriteram_data_out);
 `endif
 			// Read X lower 8 bits from sprite RAM
 			spr_x[7:0] <= spriteram_data_out;
@@ -599,7 +622,7 @@ begin
 		SE_SETUP_WRITE:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_WRITE: AY: %d   Y: %d   X: %d   I: %d   O: %d", spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_y_offset);
+			$display("CASVAL->SE_SETUP_WRITE: t=%d  h/v = %d/%d  AY: %d  Y: %d  X: %d  I: %d  O: %d", spr_timer_line, hcnt, vcnt, spr_active_y, spr_y, spr_x, spr_image_index, spr_rom_y_offset);
 `endif
 			// Enable line buffer write
 			spritelbram_wr <= 1'b0;
@@ -650,7 +673,7 @@ begin
 			else
 			begin
 `ifdef CASVAL_DEBUG
-				$display("CASVAL->SE_GET_PIXEL: y: %d, x: %d i: %d, sprom_addr < %x, palrom_addr < %x", spr_y, spr_pixel_index, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
+				$display("CASVAL->SE_GET_PIXEL: t=%d  h/v = %d/%d  y: %d, x: %d i: %d, sprom_addr < %x, palrom_addr < %x", spr_timer_line, hcnt, vcnt, spr_y, spr_pixel_index, spr_image_index, sprom_addr, {spriterom_data_out[4:0],1'b0});
 `endif
 				// Setup palette address to read pixel colour
 				palrom_addr <= {spr_palette_index, spriterom_data_out[4:0],1'b0};
@@ -683,7 +706,7 @@ begin
 				begin
 					// If palette colour alpha is high, stage input to line buffer
 `ifdef CASVAL_DEBUG
-					$display("CASVAL->SE_STAGE_PIXEL: ay: %d y: %d, x: %d i: %d, spritelbram_data_in < %x", spr_active_y, spr_y, spr_pixel_index, spr_image_index, palrom_data_out);
+					$display("CASVAL->SE_STAGE_PIXEL: t=%d  h/v = %d/%d ay: %d y: %d, x: %d i: %d, spritelbram_data_in < %x", spr_timer_line, hcnt, vcnt, spr_active_y, spr_y, spr_pixel_index, spr_image_index, palrom_data_out);
 `endif
 					// Enable line buffer write
 					spritelbram_wr <= 1'b1;
@@ -704,7 +727,7 @@ begin
 				begin
 					// Pixel is transparent so move to next
 `ifdef CASVAL_DEBUG
-					$display("CASVAL->SE_STAGE_PIXEL: y: %d, x: %d i: %d, spritelbram_data_in < %x - FAIL ALPHA  CHECK", spr_y,spr_pixel_index, spr_image_index, palrom_data_out);
+					$display("CASVAL->SE_STAGE_PIXEL: t=%d  h/v = %d/%d y: %d, x: %d i: %d, spritelbram_data_in < %x - FAIL ALPHA  CHECK", spr_timer_line, hcnt, vcnt, spr_y,spr_pixel_index, spr_image_index, palrom_data_out);
 `endif
 					// Increment line buffer write address
 					spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
@@ -722,7 +745,7 @@ begin
 		begin
 			// Get pixel colour from palette rom and stage input to line buffer
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_WRITE_PIXEL: y: %d, x: %d i: %d, spritelbram_wr_addr < %d, spritelbram_data_in=%b", spr_y, spr_pixel_index, spr_image_index, spritelbram_wr_addr[SPRITE_POSITION_WIDTH-1:0], spritelbram_data_in);
+			$display("CASVAL->SE_WRITE_PIXEL: t=%d  h/v = %d/%d  y: %d, x: %d i: %d, spritelbram_wr_addr < %d, spritelbram_data_in=%b", spr_timer_line, hcnt, vcnt, spr_y, spr_pixel_index, spr_image_index, spritelbram_wr_addr[SPRITE_POSITION_WIDTH-1:0], spritelbram_data_in);
 `endif
 			// Disable line buffer write
 			spritelbram_wr <= 1'b0;
@@ -738,7 +761,7 @@ begin
 		begin
 			// Once all sprites have been processed for each pixel return to idle
 `ifdef CASVAL_DEBUG_TIMES
-			$display("CASVAL->SE_LINE_COMPLETE: counter=%d", spr_timer_line);
+			$display("CASVAL->SE_LINE_COMPLETE: t=%d  h/v = %d/%d", spr_timer_line, hcnt, vcnt);
 			// Update slowest line counter
 			if(spr_timer_line > spr_linetime_max)
 			begin

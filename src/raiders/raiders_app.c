@@ -65,33 +65,13 @@ void basic_input()
 	input_x = CHECK_BIT(joystick[0], 6);
 }
 
-unsigned char player_aabb_check(unsigned short x, unsigned short y)
-{
-	unsigned short l = x + 6;
-	unsigned short r = x + 24;
-	unsigned short t = y + 26;
-	unsigned short b = y + 32;
-
-	for (unsigned char c = 0; c < const_collision_boxes_max; c++)
-	{
-		if (r < collision_box_l[c] || l > collision_box_r[c])
-		{
-			continue;
-		}
-		if (b < collision_box_t[c] || t > collision_box_b[c])
-		{
-			continue;
-		}
-		return c;
-	}
-	return 255;
-}
-
-#define const_player_walk_speed 4
-#define const_player_run_speed 8
+#define const_player_walk_speed 5
+#define const_player_run_speed 12
 
 #define const_team_player 0
 #define const_team_ai 1
+
+// #define DEBUG_TIMING
 
 void app_main()
 {
@@ -100,8 +80,43 @@ void app_main()
 	init_sprites();
 	clear_sprites();
 
+	unsigned char s = 0;
+	unsigned char yo = 32;
+	for (unsigned char y = 0; y < 2; y++)
+	{
+		unsigned char i = 0;
+		for (unsigned char x = 0; x < 7 + y; x++)
+		{
+			enable_sprite(s, sprite_palette_test, sprite_size_test, 0);
+			spr_index[s] = sprite_index_test_first + i;
+			set_sprite_position(s, 32 + (x * 36), yo + (y * 34));
+			i++;
+			if (i == 8)
+				i = 0;
+			s++;
+		}
+	}
+	// yo += 70;
+	// for (unsigned char y = 0; y < 2; y++)
+	// {
+	// 	unsigned char i = 0;
+	// 	for (unsigned char x = 0; x < 14 + y; x++)
+	// 	{
+	// 		enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
+	// 		spr_index[s] = sprite_index_test16_first + i;
+	// 		set_sprite_position(s, 32 + (x * 18), yo + (y * 18));
+	// 		i++;
+	// 		if (i == 8)
+	// 			i = 0;
+	// 		s++;
+	// 	}
+	// }
+
+	update_sprites();
+	return;
+
 	// Set player position
-	set_character_screen_position(0, 40, 160);
+	set_character_screen_position(0, 60, 160);
 	activate_character(0, sprite_index_alex_first, const_team_player);
 
 	// Set enemy position
@@ -111,8 +126,19 @@ void app_main()
 
 	// Set enemy position
 	set_character_screen_position(2, 360, 175);
-	activate_character(2, sprite_index_ninjared_first, const_team_ai);
+	activate_character(2, sprite_index_ninjablack_first, const_team_ai);
 	ai_mode[1] = 2;
+
+	// Set remaining enemy positions randomly
+	for (unsigned char a = 2; a < const_ai_max; a++)
+	{
+		unsigned char c = a + const_ai_first_character;
+		unsigned short ax = rand_ushort(50, 400);
+		unsigned short ay = rand_ushort(140, 180);
+		set_character_screen_position(c, ax, ay);
+		activate_character(c, sprite_index_ninjared_first, const_team_ai);
+		ai_mode[a] = 0;
+	}
 
 	// // Set enemy position
 	// set_character_screen_position(3, 300, 180);
@@ -125,11 +151,11 @@ void app_main()
 	// 2 - run in close!
 
 	scene_offset_x = 0;
-	scene_offset_y = -2;
+	scene_offset_y = 0;
 	init_scene();
 
 	update_characters();
-	
+
 	while (1)
 	{
 		vblank = CHECK_BIT(input0, INPUT_VBLANK);
@@ -137,14 +163,27 @@ void app_main()
 		if (VBLANK_RISING)
 		{
 			// Update sprites with changes from last frame
+#ifdef DEBUG_TIMING
+			unsigned short time_before_update_sprites = GET_TIMER;
+#endif
 			update_sprites();
-
+#ifdef DEBUG_TIMING
+			unsigned short time_after_update_sprites = GET_TIMER;
+#endif
 			// Update tilemap with changes from last frame
+#ifdef DEBUG_TIMING
+			unsigned short time_before_update_tiles = GET_TIMER;
+#endif
 			update_tilemap();
+#ifdef DEBUG_TIMING
+			unsigned short time_after_update_tiles = GET_TIMER;
+#endif
 
+#ifdef DEBUG_TIMING
 			// Reset timer
 			timer[0] = 0;
-
+			unsigned short time_before_player_input = GET_TIMER;
+#endif
 			// Collect player inputs
 			basic_input();
 
@@ -171,43 +210,28 @@ void app_main()
 					{
 						character_dir[0] = -1;
 						set_sprite_mirror(player_sprite, 1);
-						unsigned short new_player_x = character_x[0] - player_speed;
-						if (player_aabb_check(new_player_x, character_y[0]) == 255)
-						{
-							player_moving = 1;
-							player_move_x = -player_speed;
-						}
+						player_moving = 1;
+						player_move_x = -player_speed;
 					}
 					if (input_right)
 					{
 						character_dir[0] = 1;
 						set_sprite_mirror(player_sprite, 0);
-						unsigned short new_player_x = character_x[0] + player_speed;
-						if (player_aabb_check(new_player_x, character_y[0]) == 255)
-						{
-							player_moving = 1;
-							player_move_x = player_speed;
-						}
+						player_moving = 1;
+						player_move_x = player_speed;
 					}
 
 					if (input_up)
 					{
-						unsigned short new_player_y = character_y[0] - player_speed;
-						if (player_aabb_check(character_x[0], new_player_y) == 255)
-						{
-							player_moving = 1;
-							player_move_y = -player_speed;
-						}
+						player_moving = 1;
+						player_move_y = -player_speed;
 					}
 					if (input_down)
 					{
-						unsigned short new_player_y = character_y[0] + player_speed;
-						if (player_aabb_check(character_x[0], new_player_y) == 255)
-						{
-							player_moving = 1;
-							player_move_y = player_speed;
-						}
+						player_moving = 1;
+						player_move_y = player_speed;
 					}
+
 					if (player_moving)
 					{
 						character_anim[0] = run ? const_character_anim_run : const_character_anim_walk;
@@ -223,7 +247,13 @@ void app_main()
 				character_move_x[0] = player_move_x;
 				character_move_y[0] = player_move_y;
 			}
+#ifdef DEBUG_TIMING
+			unsigned short time_after_player_input = GET_TIMER;
+#endif
 
+#ifdef DEBUG_TIMING
+			unsigned short time_before_scroll = GET_TIMER;
+#endif
 			// Handle scrolling
 			scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
 			unsigned short focus_x = ((character_x[0] / const_character_position_divider));
@@ -250,23 +280,49 @@ void app_main()
 				// update_tilemap();
 			}
 
-			// unsigned short tp1 = GET_TIMER;
+#ifdef DEBUG_TIMING
+			unsigned short time_after_scroll = GET_TIMER;
+#endif
 
+#ifdef DEBUG_TIMING
+			unsigned short time_before_ai = GET_TIMER;
+#endif
 			update_ai();
-			// unsigned short tai = GET_TIMER;
+#ifdef DEBUG_TIMING
+			unsigned short time_after_ai = GET_TIMER;
+#endif
 
+#ifdef DEBUG_TIMING
+			unsigned short time_before_characters = GET_TIMER;
+#endif
 			update_characters();
-			// unsigned short tc = GET_TIMER;
+#ifdef DEBUG_TIMING
+			unsigned short time_after_characters = GET_TIMER;
+#endif
 
+#ifdef DEBUG_TIMING
+			unsigned short time_before_sortsprites = GET_TIMER;
+#endif
 			sort_sprites();
-			// unsigned short tss = GET_TIMER;
+#ifdef DEBUG_TIMING
+			unsigned short time_after_sortsprites = GET_TIMER;
+			// Reset timer
+			timer[0] = 0;
+#endif
 
-			// unsigned short tsu = GET_TIMER;
+#ifdef DEBUG_TIMING
+			write_stringf_ushort("update sprites      %6d", 0xFF, 0, 23, time_after_update_sprites - time_before_update_sprites);
+			write_stringf_ushort("update tiles        %6d", 0xFF, 0, 24, time_after_update_tiles - time_before_update_tiles);
+			write_stringf_ushort("player input        %6d", 0xFF, 0, 25, time_after_player_input - time_before_player_input);
+			write_stringf_ushort("scrolling           %6d", 0xFF, 0, 26, time_after_scroll - time_before_scroll);
+			write_stringf_ushort("update ai           %6d", 0xFF, 0, 27, time_after_ai - time_before_ai);
+			write_stringf_ushort("update characters   %6d", 0xFF, 0, 28, time_after_characters - time_before_characters);
+			write_stringf_ushort("sort sprites        %6d", 0xFF, 0, 29, time_after_sortsprites - time_before_sortsprites);
+#endif
 			// write_stringf_ushort("player         %4d", 0xFF, 0, 0, tp1);
 			// write_stringf_ushort("ai             %4d", 0xFF, 0, 10, tai - tp1);
 			// write_stringf_ushort("characters     %4d", 0xFF, 0, 2, tc - tai);
 			// write_stringf_ushort("sort sprites   %4d", 0xFF, 0, 3, tss - tc);
-			// write_stringf_ushort("update sprites %4d", 0, 0, 4, tsu - tss);
 		}
 
 		vblank_last = vblank;

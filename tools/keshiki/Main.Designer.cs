@@ -42,6 +42,12 @@ namespace keshiki
             this.tabs = new System.Windows.Forms.TabControl();
             this.tab_palette = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.btn_MoveDown_All = new System.Windows.Forms.Button();
+            this.btn_MoveUp_All = new System.Windows.Forms.Button();
+            this.btn_MoveRight_All = new System.Windows.Forms.Button();
+            this.btn_MoveLeft_All = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
+            this.btn_DeleteBox = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.txt_CollisionBox_Bottom = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
@@ -54,7 +60,6 @@ namespace keshiki
             this.btn_AddCollision = new System.Windows.Forms.Button();
             this.lst_Collision = new System.Windows.Forms.ListBox();
             this.images = new System.Windows.Forms.ImageList(this.components);
-            this.btn_DeleteBox = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pic_Scene)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pic_Cell)).BeginInit();
             this.scroll_Scene.SuspendLayout();
@@ -172,6 +177,11 @@ namespace keshiki
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.btn_MoveDown_All);
+            this.tabPage2.Controls.Add(this.btn_MoveUp_All);
+            this.tabPage2.Controls.Add(this.btn_MoveRight_All);
+            this.tabPage2.Controls.Add(this.btn_MoveLeft_All);
+            this.tabPage2.Controls.Add(this.label5);
             this.tabPage2.Controls.Add(this.btn_DeleteBox);
             this.tabPage2.Controls.Add(this.label3);
             this.tabPage2.Controls.Add(this.txt_CollisionBox_Bottom);
@@ -192,12 +202,74 @@ namespace keshiki
             this.tabPage2.Text = "Collision";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // btn_MoveDown_All
+            // 
+            this.btn_MoveDown_All.Location = new System.Drawing.Point(255, 543);
+            this.btn_MoveDown_All.Name = "btn_MoveDown_All";
+            this.btn_MoveDown_All.Size = new System.Drawing.Size(75, 23);
+            this.btn_MoveDown_All.TabIndex = 16;
+            this.btn_MoveDown_All.Text = "Down";
+            this.btn_MoveDown_All.UseVisualStyleBackColor = true;
+            this.btn_MoveDown_All.Click += new System.EventHandler(this.btn_MoveDown_All_Click);
+            // 
+            // btn_MoveUp_All
+            // 
+            this.btn_MoveUp_All.Location = new System.Drawing.Point(174, 543);
+            this.btn_MoveUp_All.Name = "btn_MoveUp_All";
+            this.btn_MoveUp_All.Size = new System.Drawing.Size(75, 23);
+            this.btn_MoveUp_All.TabIndex = 15;
+            this.btn_MoveUp_All.Text = "Up";
+            this.btn_MoveUp_All.UseVisualStyleBackColor = true;
+            this.btn_MoveUp_All.Click += new System.EventHandler(this.btn_MoveUp_All_Click);
+            // 
+            // btn_MoveRight_All
+            // 
+            this.btn_MoveRight_All.Location = new System.Drawing.Point(87, 543);
+            this.btn_MoveRight_All.Name = "btn_MoveRight_All";
+            this.btn_MoveRight_All.Size = new System.Drawing.Size(75, 23);
+            this.btn_MoveRight_All.TabIndex = 14;
+            this.btn_MoveRight_All.Text = "Right";
+            this.btn_MoveRight_All.UseVisualStyleBackColor = true;
+            this.btn_MoveRight_All.Click += new System.EventHandler(this.btn_MoveRight_All_Click);
+            // 
+            // btn_MoveLeft_All
+            // 
+            this.btn_MoveLeft_All.Location = new System.Drawing.Point(6, 543);
+            this.btn_MoveLeft_All.Name = "btn_MoveLeft_All";
+            this.btn_MoveLeft_All.Size = new System.Drawing.Size(75, 23);
+            this.btn_MoveLeft_All.TabIndex = 13;
+            this.btn_MoveLeft_All.Text = "Left";
+            this.btn_MoveLeft_All.UseVisualStyleBackColor = true;
+            this.btn_MoveLeft_All.Click += new System.EventHandler(this.btn_MoveLeft_All_Click);
+            // 
+            // label5
+            // 
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(6, 523);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(52, 15);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Move all";
+            // 
+            // btn_DeleteBox
+            // 
+            this.btn_DeleteBox.Enabled = false;
+            this.btn_DeleteBox.Location = new System.Drawing.Point(251, 6);
+            this.btn_DeleteBox.Name = "btn_DeleteBox";
+            this.btn_DeleteBox.Size = new System.Drawing.Size(75, 23);
+            this.btn_DeleteBox.TabIndex = 11;
+            this.btn_DeleteBox.Text = "Delete Box";
+            this.btn_DeleteBox.UseVisualStyleBackColor = true;
+            this.btn_DeleteBox.Click += new System.EventHandler(this.btn_DeleteBox_Click);
+            // 
             // label3
             // 
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(267, 506);
+            this.label3.Location = new System.Drawing.Point(267, 445);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(47, 15);
             this.label3.TabIndex = 10;
@@ -207,7 +279,7 @@ namespace keshiki
             // 
             this.txt_CollisionBox_Bottom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_CollisionBox_Bottom.Location = new System.Drawing.Point(267, 523);
+            this.txt_CollisionBox_Bottom.Location = new System.Drawing.Point(267, 462);
             this.txt_CollisionBox_Bottom.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -223,7 +295,7 @@ namespace keshiki
             this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(202, 506);
+            this.label4.Location = new System.Drawing.Point(202, 445);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(35, 15);
             this.label4.TabIndex = 8;
@@ -233,7 +305,7 @@ namespace keshiki
             // 
             this.txt_CollisionBox_Right.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_CollisionBox_Right.Location = new System.Drawing.Point(202, 523);
+            this.txt_CollisionBox_Right.Location = new System.Drawing.Point(202, 462);
             this.txt_CollisionBox_Right.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -249,7 +321,7 @@ namespace keshiki
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(68, 506);
+            this.label2.Location = new System.Drawing.Point(68, 445);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(26, 15);
             this.label2.TabIndex = 6;
@@ -259,7 +331,7 @@ namespace keshiki
             // 
             this.txt_CollisionBox_Top.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_CollisionBox_Top.Location = new System.Drawing.Point(68, 523);
+            this.txt_CollisionBox_Top.Location = new System.Drawing.Point(68, 462);
             this.txt_CollisionBox_Top.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -275,7 +347,7 @@ namespace keshiki
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(3, 506);
+            this.label1.Location = new System.Drawing.Point(3, 445);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(27, 15);
             this.label1.TabIndex = 4;
@@ -285,7 +357,7 @@ namespace keshiki
             // 
             this.txt_CollisionBox_Left.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_CollisionBox_Left.Location = new System.Drawing.Point(3, 523);
+            this.txt_CollisionBox_Left.Location = new System.Drawing.Point(3, 462);
             this.txt_CollisionBox_Left.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -300,7 +372,7 @@ namespace keshiki
             // 
             this.txt_Collision.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_Collision.Location = new System.Drawing.Point(3, 548);
+            this.txt_Collision.Location = new System.Drawing.Point(3, 487);
             this.txt_Collision.Name = "txt_Collision";
             this.txt_Collision.Size = new System.Drawing.Size(327, 23);
             this.txt_Collision.TabIndex = 2;
@@ -324,7 +396,7 @@ namespace keshiki
             this.lst_Collision.ItemHeight = 15;
             this.lst_Collision.Location = new System.Drawing.Point(3, 33);
             this.lst_Collision.Name = "lst_Collision";
-            this.lst_Collision.Size = new System.Drawing.Size(327, 469);
+            this.lst_Collision.Size = new System.Drawing.Size(327, 409);
             this.lst_Collision.TabIndex = 0;
             this.lst_Collision.SelectedIndexChanged += new System.EventHandler(this.lst_Collision_SelectedIndexChanged);
             // 
@@ -336,17 +408,6 @@ namespace keshiki
             this.images.Images.SetKeyName(0, "cell_transparent.png");
             this.images.Images.SetKeyName(1, "cell_solid.png");
             this.images.Images.SetKeyName(2, "cell_active.png");
-            // 
-            // btn_DeleteBox
-            // 
-            this.btn_DeleteBox.Enabled = false;
-            this.btn_DeleteBox.Location = new System.Drawing.Point(251, 6);
-            this.btn_DeleteBox.Name = "btn_DeleteBox";
-            this.btn_DeleteBox.Size = new System.Drawing.Size(75, 23);
-            this.btn_DeleteBox.TabIndex = 11;
-            this.btn_DeleteBox.Text = "Delete Box";
-            this.btn_DeleteBox.UseVisualStyleBackColor = true;
-            this.btn_DeleteBox.Click += new System.EventHandler(this.btn_DeleteBox_Click);
             // 
             // Main
             // 
@@ -403,5 +464,10 @@ namespace keshiki
         private Label label4;
         private NumericUpDown txt_CollisionBox_Right;
         private Button btn_DeleteBox;
+        private Button btn_MoveRight_All;
+        private Button btn_MoveLeft_All;
+        private Label label5;
+        private Button btn_MoveDown_All;
+        private Button btn_MoveUp_All;
     }
 }

@@ -29,7 +29,6 @@ unsigned short scroll_x_max;
 unsigned char screen_width = 21;
 unsigned char scroll_move_max = 5;
 
-
 void update_section(unsigned char lx, unsigned char rx, unsigned char ty, unsigned char by)
 {
 	for (unsigned char y = ty; y <= by; y++)
@@ -54,8 +53,10 @@ void init_scene()
 	// Shift collision boxes to match scene offset
 	for (unsigned char b = 0; b < const_collision_boxes_max; b++)
 	{
-		collision_box_t[b] -= scene_offset_y * 16;
-		collision_box_b[b] -= scene_offset_y * 16;
+		collision_box_l[b] += 32;
+		collision_box_r[b] += 32;
+		collision_box_t[b] += (scene_offset_y * -16) + 32;
+		collision_box_b[b] += (scene_offset_y * -16) + 32;
 	}
 }
 

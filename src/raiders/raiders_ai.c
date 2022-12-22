@@ -25,15 +25,12 @@
 #include "raiders_ai.h"
 #include "raiders_characters.h"
 
-#define const_ai_first_character 1
-#define const_ai_max 3
-
 unsigned char ai_mode[const_ai_max];
 unsigned char ai_attack_timer[const_ai_max];
 unsigned char ai_active = 0;
 
-#define const_ai_walk_speed 3
-#define const_ai_run_speed 6
+#define const_ai_walk_speed 4
+#define const_ai_run_speed 8
 
 #define const_ai_dist_far_x 240
 #define const_ai_dist_mid_x 120
@@ -161,7 +158,7 @@ void update_ai()
 		character_move_y[ai_char] = move_y;
 	}
 
-	//write_stringf("ai: attack timer: %3d", 0xFF, 0, ai_active, ai_attack_timer[ai_active]);
+	// write_stringf("ai: attack timer: %3d", 0xFF, 0, ai_active, ai_attack_timer[ai_active]);
 
 	ai_active++;
 	if (ai_active == const_ai_max)

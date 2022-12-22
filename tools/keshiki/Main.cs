@@ -607,5 +607,38 @@ namespace keshiki
             RefreshCollision();
             ShowCollision();
         }
+
+        private void btn_MoveLeft_All_Click(object sender, EventArgs e)
+        {
+            MoveCollisionBoxes(-1,0);
+        }
+
+        private void btn_MoveRight_All_Click(object sender, EventArgs e)
+        {
+            MoveCollisionBoxes(1, 0);
+        }
+
+
+        private void btn_MoveUp_All_Click(object sender, EventArgs e)
+        {
+            MoveCollisionBoxes(0,-1);
+        }
+
+        private void btn_MoveDown_All_Click(object sender, EventArgs e)
+        {
+            MoveCollisionBoxes(0, 1);
+        }
+        private void MoveCollisionBoxes(int x, int y)
+        {
+            foreach(var c in scene.Collision)
+            {
+                c.Left += x;
+                c.Right += x;
+                c.Top += y;
+                c.Bottom += y;
+            }
+            ShowCollision();
+            RefreshCollision();
+        }
     }
 }

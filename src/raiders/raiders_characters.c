@@ -21,6 +21,7 @@
 #include "../shared/ui.h"
 #include "../shared/sprite.h"
 #include "sprite_images.h"
+#include "collision_boxes.h"
 #include "raiders_scene.h"
 #include "raiders_characters.h"
 
@@ -83,6 +84,28 @@ void set_character_screen_position(unsigned char c, unsigned short x, unsigned s
 	character_y[c] = 32 + (y * const_character_position_divider);
 }
 
+unsigned char collisionbox_aabb_check(unsigned short x, unsigned short y)
+{
+	unsigned short l = (x / const_character_position_divider) + 6;
+	unsigned short r = l + 18;
+	unsigned short t = (y / const_character_position_divider) + 26;
+	unsigned short b = t + 6;
+
+	for (unsigned char c = 0; c < const_collision_boxes_max; c++)
+	{
+		if (r < collision_box_l[c] || l > collision_box_r[c])
+		{
+			continue;
+		}
+		if (b < collision_box_t[c] || t > collision_box_b[c])
+		{
+			continue;
+		}
+		return c;
+	}
+	return 255;
+}
+
 void update_characters()
 {
 	for (unsigned char c = 0; c < const_character_max; c++)
@@ -93,8 +116,16 @@ void update_characters()
 		}
 
 		// Handle character movement
-		character_x[c] += character_move_x[c];
-		character_y[c] += character_move_y[c];
+		unsigned char xc = collisionbox_aabb_check(character_x[c] + character_move_x[c], character_y[c]);
+		unsigned char yc = collisionbox_aabb_check(character_x[c], character_y[c] + character_move_y[c]);
+		if (xc == 255)
+		{
+			character_x[c] += character_move_x[c];
+		}
+		if (yc == 255)
+		{
+			character_y[c] += character_move_y[c];
+		}
 
 		// Decrement speed
 		if (character_move_x[c] > 0)

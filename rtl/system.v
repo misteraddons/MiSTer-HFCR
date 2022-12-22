@@ -227,6 +227,7 @@ always @(posedge clk_24) begin
 	//if(tilemapcontrol_cs) $display("tilemapcontrol_cs addr=%x dout=%x din=%x wr=%b", cpu_addr, cpu_dout, tilemapcontrol_data_out, cpu_wr_n);
 	//if(tilemapram_cs  && !cpu_wr_n) $display("tilemapram_cs addr=%x dout=%x", cpu_addr, cpu_dout);
 	//if(timer_cs) $display("timer_cs wr=%b timer=%d addr=%d  frame_time=%d  hcnt=%d  vcnt=%d", ~cpu_wr_n, timer, cpu_addr, frame_timer, hcnt, vcnt);
+	if(timer_cs && ~cpu_wr_n) $display("timer clear @ timer=%d frame_time=%d  hcnt=%d  vcnt=%d", timer, frame_timer, hcnt, vcnt);
 end
 
 // ROM data available to CPU

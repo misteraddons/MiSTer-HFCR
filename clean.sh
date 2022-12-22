@@ -1,4 +1,8 @@
-# Make C code
-cd src
+# Define current project and other variables
+PROJECT=$(cat CURRENT_PROJECT)
+CURRENTDIR=$(pwd)
+
+# Compile C code
+cd src/$PROJECT
 make clean
-cd ..
+cd $CURRENTDIR
