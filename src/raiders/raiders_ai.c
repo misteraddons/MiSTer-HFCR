@@ -45,126 +45,128 @@ unsigned char ai_active = 0;
 
 void update_ai()
 {
-	unsigned ai_char = ai_active + const_ai_first_character;
-	signed char move_x = 0;
-	signed char move_y = 0;
-
-	if (character_anim_locked[ai_char] == 0)
+	for (unsigned char ai_active = 0; ai_active < const_ai_max; ai_active++)
 	{
-		unsigned char min_dist_x = const_ai_dist_mid_x;
-		unsigned char min_dist_y = const_ai_dist_mid_y;
-		unsigned char run_dist_x = const_ai_dist_far_x;
-		unsigned char run_dist_y = const_ai_dist_far_y;
-		if (ai_mode[ai_active] == 1)
-		{
-			min_dist_x = const_ai_dist_close_x;
-			run_dist_x = const_ai_dist_mid_x;
-			min_dist_y = const_ai_dist_close_y;
-			run_dist_y = const_ai_dist_mid_y;
-		}
-		if (ai_mode[ai_active] == 2)
-		{
-			min_dist_x = const_ai_dist_close_x;
-			run_dist_x = const_ai_dist_close_x;
-			min_dist_y = const_ai_dist_close_y;
-			run_dist_y = const_ai_dist_close_y;
-		}
-
-		bool walk = false;
-		bool run = false;
-
-		signed short player_cpu_off_x = character_x[0] - character_x[ai_char];
-		signed char player_cpu_off_y = character_y[0] - character_y[ai_char];
-		unsigned short dx = abs(player_cpu_off_x);
-		unsigned short dy = abs(player_cpu_off_y);
-
-		if (player_cpu_off_x != 0)
-		{
-			signed char sx = sign_short_as_char(player_cpu_off_x);
-			character_dir[ai_char] = sx;
-			set_sprite_mirror(const_character_first_sprite_index + ai_char, sx == 1 ? 0 : 1);
-			if (dx > run_dist_x)
-			{
-				run = true;
-				move_x = sx * const_ai_run_speed;
-			}
-			else if (dx > (min_dist_x + 4))
-			{
-				walk = true;
-				move_x = sx * const_ai_walk_speed;
-			}
-			else if (dx < (min_dist_x - 4))
-			{
-				walk = true;
-				move_x = -sx * const_ai_walk_speed;
-			}
-		}
-
-		if (!run)
-		{
-			if (player_cpu_off_y != 0)
-			{
-				signed char sy = sign_short_as_char(player_cpu_off_y);
-
-				if (dy > run_dist_y)
-				{
-					run = true;
-					move_y = sy * const_ai_run_speed;
-				}
-				else if (dy > (min_dist_y + 4))
-				{
-					walk = true;
-					move_y = sy * const_ai_walk_speed;
-				}
-				else if (dy < (min_dist_y - 4))
-				{
-					walk = true;
-					move_y = -sy * const_ai_walk_speed;
-				}
-			}
-		}
+		unsigned ai_char = ai_active + const_ai_first_character;
+		signed char move_x = 0;
+		signed char move_y = 0;
 
 		if (character_anim_locked[ai_char] == 0)
 		{
-			character_anim[ai_char] = run ? const_character_anim_run : walk ? const_character_anim_walk
-																			: const_character_anim_idle;
-			if (character_anim_timer[ai_char] == 0)
+			unsigned char min_dist_x = const_ai_dist_mid_x;
+			unsigned char min_dist_y = const_ai_dist_mid_y;
+			unsigned char run_dist_x = const_ai_dist_far_x;
+			unsigned char run_dist_y = const_ai_dist_far_y;
+			if (ai_mode[ai_active] == 1)
 			{
-				if (ai_attack_timer[ai_active] == 0)
+				min_dist_x = const_ai_dist_close_x;
+				run_dist_x = const_ai_dist_mid_x;
+				min_dist_y = const_ai_dist_close_y;
+				run_dist_y = const_ai_dist_mid_y;
+			}
+			if (ai_mode[ai_active] == 2)
+			{
+				min_dist_x = const_ai_dist_close_x;
+				run_dist_x = const_ai_dist_close_x;
+				min_dist_y = const_ai_dist_close_y;
+				run_dist_y = const_ai_dist_close_y;
+			}
+
+			bool walk = false;
+			bool run = false;
+
+			signed short player_cpu_off_x = character_x[0] - character_x[ai_char];
+			signed char player_cpu_off_y = character_y[0] - character_y[ai_char];
+			unsigned short dx = abs(player_cpu_off_x);
+			unsigned short dy = abs(player_cpu_off_y);
+
+			if (player_cpu_off_x != 0)
+			{
+				signed char sx = sign_short_as_char(player_cpu_off_x);
+				character_dir[ai_char] = sx;
+				set_sprite_mirror(const_character_first_sprite_index + ai_char, sx == 1 ? 0 : 1);
+				if (dx > run_dist_x)
 				{
-					if (dx < const_ai_range_attack_x && dy < const_ai_range_attack_y)
+					run = true;
+					move_x = sx * const_ai_run_speed;
+				}
+				else if (dx > (min_dist_x + 4))
+				{
+					walk = true;
+					move_x = sx * const_ai_walk_speed;
+				}
+				else if (dx < (min_dist_x - 4))
+				{
+					walk = true;
+					move_x = -sx * const_ai_walk_speed;
+				}
+			}
+
+			if (!run)
+			{
+				if (player_cpu_off_y != 0)
+				{
+					signed char sy = sign_short_as_char(player_cpu_off_y);
+
+					if (dy > run_dist_y)
 					{
-						character_move_x[ai_char] = 0;
-						character_move_y[ai_char] = 0;
-						unsigned char attack = rand_uchar(0, 1);
-						switch (attack)
-						{
-						case 0:
-							character_start_punch(ai_char);
-							break;
-						case 1:
-							character_start_kick(ai_char);
-							break;
-						}
+						run = true;
+						move_y = sy * const_ai_run_speed;
 					}
-					ai_attack_timer[ai_active] = rand_uchar(6, 25);
+					else if (dy > (min_dist_y + 4))
+					{
+						walk = true;
+						move_y = sy * const_ai_walk_speed;
+					}
+					else if (dy < (min_dist_y - 4))
+					{
+						walk = true;
+						move_y = -sy * const_ai_walk_speed;
+					}
+				}
+			}
+
+			if (character_anim_locked[ai_char] == 0)
+			{
+				character_anim[ai_char] = run ? const_character_anim_run : walk ? const_character_anim_walk
+																				: const_character_anim_idle;
+				if (character_anim_timer[ai_char] == 0)
+				{
+					if (ai_attack_timer[ai_active] == 0)
+					{
+						if (dx < const_ai_range_attack_x && dy < const_ai_range_attack_y)
+						{
+							character_move_x[ai_char] = 0;
+							character_move_y[ai_char] = 0;
+							unsigned char attack = rand_uchar(0, 1);
+							switch (attack)
+							{
+							case 0:
+								character_start_punch(ai_char);
+								break;
+							case 1:
+								character_start_kick(ai_char);
+								break;
+							}
+						}
+						ai_attack_timer[ai_active] = rand_uchar(6, 25);
+					}
 				}
 			}
 		}
+		if (!character_anim_locked[ai_char])
+		{
+			character_move_x[ai_char] = move_x;
+			character_move_y[ai_char] = move_y;
+		}
 	}
-	if (!character_anim_locked[0])
-	{
-		character_move_x[ai_char] = move_x;
-		character_move_y[ai_char] = move_y;
-	}
-
 	// write_stringf("ai: attack timer: %3d", 0xFF, 0, ai_active, ai_attack_timer[ai_active]);
 
-	ai_active++;
-	if (ai_active == const_ai_max)
-	{
-		ai_active = 0;
-	}
+	// ai_active++;
+	// if (ai_active == const_ai_max)
+	// {
+	// 	ai_active = 0;
+	// }
 
 	// Linearly decrement all attack timers otherwise attacks get slower the more AIs you have
 	for (unsigned char a = 0; a < const_ai_max; a++)

@@ -80,57 +80,30 @@ void app_main()
 	init_sprites();
 	clear_sprites();
 
-	unsigned char s = 0;
-	unsigned char yo = 32;
-	unsigned char i = 0;
-	for (unsigned char x = 0; x < 8; x++)
-	{
-		enable_sprite(s, sprite_palette_test, sprite_size_test, 0);
-		spr_index[s] = sprite_index_test_first + i;
-		set_sprite_position(s, 32 + (x * 36), yo);
-		i++;
-		if (i == 4)
-			i = 0;
-		s++;
-	}
-	i = 2;
-	for (unsigned char x = 0; x < 5; x++)
-	{
-		enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
-		spr_index[s] = sprite_index_test16_first + i;
-		set_sprite_position(s, 32 + (x * 18), yo);
-		i++;
-		if (i == 8)
-			i = 0;
-		s++;
-	}
-
-	update_sprites();
-	return;
-
 	// Set player position
 	set_character_screen_position(0, 60, 160);
 	activate_character(0, sprite_index_alex_first, const_team_player);
 
-	// Set enemy position
-	set_character_screen_position(1, 340, 145);
-	activate_character(1, sprite_index_ninjablack_first, const_team_ai);
-	ai_mode[0] = 1;
+	// // Set enemy position
+	// set_character_screen_position(1, 340, 145);
+	// activate_character(1, sprite_index_ninjablack_first, const_team_ai);
+	// ai_mode[0] = 1;
 
-	// Set enemy position
-	set_character_screen_position(2, 360, 175);
-	activate_character(2, sprite_index_ninjablack_first, const_team_ai);
-	ai_mode[1] = 2;
+	// // Set enemy position
+	// set_character_screen_position(2, 360, 175);
+	// activate_character(2, sprite_index_ninjablack_first, const_team_ai);
+	// ai_mode[1] = 2;
 
 	// Set remaining enemy positions randomly
-	for (unsigned char a = 2; a < const_ai_max; a++)
+	for (unsigned char a = 0; a < const_ai_max; a++)
 	{
 		unsigned char c = a + const_ai_first_character;
-		unsigned short ax = rand_ushort(50, 400);
+		unsigned short ax = rand_ushort(300, 600);
 		unsigned short ay = rand_ushort(140, 180);
 		set_character_screen_position(c, ax, ay);
-		activate_character(c, sprite_index_ninjared_first, const_team_ai);
-		ai_mode[a] = 0;
+		activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai);
+		character_anim_timer[c] = rand_uchar(0, 5);
+		ai_mode[a] = rand_uchar(0, 2);
 	}
 
 	// // Set enemy position
@@ -312,10 +285,6 @@ void app_main()
 			write_stringf_ushort("update characters   %6d", 0xFF, 0, 28, time_after_characters - time_before_characters);
 			write_stringf_ushort("sort sprites        %6d", 0xFF, 0, 29, time_after_sortsprites - time_before_sortsprites);
 #endif
-			// write_stringf_ushort("player         %4d", 0xFF, 0, 0, tp1);
-			// write_stringf_ushort("ai             %4d", 0xFF, 0, 10, tai - tp1);
-			// write_stringf_ushort("characters     %4d", 0xFF, 0, 2, tc - tai);
-			// write_stringf_ushort("sort sprites   %4d", 0xFF, 0, 3, tss - tc);
 		}
 
 		vblank_last = vblank;

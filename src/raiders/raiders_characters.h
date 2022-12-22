@@ -20,7 +20,7 @@
 #ifndef RAIDERS_CHARACTERS_H
 #define RAIDERS_CHARACTERS_H
 
-#define const_character_max 10
+#define const_character_max 5
 
 #define const_character_position_divider 4
 
