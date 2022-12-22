@@ -85,6 +85,7 @@ void character_anim_oneshot(unsigned char c)
 			{
 				character_anim[c] = const_character_anim_dead;
 				character_anim_timer[c] = const_character_anim_dead_rate;
+				character_anim_dir[c] = const_character_anim_dead_flashcount; // Re-use anim direction for number of flashes before character is culled
 			}
 		}
 		else
@@ -180,7 +181,7 @@ void character_start_fall(unsigned char c)
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_fall_rate;
 	character_frame[c] = 15;
-	character_frame_target[c] = 16;
+	character_frame_target[c] = const_character_frame_dead;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 }
@@ -193,6 +194,8 @@ void update_characters()
 		{
 			continue;
 		}
+
+		unsigned char player_sprite = const_character_first_sprite_index + c;
 
 		// Handle character movement
 		unsigned char xc = collisionbox_aabb_check(character_x[c] + character_move_x[c], character_y[c]);
@@ -286,10 +289,24 @@ void update_characters()
 		case const_character_anim_oneshot:
 			character_anim_oneshot(c);
 			break;
+		case const_character_anim_dead:
+			if (character_anim_timer[c] == 0)
+			{
+				character_anim_timer[c] = const_character_anim_dead_rate;
+				character_anim_dir[c]--;
+				if (character_anim_dir[c] == 0)
+				{
+					deactivate_character(c);
+				}
+				else
+				{
+					spr_on[player_sprite] = !spr_on[player_sprite];
+				}
+			}
+			break;
 		}
 
 		// Draw character sprite
-		unsigned char player_sprite = const_character_first_sprite_index + c;
 		spr_index[player_sprite] = character_sprite_offset[c] + character_frame[c];
 		unsigned short x = (character_x[c] / const_character_position_divider) - scroll_x;
 		unsigned short y = (character_y[c] / const_character_position_divider);
@@ -387,12 +404,6 @@ void update_characters()
 					// Cancel any pending attack on character
 					character_scheduled_attack[tc] = 0;
 					character_scheduled_attack_in[tc] = 0;
-
-					// write_stringf("HIT %d", 0xFf, 0, c, tc);
-					// unsigned char s = tc + 10;
-					// enable_sprite(s, sprite_palette_hit, sprite_size_hit, 0);
-					// set_sprite_position(s, hit_x, hit_y);
-					// spr_index[s] = sprite_index_hit_first;
 				}
 
 				if (hit)
@@ -404,6 +415,8 @@ void update_characters()
 		}
 		// write_stringf_ushort("x: %4d", 0xFF, 0, c, character_x[c]);
 		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
+
+		//write_stringf("c: %3d", 0xFF, 0, c, character_hit_combo[c]);
 
 		// write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
 		// write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);

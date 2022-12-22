@@ -26,6 +26,8 @@ extern unsigned short scroll_x;
 extern unsigned short scroll_x_max;
 extern unsigned char scroll_move_max;
 
+#define screen_width 320
+
 extern void init_scene();
 
 extern void update_tilemap();

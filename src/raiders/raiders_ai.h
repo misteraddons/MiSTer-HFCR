@@ -23,8 +23,8 @@
 #define const_ai_first_character 1
 #define const_ai_max const_character_max - 1
 
+extern unsigned char ai_active[];
 extern unsigned char ai_mode[];
-extern unsigned char ai_active;
 
 extern void update_ai();
 

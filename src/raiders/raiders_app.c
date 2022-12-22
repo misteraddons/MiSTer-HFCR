@@ -71,7 +71,6 @@ void basic_input()
 unsigned char player_hit_combo_timer;
 
 #define const_team_player 0
-#define const_team_ai 1
 
 // #define DEBUG_TIMING
 
@@ -85,18 +84,6 @@ void app_main()
 	// Set player position
 	set_character_screen_position(0, 60, 160);
 	activate_character(0, sprite_index_alex_first, const_team_player, 30);
-
-	// Set enemy positions randomly
-	for (unsigned char a = 0; a < const_ai_max; a++)
-	{
-		unsigned char c = a + const_ai_first_character;
-		unsigned short ax = rand_ushort(300, 500);
-		unsigned short ay = rand_ushort(140, 180);
-		set_character_screen_position(c, ax, ay);
-		activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai, 20);
-		character_anim_timer[c] = rand_uchar(0, 5);
-		ai_mode[a] = 0;
-	}
 
 	// AI modes
 	// 0 - run to far point, walk to near point and hang back
@@ -219,11 +206,18 @@ void app_main()
 #endif
 			// Handle scrolling
 			scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
-			unsigned short focus_x = ((character_x[0] / const_character_position_divider));
+			unsigned short focus_x = (character_x[0] / const_character_position_divider);
+			if (focus_x > scroll_x_max)
+			{
+				focus_x = scroll_x_max;
+			}
 			signed short scroll_offset = focus_x - scroll_x;
+			// write_stringf_ushort("scroll_x: %4d", 0xFF, 0, 0, scroll_x);
+			// write_stringf_ushort("focus_x: %4d", 0xFF, 0, 1, focus_x);
 
 			if (scroll_offset > 200 && scroll_x < scroll_x_max)
 			{
+				// write_stringf_short("scroll_offset: %4d", 0xFF, 0, 2, scroll_offset);
 				signed short scroll_amount = scroll_offset - 200;
 				if (scroll_amount > scroll_move_max)
 				{
@@ -234,13 +228,13 @@ void app_main()
 
 			if (scroll_x > 0 && scroll_offset < 140)
 			{
+				// write_stringf_short("scroll_offset: %4d", 0xFF, 0, 2, scroll_offset);
 				signed short scroll_amount = scroll_offset - 140;
 				if (scroll_amount < -scroll_move_max)
 				{
 					scroll_amount = -scroll_move_max;
 				}
 				tilemap_offset_x += scroll_amount;
-				// update_tilemap();
 			}
 
 #ifdef DEBUG_TIMING

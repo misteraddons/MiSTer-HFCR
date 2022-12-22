@@ -20,7 +20,7 @@
 #ifndef RAIDERS_CHARACTERS_H
 #define RAIDERS_CHARACTERS_H
 
-#define const_character_max 3
+#define const_character_max 6
 
 #define const_character_position_divider 4
 
@@ -52,6 +52,8 @@ extern unsigned char character_hit_combo_timer[];
 
 #define const_character_anim_dead 4
 #define const_character_anim_dead_rate 30
+#define const_character_frame_dead 16
+#define const_character_anim_dead_flashcount 4
 
 #define const_character_anim_punch_rate 6
 #define const_character_anim_kick_rate 9
