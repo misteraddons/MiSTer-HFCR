@@ -418,6 +418,7 @@ wire		spritecollisionram_data_in;
 wire [SPRITE_POSITION_WIDTH:0]	spritelbram_rd_addr;
 wire [SPRITE_POSITION_WIDTH:0]	spritelbram_wr_addr;
 wire		spritelbram_wr;
+wire		spritelbram_rd_wr;
 wire [15:0]	spritelbram_data_in;
 wire [15:0]	spritelbram_data_out;
 sprite_engine #(
@@ -445,6 +446,7 @@ sprite_engine #(
 	.sprom_addr(sprom_addr),
 	.palrom_addr(palrom_addr),
 	.spritelbram_rd_addr(spritelbram_rd_addr),
+	.spritelbram_rd_wr(spritelbram_rd_wr),
 	.spritelbram_wr_addr(spritelbram_wr_addr),
 	.spritelbram_wr(spritelbram_wr),
 	.spritecollisionram_wr(spritecollisionram_wr),
@@ -860,8 +862,8 @@ dpram #(SPRITE_POSITION_WIDTH+1,16) spritelbram
 
 	.clock_b(clk_24),
 	.address_b(spritelbram_rd_addr),
-	.wren_b(1'b0),
-	.data_b(),
+	.wren_b(spritelbram_rd_wr),
+	.data_b(16'b0),
 	.q_b(spritelbram_data_out)
 );
 

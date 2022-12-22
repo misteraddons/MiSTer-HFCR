@@ -62,7 +62,7 @@ end
 always @(posedge clock_b) begin
 	q_b <= mem[address_b];
 	if(wren_b) begin
-		q_b <= data_b;
+		//q_b <= data_b;
 		mem[address_b] <= data_b;
 	end
 end

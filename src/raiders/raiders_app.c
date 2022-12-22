@@ -82,35 +82,28 @@ void app_main()
 
 	unsigned char s = 0;
 	unsigned char yo = 32;
-	for (unsigned char y = 0; y < 2; y++)
+	unsigned char i = 0;
+	for (unsigned char x = 0; x < 8; x++)
 	{
-		unsigned char i = 0;
-		for (unsigned char x = 0; x < 7 + y; x++)
-		{
-			enable_sprite(s, sprite_palette_test, sprite_size_test, 0);
-			spr_index[s] = sprite_index_test_first + i;
-			set_sprite_position(s, 32 + (x * 36), yo + (y * 34));
-			i++;
-			if (i == 8)
-				i = 0;
-			s++;
-		}
+		enable_sprite(s, sprite_palette_test, sprite_size_test, 0);
+		spr_index[s] = sprite_index_test_first + i;
+		set_sprite_position(s, 32 + (x * 36), yo);
+		i++;
+		if (i == 4)
+			i = 0;
+		s++;
 	}
-	// yo += 70;
-	// for (unsigned char y = 0; y < 2; y++)
-	// {
-	// 	unsigned char i = 0;
-	// 	for (unsigned char x = 0; x < 14 + y; x++)
-	// 	{
-	// 		enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
-	// 		spr_index[s] = sprite_index_test16_first + i;
-	// 		set_sprite_position(s, 32 + (x * 18), yo + (y * 18));
-	// 		i++;
-	// 		if (i == 8)
-	// 			i = 0;
-	// 		s++;
-	// 	}
-	// }
+	i = 2;
+	for (unsigned char x = 0; x < 5; x++)
+	{
+		enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
+		spr_index[s] = sprite_index_test16_first + i;
+		set_sprite_position(s, 32 + (x * 18), yo);
+		i++;
+		if (i == 8)
+			i = 0;
+		s++;
+	}
 
 	update_sprites();
 	return;

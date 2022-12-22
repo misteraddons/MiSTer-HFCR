@@ -53,7 +53,8 @@ module sprite_engine #(
 	output 		[SPRITE_POSITION_WIDTH:0]	spritelbram_rd_addr,
 	output reg	[SPRITE_POSITION_WIDTH:0]	spritelbram_wr_addr,
 
-	output reg			spritelbram_wr,
+	output reg			spritelbram_wr,			// Write enable for buffer being written to
+	output reg			spritelbram_rd_wr,		// Write enable for buffer being read
 	output reg	[15:0]	spritelbram_data_in,
 
 	output reg			spritecollisionram_wr,
@@ -65,10 +66,10 @@ module sprite_engine #(
 	output reg			spritedebugram_wr_b,
 `endif
 
-	output		[7:0]	spr_r,
-	output		[7:0]	spr_g,
-	output		[7:0]	spr_b,
-	output				spr_a
+	output reg	 [7:0]	spr_r,
+	output reg	 [7:0]	spr_g,
+	output reg	 [7:0]	spr_b,
+	output reg			spr_a
 );
 
 // State machine constants
@@ -76,7 +77,6 @@ localparam SE_INIT = 0;
 localparam SE_IDLE = 1;
 localparam SE_WAIT = 2;
 localparam SE_RESET = 3;
-localparam SE_CLEAR_BUFFER = 4;
 localparam SE_SETUP_READ_Y = 5;
 localparam SE_READ_Y_UPPER = 6;
 localparam SE_READ_Y_LOWER = 7;
@@ -138,7 +138,7 @@ reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_16x16;
 reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
 
 //`define CASVAL_DEBUG
-`define CASVAL_DEBUG_TIMES
+//`define CASVAL_DEBUG_TIMES
 //`define CASVAL_DEBUG_OUTLINE
 
 `ifdef CASVAL_DEBUG_TIMES
@@ -150,10 +150,30 @@ reg [SPR_TIMER_WIDTH-1:0] spr_timer_line;
 
 // Sprite engine outputs
 assign spritelbram_rd_addr = {spritelb_slot_rd, (hcnt + spr_border_size)};
-assign spr_r = {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
-assign spr_g = {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
-assign spr_b = {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
-assign spr_a = spritelbram_data_out[15];
+reg [1:0] spritelbram_cycle;
+always @(posedge clk)
+begin
+	if(reset)
+	begin
+		spritelbram_cycle <= 2'b0;
+	end
+	else
+	begin
+		if(spritelbram_cycle == 2'd0)
+		begin
+			spr_r <= {spritelbram_data_out[4:0],spritelbram_data_out[4:2]};
+			spr_g <= {spritelbram_data_out[9:5],spritelbram_data_out[9:7]};
+			spr_b <= {spritelbram_data_out[14:10],spritelbram_data_out[14:12]};
+			spr_a <= spritelbram_data_out[15];
+			spritelbram_rd_wr <= 1'b1;
+		end
+		else
+		begin
+			spritelbram_rd_wr <= 1'b1;
+		end
+		spritelbram_cycle <= spritelbram_cycle + 1;
+	end
+end
 
 // Collision system
 localparam CP_IDLE = 0;
@@ -433,6 +453,9 @@ begin
 			// Wait for hsync to go high outside of reset
 			if(reset == 1'b0 && hsync && !hsync_last)
 			begin
+`ifdef CASVAL_DEBUG
+			$display("CASVAL->SE_HYSNC: t=%d  h/v = %d/%d  addr=%x  dout=%x", spr_timer_idle, hcnt, vcnt, sprom_addr, spriterom_data_out);
+`endif
 				// Rotate line buffer slots
 				spritelb_slot_rd <= spritelb_slot_rd + 1'b1;
 				spritelb_slot_wr <= spritelb_slot_wr + 1'b1;
@@ -464,30 +487,7 @@ begin
 					$display("CASVAL->LEAVING SE_IDLE: spr_timer_idle = %d, spr_linetime_max=%d", spr_timer_idle, spr_linetime_max);
 					spr_timer_line <= {SPR_TIMER_WIDTH{1'b0}};
 `endif
-
-			// Setup line buffer RAM for clear operation
-			spritelbram_wr_addr <= {spritelb_slot_wr, {SPRITE_POSITION_WIDTH{1'b0}}};
-			spritelbram_wr <= 1'b1;
-			spritelbram_data_in <= 16'b0;
-
-			spr_state <= SE_CLEAR_BUFFER;
-		end
-
-		SE_CLEAR_BUFFER:
-		begin
-			if(spritelbram_wr_addr[8:0] < spr_line_max[8:0])
-			begin
-				spritelbram_wr_addr <= spritelbram_wr_addr + 1'b1;
-			end
-			else
-			begin
-				// Disable line buffer write
-				spritelbram_wr <= 1'b0;
-`ifdef CASVAL_DEBUG_TIMES
-				$display("CASVAL->LINE BUFFER CLEARED:t=%d  h/v = %d/%d  spr_active_y = %d", spr_timer_line, hcnt, vcnt, spr_active_y);
-`endif
-				spr_state <= SE_SETUP_READ_Y;
-			end
+			 spr_state <= SE_SETUP_READ_Y;
 		end
 
 		SE_SETUP_READ_Y:
