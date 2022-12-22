@@ -45,9 +45,22 @@ unsigned char ai_active = 0;
 
 void update_ai()
 {
+	bool first_up = true;
 	for (unsigned char ai_active = 0; ai_active < const_ai_max; ai_active++)
 	{
 		unsigned ai_char = ai_active + const_ai_first_character;
+
+		if (character_health[ai_char] == 0)
+		{
+			continue;
+		}
+
+		if (first_up && ai_mode[ai_active] == 0)
+		{
+			ai_mode[ai_active] = rand_uchar(1, 2);
+		}
+		first_up = false;
+
 		signed char move_x = 0;
 		signed char move_y = 0;
 

@@ -68,6 +68,8 @@ void basic_input()
 #define const_player_walk_speed 5
 #define const_player_run_speed 12
 
+unsigned char player_hit_combo_timer;
+
 #define const_team_player 0
 #define const_team_ai 1
 
@@ -82,34 +84,19 @@ void app_main()
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);
-	activate_character(0, sprite_index_alex_first, const_team_player);
+	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
-	// // Set enemy position
-	// set_character_screen_position(1, 340, 145);
-	// activate_character(1, sprite_index_ninjablack_first, const_team_ai);
-	// ai_mode[0] = 1;
-
-	// // Set enemy position
-	// set_character_screen_position(2, 360, 175);
-	// activate_character(2, sprite_index_ninjablack_first, const_team_ai);
-	// ai_mode[1] = 2;
-
-	// Set remaining enemy positions randomly
+	// Set enemy positions randomly
 	for (unsigned char a = 0; a < const_ai_max; a++)
 	{
 		unsigned char c = a + const_ai_first_character;
-		unsigned short ax = rand_ushort(300, 600);
+		unsigned short ax = rand_ushort(300, 500);
 		unsigned short ay = rand_ushort(140, 180);
 		set_character_screen_position(c, ax, ay);
-		activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai);
+		activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai, 20);
 		character_anim_timer[c] = rand_uchar(0, 5);
-		ai_mode[a] = rand_uchar(0, 2);
+		ai_mode[a] = 0;
 	}
-
-	// // Set enemy position
-	// set_character_screen_position(3, 300, 180);
-	// activate_character(3, sprite_index_stroudman_first);
-	// ai_mode[2] = 0;
 
 	// AI modes
 	// 0 - run to far point, walk to near point and hang back
@@ -159,11 +146,21 @@ void app_main()
 			unsigned player_speed = run ? const_player_run_speed : const_player_walk_speed;
 			signed char player_move_x = 0;
 			signed char player_move_y = 0;
+
 			if (character_anim_locked[0] == 0)
 			{
 				if (input_b && character_anim_timer[0] == 0)
 				{
-					character_start_punch(0);
+					if (character_hit_combo[0] >= 2)
+					{
+						character_start_uppercut(0);
+						character_hit_combo[0] = 0;
+						character_hit_combo_timer[0] = 0;
+					}
+					else
+					{
+						character_start_punch(0);
+					}
 				}
 				else if (input_x && character_anim_timer[0] == 0)
 				{
