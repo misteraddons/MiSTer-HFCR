@@ -156,6 +156,17 @@ void character_start_uppercut(unsigned char c)
 	character_scheduled_attack[c] = const_character_attack_uppercut;
 	character_scheduled_attack_in[c] = 2 * character_anim_rate[c];
 }
+void character_start_powerkick(unsigned char c)
+{
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_powerkick_rate;
+	character_frame[c] = 23;
+	character_frame_target[c] = 23;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = character_anim_rate[c];
+	character_scheduled_attack[c] = const_character_attack_powerkick;
+	character_scheduled_attack_in[c] = character_anim_rate[c];
+}
 
 void character_start_hit_high(unsigned char c)
 {
@@ -342,12 +353,16 @@ void update_characters()
 					hit_x += d == 1 ? 18 : -2;
 					hit_y += 5;
 					break;
+				case const_character_attack_powerkick:
+					hit_x += d == 1 ? 18 : -2;
+					hit_y += 5;
+					break;
 				}
 
 				unsigned short hit_x_max = hit_x + 16;
 				unsigned short hit_y_max = hit_y + 16;
 
-				bool hit = false;
+				bool add_combo = false;
 				for (unsigned char tc = 0; tc < const_character_max; tc++)
 				{
 					if (tc == c || character_team[c] == character_team[tc] || character_health[tc] == 0)
@@ -376,17 +391,22 @@ void update_characters()
 					case const_character_attack_punch:
 						character_start_hit_high(tc);
 						hit_power = const_character_attack_punch_knockback;
+						add_combo = true;
 						break;
 					case const_character_attack_kick:
 						character_start_hit_mid(tc);
 						hit_power = const_character_attack_kick_knockback;
+						add_combo = true;
 						break;
 					case const_character_attack_uppercut:
 						character_start_hit_high(tc);
 						hit_power = const_character_attack_uppercut_knockback;
 						break;
+					case const_character_attack_powerkick:
+						character_start_hit_high(tc);
+						hit_power = const_character_attack_powerkick_knockback;
+						break;
 					}
-					hit = true;
 
 					character_move_x[tc] = hit_direction * hit_power;
 
@@ -406,7 +426,7 @@ void update_characters()
 					character_scheduled_attack_in[tc] = 0;
 				}
 
-				if (hit)
+				if (add_combo)
 				{
 					character_hit_combo[c]++;
 					character_hit_combo_timer[c] = 45;
@@ -416,7 +436,8 @@ void update_characters()
 		// write_stringf_ushort("x: %4d", 0xFF, 0, c, character_x[c]);
 		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
 
-		//write_stringf("c: %3d", 0xFF, 0, c, character_hit_combo[c]);
+		write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
+		write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
 
 		// write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
 		// write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);

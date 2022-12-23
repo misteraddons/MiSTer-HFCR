@@ -51,6 +51,11 @@ unsigned char ai_spawn_timer = 15;
 
 #define const_team_ai 1
 
+// AI modes
+// 0 - run to far point, walk to near point and hang back
+// 1 - run in near, walk to closed
+// 2 - run in close!
+
 void update_ai()
 {
 

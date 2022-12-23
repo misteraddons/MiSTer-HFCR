@@ -57,7 +57,8 @@ extern unsigned char character_hit_combo_timer[];
 
 #define const_character_anim_punch_rate 6
 #define const_character_anim_kick_rate 9
-#define const_character_anim_uppercut_rate 7
+#define const_character_anim_uppercut_rate 5
+#define const_character_anim_powerkick_rate 8
 #define const_character_anim_hit_high_rate 6
 #define const_character_anim_hit_mid_rate 6
 #define const_character_anim_fall_rate 14
@@ -67,7 +68,9 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_attack_kick 2
 #define const_character_attack_kick_knockback 8
 #define const_character_attack_uppercut 3
-#define const_character_attack_uppercut_knockback 20
+#define const_character_attack_uppercut_knockback 14
+#define const_character_attack_powerkick 4
+#define const_character_attack_powerkick_knockback 20
 
 #define const_character_first_sprite_index 0
 
@@ -81,6 +84,7 @@ extern void update_characters();
 extern void character_start_punch(unsigned char c);
 extern void character_start_kick(unsigned char c);
 extern void character_start_uppercut(unsigned char c);
+extern void character_start_powerkick(unsigned char c);
 extern void character_start_hit_high(unsigned char c);
 extern void character_start_hit_mid(unsigned char c);
 

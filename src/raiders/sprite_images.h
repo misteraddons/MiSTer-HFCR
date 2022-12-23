@@ -28,25 +28,4 @@
 #define sprite_size_ninjared 0
 #define sprite_pixelsize_ninjared 32
 #define sprite_halfpixelsize_ninjared 16
-#define sprite_index_test_first 80
-#define sprite_index_test_count 8
-#define sprite_index_test_last 87
-#define sprite_palette_test 2
-#define sprite_size_test 0
-#define sprite_pixelsize_test 32
-#define sprite_halfpixelsize_test 16
-#define sprite_index_hit_first 0
-#define sprite_index_hit_count 1
-#define sprite_index_hit_last 0
-#define sprite_palette_hit 1
-#define sprite_size_hit 1
-#define sprite_pixelsize_hit 16
-#define sprite_halfpixelsize_hit 8
-#define sprite_index_test16_first 1
-#define sprite_index_test16_count 8
-#define sprite_index_test16_last 8
-#define sprite_palette_test16 2
-#define sprite_size_test16 1
-#define sprite_pixelsize_test16 16
-#define sprite_halfpixelsize_test16 8
 #endif

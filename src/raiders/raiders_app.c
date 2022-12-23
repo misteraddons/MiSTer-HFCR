@@ -85,11 +85,6 @@ void app_main()
 	set_character_screen_position(0, 60, 160);
 	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
-	// AI modes
-	// 0 - run to far point, walk to near point and hang back
-	// 1 - run in near, walk to closed
-	// 2 - run in close!
-
 	scene_offset_x = 0;
 	scene_offset_y = 0;
 	init_scene();
@@ -151,7 +146,16 @@ void app_main()
 				}
 				else if (input_x && character_anim_timer[0] == 0)
 				{
-					character_start_kick(0);
+					if (character_hit_combo[0] >= 2)
+					{
+						character_start_powerkick(0);
+						character_hit_combo[0] = 0;
+						character_hit_combo_timer[0] = 0;
+					}
+					else
+					{
+						character_start_kick(0);
+					}
 				}
 				else
 				{
