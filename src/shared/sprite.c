@@ -20,6 +20,7 @@
 ===========================================================================*/
 
 #include "sys.h"
+#include "ui.h"
 #include "sprite.h"
 
 #define const_sprite_max 32

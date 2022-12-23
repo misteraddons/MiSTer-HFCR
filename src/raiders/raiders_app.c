@@ -74,12 +74,79 @@ unsigned char player_hit_combo_timer;
 
 // #define DEBUG_TIMING
 
+void sprite_test()
+{
+	clear_bgcolor(0b00011001);
+	SET_BIT(video_ctl, 0); // Enable sprite priority over charmap
+	unsigned char first_sprite = 0;
+
+	unsigned redraw = true;
+	while (1)
+	{
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
+		if (VBLANK_RISING)
+		{
+
+			// Collect player inputs
+			basic_input();
+
+			if (input_up)
+			{
+				if (first_sprite > 7)
+				{
+					first_sprite-=8;
+					redraw = true;
+				}
+			}
+			if (input_down)
+			{
+				first_sprite+=8;
+				redraw = true;
+			}
+
+			write_stringf("first: %3d", 0xFF, 0, 0, first_sprite);
+			write_stringf("last: %3d", 0xFF, 12, 0, first_sprite + 32);
+
+			if (redraw)
+			{
+				unsigned char s = 0;
+				unsigned char f = first_sprite;
+				for (unsigned char y = 0; y < 5; y++)
+				{
+					for (unsigned char x = 0; x < 8; x++)
+					{
+						write_stringf("%2d", 0xFF, x * 4, 1 + (y * 6), s);
+						write_stringf("-%2d", 0xFF, (x * 4) + 3, 1 + (y * 6), f);
+						enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
+						set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+						spr_index[s] = f;
+						s++;
+						f++;
+						if (s == 32)
+						{
+							break;
+						}
+					}
+					if (s == 32)
+					{
+						break;
+					}
+				}
+				update_sprites();
+				redraw = false;
+			}
+		}
+	}
+}
+
 void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 	clear_chars(0);
 	init_sprites();
 	clear_sprites();
+
+	// sprite_test();
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);

@@ -296,9 +296,9 @@ int main(int argc, char** argv, char** env) {
 		//ImGui::Begin("BGCOLRAM Editor");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__bgcolram__DOT__mem, 2048, 0);
 		//ImGui::End();
-		//ImGui::Begin("Sprite RAM");
-		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 128, 0);
-		//ImGui::End();
+		ImGui::Begin("Sprite RAM");
+		mem_edit.DrawContents(&top->emu__DOT__system__DOT__spriteram__DOT__mem, 128, 0);
+		ImGui::End();
 		//ImGui::Begin("Sprite Linebuffer RAM");
 		//mem_edit.DrawContents(&top->emu__DOT__system__DOT__spritelbram__DOT__mem, 1024, 0);
 		//ImGui::End();

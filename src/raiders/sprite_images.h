@@ -28,4 +28,11 @@
 #define sprite_size_ninjared 0
 #define sprite_pixelsize_ninjared 32
 #define sprite_halfpixelsize_ninjared 16
+#define sprite_index_stroudman_first 80
+#define sprite_index_stroudman_count 16
+#define sprite_index_stroudman_last 95
+#define sprite_palette_stroudman 0
+#define sprite_size_stroudman 0
+#define sprite_pixelsize_stroudman 32
+#define sprite_halfpixelsize_stroudman 16
 #endif
