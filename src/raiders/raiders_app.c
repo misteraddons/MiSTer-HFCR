@@ -198,7 +198,7 @@ void app_main()
 
 			if (character_anim_locked[0] == 0)
 			{
-				if (input_b && character_anim_timer[0] == 0)
+				if (input_b)
 				{
 					if (character_hit_combo[0] >= 2)
 					{
@@ -211,7 +211,7 @@ void app_main()
 						character_start_punch(0);
 					}
 				}
-				else if (input_x && character_anim_timer[0] == 0)
+				else if (input_x)
 				{
 					if (character_hit_combo[0] >= 2)
 					{

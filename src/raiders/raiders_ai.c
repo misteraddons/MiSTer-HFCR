@@ -92,7 +92,8 @@ void update_ai()
 	bool first_up = true;
 	for (unsigned char a = 0; a < const_ai_max; a++)
 	{
-		if (!ai_active[a])
+		unsigned ai_char = a + const_ai_first_character;
+		if (!ai_active[a] && character_active[ai_char] == 0)
 		{
 			if (a < ai_first_free)
 			{
@@ -103,8 +104,8 @@ void update_ai()
 
 		ai_active_count++;
 
-		unsigned ai_char = a + const_ai_first_character;
-		if (character_health[ai_char] == 0 && character_active[ai_char] == 0)
+		
+		if (character_health[ai_char] == 0)
 		{
 			ai_active[a] = 0;
 			continue;
