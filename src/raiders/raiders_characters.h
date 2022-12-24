@@ -66,15 +66,23 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_attack_punch 1
 #define const_character_attack_punch_knockback 4
 #define const_character_attack_punch_hittime 14
+#define const_character_frame_punch_first 6
+#define const_character_frame_punch_count 3
 #define const_character_attack_kick 2
 #define const_character_attack_kick_knockback 8
 #define const_character_attack_kick_hittime 16
+#define const_character_frame_kick_first 9
+#define const_character_frame_kick_count 3
 #define const_character_attack_uppercut 3
 #define const_character_attack_uppercut_knockback 12
 #define const_character_attack_uppercut_hittime 11
+#define const_character_frame_uppercut_first 20
+#define const_character_frame_uppercut_count 3
 #define const_character_attack_powerkick 4
 #define const_character_attack_powerkick_knockback 20
 #define const_character_attack_powerkick_hittime 6
+#define const_character_frame_powerkick_first 23
+#define const_character_frame_powerkick_count 1
 
 #define const_character_first_sprite_index 0
 

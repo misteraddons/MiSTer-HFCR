@@ -126,8 +126,8 @@ void character_start_punch(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_punch_rate;
-	character_frame[c] = 6;
-	character_frame_target[c] = 8;
+	character_frame[c] = const_character_frame_punch_first;
+	character_frame_target[c] = const_character_frame_punch_first + const_character_frame_punch_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_punch;
@@ -137,8 +137,8 @@ void character_start_kick(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_kick_rate;
-	character_frame[c] = 9;
-	character_frame_target[c] = 11;
+	character_frame[c] = const_character_frame_kick_first;
+	character_frame_target[c] = const_character_frame_kick_first + const_character_frame_kick_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_kick;
@@ -148,8 +148,8 @@ void character_start_uppercut(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_uppercut_rate;
-	character_frame[c] = 20;
-	character_frame_target[c] = 22;
+	character_frame[c] = const_character_frame_uppercut_first;
+	character_frame_target[c] = const_character_frame_uppercut_first + const_character_frame_uppercut_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_uppercut;
@@ -159,8 +159,8 @@ void character_start_powerkick(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_powerkick_rate;
-	character_frame[c] = 23;
-	character_frame_target[c] = 23;
+	character_frame[c] = const_character_frame_powerkick_first;
+	character_frame_target[c] = const_character_frame_powerkick_first + const_character_frame_powerkick_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_powerkick;
@@ -442,9 +442,9 @@ void update_characters()
 		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
 		// write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
 		// write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
-		//write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
-		//write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);
-		//write_stringf("t: %3d", 0xFF, 14, c, character_anim_timer[c]);
-		//write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
+		// write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
+		// write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);
+		// write_stringf("t: %3d", 0xFF, 14, c, character_anim_timer[c]);
+		// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
 	}
 }
