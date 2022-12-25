@@ -31,8 +31,10 @@ extern unsigned char character_anim[];
 extern unsigned char character_frame[];
 extern unsigned short character_x[];
 extern unsigned short character_y[];
+extern unsigned char character_z[];
 extern signed char character_move_x[];
 extern signed char character_move_y[];
+extern signed char character_move_z[];
 extern unsigned char character_sprite_offset[];
 extern unsigned char character_anim_timer[];
 extern unsigned char character_anim_dir[];
@@ -43,11 +45,17 @@ extern unsigned char character_hit_combo[];
 extern unsigned char character_hit_combo_timer[];
 
 #define const_character_anim_idle 0
+#define const_character_frame_idle 1
 
 #define const_character_anim_walk 1
 #define const_character_anim_walk_rate 4
+#define const_character_frame_walk_first 0
+#define const_character_frame_walk_last 2
+
 #define const_character_anim_run 2
 #define const_character_anim_run_rate 4
+#define const_character_frame_run 3
+
 #define const_character_anim_oneshot 3
 
 #define const_character_anim_dead 4

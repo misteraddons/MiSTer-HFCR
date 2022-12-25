@@ -34,8 +34,10 @@ unsigned char character_frame[const_character_max];
 unsigned char character_frame_target[const_character_max];
 unsigned short character_x[const_character_max];
 unsigned short character_y[const_character_max];
+unsigned char character_z[const_character_max];
 signed char character_move_x[const_character_max];
 signed char character_move_y[const_character_max];
+signed char character_move_z[const_character_max];
 unsigned char character_sprite_offset[const_character_max];
 unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
@@ -262,12 +264,12 @@ void update_characters()
 			switch (character_anim[c])
 			{
 			case const_character_anim_idle:
-				character_frame[c] = 1;
+				character_frame[c] = const_character_frame_idle;
 				break;
 			case const_character_anim_walk:
-				if (character_frame[c] > 2)
+				if (character_frame[c] > const_character_frame_walk_last)
 				{
-					character_frame[c] = 0;
+					character_frame[c] = const_character_frame_walk_first;
 					character_anim_dir[c] = 0;
 				}
 				if (character_anim_timer[c] == 0)
@@ -276,7 +278,7 @@ void update_characters()
 					if (character_anim_dir[c] == 0)
 					{
 						character_frame[c]++;
-						if (character_frame[c] == 2)
+						if (character_frame[c] == const_character_frame_walk_last)
 						{
 							character_anim_dir[c] = 1;
 						}
@@ -284,7 +286,7 @@ void update_characters()
 					else
 					{
 						character_frame[c]--;
-						if (character_frame[c] == 0)
+						if (character_frame[c] == const_character_frame_walk_first)
 						{
 							character_anim_dir[c] = 0;
 						}
@@ -293,7 +295,7 @@ void update_characters()
 				break;
 			case const_character_anim_run:
 				character_anim_timer[c] = const_character_anim_run_rate;
-				character_frame[c] = character_frame[c] == 1 ? 3 : 1;
+				character_frame[c] = character_frame[c] == const_character_frame_idle ? const_character_frame_run : const_character_frame_idle;
 				break;
 			case const_character_anim_oneshot:
 				character_anim_oneshot(c);
