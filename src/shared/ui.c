@@ -53,6 +53,30 @@ void clear_bgcolor(char color)
 	}
 }
 
+// char log[20][30];
+unsigned char log_index = 0;
+void write_log_uchar(const char *format, unsigned char data)
+{
+	unsigned short p = (log_index * chram_cols);
+	char temp[30];
+	sprintf(temp, format, data);
+	unsigned char l = strlen(temp);
+	for (char c = 0; c < l; c++)
+	{
+		if (temp[c] == 0)
+		{
+			return;
+		}
+		chram[p] = temp[c];
+		p++;
+	}
+	log_index++;
+	if (log_index > 21)
+	{
+		log_index = 0;
+	}
+}
+
 // Write string to character RAM
 void write_string(const char *string, char color, unsigned char x, unsigned char y)
 {

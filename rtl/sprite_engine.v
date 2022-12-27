@@ -169,9 +169,9 @@ begin
 		end
 		else
 		begin
-			spritelbram_rd_wr <= 1'b1;
+			spritelbram_rd_wr <= 1'b0;
 		end
-		spritelbram_cycle <= spritelbram_cycle + 1;
+		spritelbram_cycle <= spritelbram_cycle + 2'd1;
 	end
 end
 

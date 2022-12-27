@@ -13,6 +13,16 @@ cd targets/verilator
 ./verilate.sh $PROJECT
 cd $CURRENTDIR
 
+# Update MiSTer project defines
+readarray -t DEFINE_LINES < src/$PROJECT/.define
+echo "" > targets/mister/defines.qip
+for i in "${DEFINE_LINES[@]}"
+do
+	if ! [[ $i == //* ]]; then
+		echo "set_global_assignment -name VERILOG_MACRO \"$i\"" >> targets/mister/defines.qip
+	fi
+done
+
 # Build target locations
 TARGETS=( targets/verilator rtl )
 

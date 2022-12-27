@@ -45,6 +45,8 @@ bool input_b;
 bool input_b_last = 0;
 bool input_x;
 bool input_x_last = 0;
+bool input_y;
+bool input_y_last = 0;
 
 // Track joypad 1 directions and start for menu control
 void basic_input()
@@ -56,6 +58,7 @@ void basic_input()
 	input_a_last = input_a;
 	input_b_last = input_b;
 	input_x_last = input_x;
+	input_y_last = input_y;
 	input_up = CHECK_BIT(joystick[0], 3);
 	input_down = CHECK_BIT(joystick[0], 2);
 	input_left = CHECK_BIT(joystick[0], 1);
@@ -63,6 +66,7 @@ void basic_input()
 	input_a = CHECK_BIT(joystick[0], 4);
 	input_b = CHECK_BIT(joystick[0], 5);
 	input_x = CHECK_BIT(joystick[0], 6);
+	input_y = CHECK_BIT(joystick[0], 7);
 }
 
 #define const_player_walk_speed 5
@@ -70,6 +74,7 @@ void basic_input()
 
 unsigned char player_hit_combo_timer;
 
+#define const_player_character 0
 #define const_team_player 0
 
 // #define DEBUG_TIMING
@@ -94,13 +99,13 @@ void sprite_test()
 			{
 				if (first_sprite > 7)
 				{
-					first_sprite-=8;
+					first_sprite -= 8;
 					redraw = true;
 				}
 			}
 			if (input_down)
 			{
-				first_sprite+=8;
+				first_sprite += 8;
 				redraw = true;
 			}
 
@@ -150,7 +155,8 @@ void app_main()
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);
-	activate_character(0, sprite_index_santa_first, const_team_player, 30);
+	// activate_character(0, sprite_index_santa_first, const_team_player, 30);
+	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
 	scene_offset_x = 0;
 	scene_offset_y = 0;
@@ -196,77 +202,87 @@ void app_main()
 			signed char player_move_x = 0;
 			signed char player_move_y = 0;
 
-			if (character_anim_locked[0] == 0)
+			if (character_anim_locked[const_player_character] == 0)
 			{
+				if (input_y && character_z[const_player_character] == 0)
+				{
+					character_start_jump(const_player_character);
+				}
 				if (input_b)
 				{
-					if (character_hit_combo[0] >= 2)
+					if (character_hit_combo[const_player_character] >= 2)
 					{
-						character_start_uppercut(0);
-						character_hit_combo[0] = 0;
-						character_hit_combo_timer[0] = 0;
+						character_start_uppercut(const_player_character);
+						character_hit_combo[const_player_character] = 0;
+						character_hit_combo_timer[const_player_character] = 0;
 					}
 					else
 					{
-						character_start_punch(0);
+						character_start_punch(const_player_character);
 					}
 				}
 				else if (input_x)
 				{
-					if (character_hit_combo[0] >= 2)
+					if (character_hit_combo[const_player_character] >= 2)
 					{
-						character_start_powerkick(0);
-						character_hit_combo[0] = 0;
-						character_hit_combo_timer[0] = 0;
+						character_start_powerkick(const_player_character);
+						character_hit_combo[const_player_character] = 0;
+						character_hit_combo_timer[const_player_character] = 0;
 					}
 					else
 					{
-						character_start_kick(0);
+						character_start_kick(const_player_character);
 					}
 				}
 				else
 				{
-					unsigned char player_sprite = const_character_first_sprite_index;
-					if (input_left)
+					if (character_onground[const_player_character])
 					{
-						character_dir[0] = -1;
-						set_sprite_mirror(player_sprite, 1);
-						player_moving = 1;
-						player_move_x = -player_speed;
-					}
-					if (input_right)
-					{
-						character_dir[0] = 1;
-						set_sprite_mirror(player_sprite, 0);
-						player_moving = 1;
-						player_move_x = player_speed;
-					}
+						unsigned char player_sprite = const_character_first_sprite_index;
+						if (input_left)
+						{
+							character_dir[const_player_character] = -1;
+							set_sprite_mirror(player_sprite, 1);
+							player_moving = 1;
+							player_move_x = -player_speed;
+						}
+						if (input_right)
+						{
+							character_dir[const_player_character] = 1;
+							set_sprite_mirror(player_sprite, 0);
+							player_moving = 1;
+							player_move_x = player_speed;
+						}
 
-					if (input_up)
-					{
-						player_moving = 1;
-						player_move_y = -player_speed;
-					}
-					if (input_down)
-					{
-						player_moving = 1;
-						player_move_y = player_speed;
-					}
+						if (input_up)
+						{
+							player_moving = 1;
+							player_move_y = -player_speed;
+						}
+						if (input_down)
+						{
+							player_moving = 1;
+							player_move_y = player_speed;
+						}
 
-					if (player_moving)
-					{
-						character_anim[0] = run ? const_character_anim_run : const_character_anim_walk;
-					}
-					else
-					{
-						character_anim[0] = const_character_anim_idle;
+						if (player_moving)
+						{
+							character_anim[const_player_character] = run ? const_character_anim_run : const_character_anim_walk;
+						}
+						else
+						{
+							if (character_anim[const_player_character] == const_character_anim_run || character_anim[const_player_character] == const_character_anim_walk)
+							{
+								character_anim[const_player_character] = const_character_anim_idle;
+							}
+						}
 					}
 				}
 			}
-			if (!character_anim_locked[0])
+			if (!character_anim_locked[const_player_character] && character_onground[const_player_character])
 			{
-				character_move_x[0] = player_move_x;
-				character_move_y[0] = player_move_y;
+				character_move_x[const_player_character] = player_move_x;
+				character_move_y[const_player_character] = player_move_y;
 			}
 #ifdef DEBUG_TIMING
 			unsigned short time_after_player_input = GET_TIMER;
@@ -277,7 +293,7 @@ void app_main()
 #endif
 			// Handle scrolling
 			scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
-			unsigned short focus_x = (character_x[0] / const_character_position_divider);
+			unsigned short focus_x = (character_x[const_player_character] / const_character_position_divider);
 			if (focus_x > scroll_x_max)
 			{
 				focus_x = scroll_x_max;

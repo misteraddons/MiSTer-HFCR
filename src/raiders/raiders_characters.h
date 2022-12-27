@@ -31,7 +31,8 @@ extern unsigned char character_anim[];
 extern unsigned char character_frame[];
 extern unsigned short character_x[];
 extern unsigned short character_y[];
-extern unsigned char character_z[];
+extern signed char character_z[];
+extern bool character_onground[];
 extern signed char character_move_x[];
 extern signed char character_move_y[];
 extern signed char character_move_z[];
@@ -63,13 +64,27 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_frame_dead 16
 #define const_character_anim_dead_flashcount 4
 
+#define const_character_anim_jump 5
+#define const_character_anim_jump_rate 5
+#define const_character_frame_jump_first 17
+
+#define const_character_frame_land_first 18
+#define const_character_frame_land_count 1
+#define const_character_anim_land_rate 5
+
 #define const_character_anim_punch_rate 6
 #define const_character_anim_kick_rate 9
 #define const_character_anim_uppercut_rate 6
 #define const_character_anim_powerkick_rate 8
 #define const_character_anim_hit_high_rate 6
+#define const_character_frame_hit_high_first 14
+#define const_character_frame_hit_high_count 1
 #define const_character_anim_hit_mid_rate 6
+#define const_character_frame_hit_mid_first 12
+#define const_character_frame_hit_mid_count 2
 #define const_character_anim_fall_rate 14
+#define const_character_frame_fall_first 15
+#define const_character_frame_fall_count 2
 
 #define const_character_attack_punch 1
 #define const_character_attack_punch_knockback 4
@@ -82,12 +97,14 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_frame_kick_first 9
 #define const_character_frame_kick_count 3
 #define const_character_attack_uppercut 3
-#define const_character_attack_uppercut_knockback 12
+#define const_character_attack_uppercut_knockback 11
+#define const_character_attack_uppercut_liftup 8
 #define const_character_attack_uppercut_hittime 11
 #define const_character_frame_uppercut_first 20
 #define const_character_frame_uppercut_count 3
 #define const_character_attack_powerkick 4
-#define const_character_attack_powerkick_knockback 20
+#define const_character_attack_powerkick_knockback 16
+#define const_character_attack_powerkick_liftup 10
 #define const_character_attack_powerkick_hittime 6
 #define const_character_frame_powerkick_first 23
 #define const_character_frame_powerkick_count 1
@@ -107,5 +124,6 @@ extern void character_start_uppercut(unsigned char c);
 extern void character_start_powerkick(unsigned char c);
 extern void character_start_hit_high(unsigned char c);
 extern void character_start_hit_mid(unsigned char c);
+extern void character_start_jump(unsigned char c);
 
 #endif

@@ -45,6 +45,9 @@ extern void clear_char_area(char c, unsigned char tx, unsigned char ty, unsigned
 // Set all character background colours to specified
 extern void clear_bgcolor(char color);
 
+// Write rotating log
+extern void write_log_uchar(const char *format, unsigned char data);
+
 // Write string to character RAM
 extern void write_string(const char *string, char color, unsigned char x, unsigned char y);
 

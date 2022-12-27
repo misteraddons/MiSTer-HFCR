@@ -34,7 +34,8 @@ unsigned char character_frame[const_character_max];
 unsigned char character_frame_target[const_character_max];
 unsigned short character_x[const_character_max];
 unsigned short character_y[const_character_max];
-unsigned char character_z[const_character_max];
+signed char character_z[const_character_max];
+bool character_onground[const_character_max];
 signed char character_move_x[const_character_max];
 signed char character_move_y[const_character_max];
 signed char character_move_z[const_character_max];
@@ -129,7 +130,7 @@ void character_start_punch(unsigned char c)
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_punch_rate;
 	character_frame[c] = const_character_frame_punch_first;
-	character_frame_target[c] = const_character_frame_punch_first + const_character_frame_punch_count - 1;
+	character_frame_target[c] = character_frame[c] + const_character_frame_punch_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_punch;
@@ -140,7 +141,7 @@ void character_start_kick(unsigned char c)
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_kick_rate;
 	character_frame[c] = const_character_frame_kick_first;
-	character_frame_target[c] = const_character_frame_kick_first + const_character_frame_kick_count - 1;
+	character_frame_target[c] = character_frame[c] + const_character_frame_kick_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_kick;
@@ -151,7 +152,7 @@ void character_start_uppercut(unsigned char c)
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_uppercut_rate;
 	character_frame[c] = const_character_frame_uppercut_first;
-	character_frame_target[c] = const_character_frame_uppercut_first + const_character_frame_uppercut_count - 1;
+	character_frame_target[c] = character_frame[c] + const_character_frame_uppercut_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_uppercut;
@@ -162,7 +163,7 @@ void character_start_powerkick(unsigned char c)
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_powerkick_rate;
 	character_frame[c] = const_character_frame_powerkick_first;
-	character_frame_target[c] = const_character_frame_powerkick_first + const_character_frame_powerkick_count - 1;
+	character_frame_target[c] = character_frame[c] + const_character_frame_powerkick_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 	character_scheduled_attack[c] = const_character_attack_powerkick;
@@ -173,8 +174,8 @@ void character_start_hit_high(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_hit_high_rate;
-	character_frame[c] = 14;
-	character_frame_target[c] = 14;
+	character_frame[c] = const_character_frame_hit_high_first;
+	character_frame_target[c] = character_frame[c] + const_character_frame_hit_high_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 }
@@ -182,8 +183,8 @@ void character_start_hit_mid(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_hit_mid_rate;
-	character_frame[c] = 12;
-	character_frame_target[c] = 12;
+	character_frame[c] = const_character_frame_hit_mid_first;
+	character_frame_target[c] = character_frame[c] + const_character_frame_hit_mid_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 }
@@ -192,8 +193,29 @@ void character_start_fall(unsigned char c)
 {
 	character_anim[c] = const_character_anim_oneshot;
 	character_anim_rate[c] = const_character_anim_fall_rate;
-	character_frame[c] = 15;
-	character_frame_target[c] = const_character_frame_dead;
+	character_frame[c] = const_character_frame_fall_first;
+	character_frame_target[c] = character_frame[c] + const_character_frame_fall_count - 1;
+	character_anim_locked[c] = 1;
+	character_anim_timer[c] = character_anim_rate[c];
+}
+
+void character_start_jump(unsigned char c)
+{
+	character_anim[c] = const_character_anim_jump;
+	character_anim_rate[c] = const_character_anim_jump_rate;
+	character_frame[c] = const_character_frame_jump_first;
+	character_anim_locked[c] = 1;
+	character_move_z[c] = 12;
+	character_anim_timer[c] = character_anim_rate[c];
+	character_onground[c] = 0;
+}
+
+void character_start_land(unsigned char c)
+{
+	character_anim[c] = const_character_anim_oneshot;
+	character_anim_rate[c] = const_character_anim_land_rate;
+	character_frame[c] = const_character_frame_land_first;
+	character_frame_target[c] = character_frame[c] + const_character_frame_land_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 }
@@ -220,23 +242,47 @@ void update_characters()
 		{
 			character_y[c] += character_move_y[c];
 		}
+		character_z[c] += character_move_z[c];
+		if (character_z[c] < 0)
+		{
+			character_z[c] = 0;
+			character_move_z[c] = 0;
+		}
+		character_onground[c] = (character_z[c] == 0);
 
-		// Decrement speed
-		if (character_move_x[c] > 0)
+		if (character_onground[c])
 		{
-			character_move_x[c]--;
+			// Trigger landing anim if jumping and hit the ground
+			if (character_anim[c] == const_character_anim_jump)
+			{
+				character_start_land(c);
+			}
+
+			// Decrement speed
+			if (character_move_x[c] > 0)
+			{
+				character_move_x[c]--;
+			}
+			if (character_move_x[c] < 0)
+			{
+				character_move_x[c]++;
+			}
+			if (character_move_y[c] > 0)
+			{
+				character_move_y[c]--;
+			}
+			if (character_move_y[c] < 0)
+			{
+				character_move_y[c]++;
+			}
 		}
-		if (character_move_x[c] < 0)
+		else
 		{
-			character_move_x[c]++;
-		}
-		if (character_move_y[c] > 0)
-		{
-			character_move_y[c]--;
-		}
-		if (character_move_y[c] < 0)
-		{
-			character_move_y[c]++;
+			// Apply gravity
+			if (character_z[c] > 0)
+			{
+				character_move_z[c]--;
+			}
 		}
 
 		// Combo timers
@@ -300,6 +346,9 @@ void update_characters()
 			case const_character_anim_oneshot:
 				character_anim_oneshot(c);
 				break;
+			case const_character_anim_jump:
+				character_anim_locked[c] = 0;
+				break;
 			case const_character_anim_dead:
 				character_anim_timer[c] = const_character_anim_dead_rate;
 				character_anim_dir[c]--;
@@ -319,6 +368,7 @@ void update_characters()
 		spr_index[player_sprite] = character_sprite_offset[c] + character_frame[c];
 		unsigned short x = (character_x[c] / const_character_position_divider) - scroll_x;
 		unsigned short y = (character_y[c] / const_character_position_divider);
+		y -= character_z[c] / const_character_position_divider;
 		if (character_frame[c] == 0 || character_frame[c] == 2 || character_frame[c] == 3)
 		{
 			y--;
@@ -391,36 +441,40 @@ void update_characters()
 					}
 
 					signed hit_direction = character_x[c] < character_x[tc] ? 1 : -1;
-					unsigned char hit_power = 0;
+					unsigned char hit_power_x = 0;
+					unsigned char hit_power_z = 0;
 
 					switch (character_scheduled_attack[c])
 					{
 					case const_character_attack_punch:
 						character_start_hit_high(tc);
-						hit_power = const_character_attack_punch_knockback;
+						hit_power_x = const_character_attack_punch_knockback;
 						add_combo = true;
 						break;
 					case const_character_attack_kick:
 						character_start_hit_mid(tc);
-						hit_power = const_character_attack_kick_knockback;
+						hit_power_x = const_character_attack_kick_knockback;
 						add_combo = true;
 						break;
 					case const_character_attack_uppercut:
 						character_start_hit_high(tc);
-						hit_power = const_character_attack_uppercut_knockback;
+						hit_power_x = const_character_attack_uppercut_knockback;
+						hit_power_z = const_character_attack_uppercut_liftup;
 						break;
 					case const_character_attack_powerkick:
 						character_start_hit_high(tc);
-						hit_power = const_character_attack_powerkick_knockback;
+						hit_power_x = const_character_attack_powerkick_knockback;
+						hit_power_z = const_character_attack_powerkick_liftup;
 						break;
 					}
 
-					character_move_x[tc] = hit_direction * hit_power;
+					character_move_x[tc] = hit_direction * hit_power_x;
+					character_move_z[tc] += hit_power_z;
 
 					// Reduce health
-					if (character_health[tc] > hit_power)
+					if (character_health[tc] > hit_power_x)
 					{
-						character_health[tc] -= hit_power;
+						character_health[tc] -= hit_power_x;
 					}
 					else
 					{
@@ -444,9 +498,9 @@ void update_characters()
 		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
 		// write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
 		// write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
-		// write_stringf("a: %3d", 0xFF, 0, c, character_anim[c]);
-		// write_stringf("l: %3d", 0xFF, 7, c, character_anim_locked[c]);
-		// write_stringf("t: %3d", 0xFF, 14, c, character_anim_timer[c]);
+		// write_stringf("a=%3d", 0xFF, 16, c, character_anim[c]);
+		// write_stringf("l=%3d", 0xFF, 21, c, character_anim_locked[c]);
+		// write_stringf("t=%3d", 0xFF, 27, c, character_anim_timer[c]);
 		// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
 	}
 }
