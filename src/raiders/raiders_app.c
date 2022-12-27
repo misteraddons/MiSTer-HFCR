@@ -116,27 +116,73 @@ void sprite_test()
 			{
 				unsigned char s = 0;
 				unsigned char f = first_sprite;
-				for (unsigned char y = 0; y < 5; y++)
+				unsigned char y = 0;
+				// for (unsigned char y = 0; y < 1; y++)
+				// {
+
+				bool m = false;
+				for (unsigned char x = 0; x < 8; x++)
 				{
-					for (unsigned char x = 0; x < 8; x++)
+					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
+					enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
+					set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+					if (m)
 					{
-						write_stringf("%2d", 0xFF, x * 4, 1 + (y * 6), s);
-						write_stringf("-%2d", 0xFF, (x * 4) + 3, 1 + (y * 6), f);
-						enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
-						set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
-						spr_index[s] = f;
-						s++;
-						f++;
-						if (s == 32)
-						{
-							break;
-						}
+						set_sprite_mirror(s, 1);
 					}
+					spr_index[s] = f;
+					s++;
+					f++;
+					m = !m;
+					if (s == 16)
+					{
+						break;
+					}
+				}
+				if (s == 16)
+				{
+					break;
+				}
+				// }
+
+				y = 2;
+				f = sprite_index_test16_first;
+				m = false;
+				for (unsigned char x = 0; x < 8; x++)
+				{
+					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
+					enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
+					set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+					if (m)
+					{
+						set_sprite_mirror(s, 1);
+					}
+					spr_index[s] = f;
+					s++;
+					f++;
+					m = !m;
 					if (s == 32)
 					{
 						break;
 					}
 				}
+
+				// y = 3;
+				// f = sprite_index_test8_first;
+				// for (unsigned char x = 0; x < 2; x++)
+				// {
+				// 	write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
+				// 	enable_sprite(s, sprite_palette_test8, sprite_size_test8, 0);
+				// 	set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+				// 	spr_index[s] = f;
+				// 	s++;
+				// 	f++;
+				// 	if (s == 32)
+				// 	{
+				// 		break;
+				// 	}
+				// }
+
 				update_sprites();
 				redraw = false;
 			}
@@ -151,7 +197,7 @@ void app_main()
 	init_sprites();
 	clear_sprites();
 
-	// sprite_test();
+	sprite_test();
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);

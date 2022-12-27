@@ -223,9 +223,9 @@ namespace rommaker
                 {
                     int g = groups[gi];
                     int index = 0;
-                    ulong groupStartPos = (ushort)(pos + (groups.Length * 3));
+                    ulong groupStartPos = (ulong)(pos + (groups.Length * 3));
                     byte[] groupStartBytes = BitConverter.GetBytes(groupStartPos);
-                    Console.WriteLine($"Starting image group {g} at {groupStartPos}");
+                    Console.WriteLine($"Starting image group {g} at {pos} - {groupStartPos}");
                     spriteStreamWriter.Write(groupStartBytes[2]); // Write byte 2 of start point for size group
                     spriteStreamWriter.Write(groupStartBytes[1]); // Write byte 1 of start point for size group
                     spriteStreamWriter.Write(groupStartBytes[0]); // Write byte 0 of start point for size group
@@ -319,7 +319,7 @@ namespace rommaker
                             }
                         }
                     }
-                    Console.WriteLine($"Ending image group {g} - length = {groupLen}");
+                    Console.WriteLine($"Ending image group {g} at {pos} length = {groupLen}");
                     groupIndex--;
                     groupStreams.Add(g, groupStream);
                 }
