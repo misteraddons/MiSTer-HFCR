@@ -124,8 +124,8 @@ void sprite_test()
 				for (unsigned char x = 0; x < 8; x++)
 				{
 					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
-					enable_sprite(s, sprite_palette_alex, sprite_size_alex, 0);
-					set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+					enable_sprite(s, sprite_palette_aaaa, sprite_palette_aaaa, 0);
+					set_sprite_position(s, 32 + (x * 34), 52 + (y * 48));
 					if (m)
 					{
 						set_sprite_mirror(s, 1);
@@ -152,7 +152,7 @@ void sprite_test()
 				{
 					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
 					enable_sprite(s, sprite_palette_test16, sprite_size_test16, 0);
-					set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
+					set_sprite_position(s, 32 + (x * 34), 52 + (y * 48));
 					if (m)
 					{
 						set_sprite_mirror(s, 1);
@@ -167,21 +167,26 @@ void sprite_test()
 					}
 				}
 
-				// y = 3;
-				// f = sprite_index_test8_first;
-				// for (unsigned char x = 0; x < 2; x++)
-				// {
-				// 	write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
-				// 	enable_sprite(s, sprite_palette_test8, sprite_size_test8, 0);
-				// 	set_sprite_position(s, 32 + (x * 34), 52 + (y * 46));
-				// 	spr_index[s] = f;
-				// 	s++;
-				// 	f++;
-				// 	if (s == 32)
-				// 	{
-				// 		break;
-				// 	}
-				// }
+				y = 3;
+				f = sprite_index_test8_first;
+				for (unsigned char x = 0; x < 8; x++)
+				{
+					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
+					enable_sprite(s, sprite_palette_test8, sprite_size_test8, 0);
+					set_sprite_position(s, 32 + (x * 34), 52 + (y * 48));
+					spr_index[s] = f;
+					if (m)
+					{
+						set_sprite_mirror(s, 1);
+					}
+					s++;
+					f++;
+					m = !m;
+					if (s == 32)
+					{
+						break;
+					}
+				}
 
 				update_sprites();
 				redraw = false;
@@ -202,7 +207,7 @@ void app_main()
 	// Set player position
 	set_character_screen_position(0, 60, 160);
 	// activate_character(0, sprite_index_santa_first, const_team_player, 30);
-	activate_character(0, sprite_index_alex_first, const_team_player, 30);
+	//activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
 	scene_offset_x = 0;
 	scene_offset_y = 0;

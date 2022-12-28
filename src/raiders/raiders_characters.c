@@ -50,8 +50,10 @@ unsigned char character_scheduled_attack_in[const_character_max];
 unsigned char character_hit_combo[const_character_max];
 unsigned char character_hit_combo_timer[const_character_max];
 
-#define const_character_sprite_palette sprite_palette_alex
-#define const_character_sprite_size sprite_size_alex
+// #define const_character_sprite_palette sprite_palette_alex
+// #define const_character_sprite_size sprite_size_alex
+#define const_character_sprite_palette 0
+#define const_character_sprite_size 0
 
 void activate_character(unsigned char c, unsigned char offset, unsigned char team, unsigned char health)
 {

@@ -419,7 +419,7 @@ system system(
 	.VGA_B(b),
 	.VGA_HB(hblank),
 	.VGA_VB(vblank),
-	.dn_addr(ioctl_addr[16:0]),
+	.dn_addr(ioctl_addr),
 	.dn_data(ioctl_dout),
 	.dn_wr(ioctl_wr),
 	.dn_index(ioctl_index),

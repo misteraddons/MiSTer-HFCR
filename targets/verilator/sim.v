@@ -138,7 +138,7 @@ system system(
 	.VGA_B(b),
 	.VGA_HB(VGA_HB),
 	.VGA_VB(VGA_VB),
-	.dn_addr(ioctl_addr[16:0]),
+	.dn_addr(ioctl_addr[23:0]),
 	.dn_data(ioctl_dout),
 	.dn_wr(ioctl_wr),
 	.dn_index(ioctl_index),

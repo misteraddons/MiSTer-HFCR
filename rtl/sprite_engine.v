@@ -127,15 +127,23 @@ reg			 [6:0]	spr_image_index;						// Sprite image index
 localparam   [SPRITE_POSITION_WIDTH-1:0]	spr_border_size = 32; // Sprite screen border width
 reg			 [SPRITE_POSITION_WIDTH-1:0]	spr_active_y;	// Current active sprite engine Y
 reg			 [SPRITE_SIZE_WIDTH:0]			spr_pixel_index;// Current sprite X pixel
-reg			 [`SPRITE_ROM_WIDTH-1:0]			spr_rom_offset; // Offset for current sprite size in image ROM
 reg			 [9:0]	spr_rom_y_offset;						// Offset for current sprite Y line in image ROM
 
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_8x8 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd7};
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_16x16 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd15};
 localparam   [SPRITE_POSITION_WIDTH-1:0] spr_size_32x32 = {{SPRITE_POSITION_WIDTH-5{1'b0}}, 5'd31};
-reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_8x8;
-reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_16x16;
-reg			 [`SPRITE_ROM_WIDTH-1:0]		 spr_rom_offset_32x32;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		spr_rom_offset_32x32;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		spr_rom_offset_16x16;
+reg			 [`SPRITE_ROM_WIDTH-1:0]		spr_rom_offset_8x8;
+
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_32x32 = { {`SPRITE_ROM_WIDTH-10{1'b0}}, spr_rom_y_offset[4:0], 5'b0};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_16x16 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, spr_rom_y_offset[3:0], 4'b0};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_8x8 = { {`SPRITE_ROM_WIDTH-6{1'b0}}, spr_rom_y_offset[2:0], 3'b0};
+
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_32x32 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd31};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_16x16 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd15};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_8x8 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd7};
+
 
 //`define CASVAL_DEBUG
 //`define CASVAL_DEBUG_TIMES
@@ -613,12 +621,6 @@ begin
 			spr_x[7:0] <= spriteram_data_out;
 			// Set up offset for sprite ROM read
 			spr_rom_y_offset <= spr_active_y - spr_y;
-			// Set up ROM offset for sprite size
-			case(spr_size)
-				spr_size_32x32: spr_rom_offset <= spr_rom_offset_32x32;
-				spr_size_16x16: spr_rom_offset <= spr_rom_offset_16x16;
-				default: spr_rom_offset <= spr_rom_offset_8x8;
-			endcase
 
 			spr_state <= SE_SETUP_WRITE;
 		end
@@ -626,7 +628,7 @@ begin
 		SE_SETUP_WRITE:
 		begin
 `ifdef CASVAL_DEBUG
-			$display("CASVAL->SE_SETUP_WRITE: AY: %d  Y: %d  X: %d  S: %d I: %d  O: %d RO=%d", spr_active_y, spr_y, spr_x, spr_index, spr_image_index, spr_rom_y_offset, spr_rom_offset);
+			$display("CASVAL->SE_SETUP_WRITE: AY: %d  Y: %d  X: %d  S: %d I: %d  O: %d", spr_active_y, spr_y, spr_x, spr_index, spr_image_index, spr_rom_y_offset);
 `endif
 			// Enable line buffer write
 			spritelbram_wr <= 1'b0;
@@ -636,21 +638,23 @@ begin
 			case(spr_size)
 				spr_size_32x32:
 				begin
+`ifdef SPRITE_ROM_WIDTH_16PLUS
 					if(`SPRITE_ROM_WIDTH > 17)
-						sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-17{1'b0}}, spr_image_index[6:0], 10'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 31 : 0);
+						sprom_addr <= spr_rom_offset_32x32 + { {`SPRITE_ROM_WIDTH-17{1'b0}}, spr_image_index[6:0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // 17+
 					else if(`SPRITE_ROM_WIDTH == 17)
-						sprom_addr <= spr_rom_offset + { spr_image_index[6:0], 10'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 31 : 0);
-					else
-						sprom_addr <= spr_rom_offset + { spr_image_index[5:0], 10'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[7:0], 5'b0} + (spr_mirror ? 31 : 0);
+						sprom_addr <= spr_rom_offset_32x32 + { spr_image_index[6:0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // 17
+`else
+					sprom_addr <= spr_rom_offset_32x32 + { spr_image_index[5-(16-`SPRITE_ROM_WIDTH):0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // < 17
+`endif
 				end
 				spr_size_16x16: 
 				begin
-					sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-15{1'b0}}, spr_image_index[6:0], 8'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[8:0], 4'b0} + (spr_mirror ? 15 : 0);
+					sprom_addr <= spr_rom_offset_16x16 + { {`SPRITE_ROM_WIDTH-15{1'b0}}, spr_image_index[6:0], 8'b0} + spr_rom_y_offset_16x16 + spr_mirror_16x16;
 				end
 				default:
 				begin
 					// Default to 8x8s
-					sprom_addr <= spr_rom_offset + { {`SPRITE_ROM_WIDTH-13{1'b0}}, spr_image_index[6:0], 6'b0} + { {`SPRITE_ROM_WIDTH-14{1'b0}}, spr_rom_y_offset[9:0], 3'b0} + (spr_mirror ? 7 : 0);
+					sprom_addr <= spr_rom_offset_8x8 + { {`SPRITE_ROM_WIDTH-13{1'b0}}, spr_image_index[6:0], 6'b0} + spr_rom_y_offset_8x8 + spr_mirror_8x8;
 				end
 			endcase
 

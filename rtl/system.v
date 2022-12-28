@@ -27,7 +27,7 @@ module system (
 	input			reset,
 	input			pause,
 	input			menu, 			// Active-high trigger to open menu in system
-	input [16:0]	dn_addr,
+	input [23:0]	dn_addr,
 	input			dn_wr,
 	input [7:0]		dn_data,
 	input [7:0]		dn_index,
