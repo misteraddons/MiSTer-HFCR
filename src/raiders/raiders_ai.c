@@ -77,12 +77,12 @@ void update_ai()
 				unsigned short ax = (rand_uchar(0, 1) == 0) ? scroll_x : scroll_x + (screen_width + 32);
 				unsigned short ay = rand_ushort(130, 190);
 				set_character_screen_position(c, ax, ay);
-				//activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai, 20);
+				activate_character(c, rand_uchar(0, 1) == 0 ? sprite_index_ninjared_first : sprite_index_ninjablack_first, const_team_ai, 20);
 				character_anim[c] = const_character_anim_idle;
 				character_anim_timer[c] = rand_uchar(0, 5);
 				ai_mode[ai_first_free] = 0;
 				ai_active[ai_first_free] = 1;
-				ai_spawn_timer = 30 + (ai_active_count * 60);
+				ai_spawn_timer = 30 + (ai_active_count * 30);
 			}
 		}
 	}
@@ -223,7 +223,7 @@ void update_ai()
 								break;
 							}
 						}
-						ai_attack_timer[a] = rand_uchar(6, 25);
+						ai_attack_timer[a] = rand_uchar(50, 255);
 					}
 				}
 			}

@@ -24,6 +24,7 @@
 #include "collision_boxes.h"
 #include "raiders_scene.h"
 #include "raiders_characters.h"
+#include "particles.h"
 
 bool character_active[const_character_max];
 unsigned char character_team[const_character_max];
@@ -58,6 +59,7 @@ unsigned char character_hit_combo_timer[const_character_max];
 void activate_character(unsigned char c, unsigned char offset, unsigned char team, unsigned char health)
 {
 	character_active[c] = true;
+	character_dir[c] = 1;
 	enable_sprite(const_character_first_sprite_index + c, const_character_sprite_palette, const_character_sprite_size, 0);
 	character_sprite_offset[c] = offset;
 	character_team[c] = team;
@@ -222,6 +224,159 @@ void character_start_land(unsigned char c)
 	character_anim_timer[c] = character_anim_rate[c];
 }
 
+void perform_attack(unsigned char c)
+{
+	// find characters to hit
+	signed char d = character_dir[c];
+
+	unsigned short hit_mid_x = (character_x[c] / const_character_position_divider) + 16;
+	unsigned short hit_mid_y = (character_y[c] / const_character_position_divider);
+
+	unsigned char hit_rad_x = 4;
+	unsigned char hit_rad_y = 2;
+
+	signed char hit_off_x = 0;
+	signed char hit_off_y = 0;
+	signed char mid_off_x = 0;
+	unsigned char hit_particle_type = 1;
+
+	switch (character_scheduled_attack[c])
+	{
+	case const_character_attack_punch:
+		hit_off_x = const_character_hitoffset_punch_x * d;
+		hit_off_y = const_character_hitoffset_punch_y;
+		mid_off_x = 11;
+		break;
+	case const_character_attack_kick:
+		hit_off_x = const_character_hitoffset_kick_x * d;
+		hit_off_y = const_character_hitoffset_kick_y;
+		mid_off_x = 12;
+		hit_rad_y = 3;
+		break;
+	case const_character_attack_uppercut:
+		hit_off_x = const_character_hitoffset_uppercut_x * d;
+		hit_off_y = const_character_hitoffset_uppercut_y;
+		mid_off_x = 11;
+		hit_rad_x = 5;
+		hit_rad_y = 3;
+		hit_particle_type = 0;
+		break;
+	case const_character_attack_powerkick:
+		hit_off_x = const_character_hitoffset_powerkick_x * d;
+		hit_off_y = const_character_hitoffset_powerkick_y;
+		mid_off_x = 12;
+		hit_rad_x = 5;
+		hit_rad_y = 3;
+		hit_particle_type = 0;
+		break;
+	}
+	// write_stringfs("< %4d", 0xFF, 22, 0, hit_off_x);
+	// write_stringfs("< %4d", 0xFF, 22, 1, hit_off_y);
+	// write_stringfs("< %4d", 0xFF, 22, 2, hit_mid_x);
+	// write_stringfs("< %4d", 0xFF, 22, 3, hit_mid_y);
+	unsigned short hit_particle_x = hit_mid_x + hit_off_x + rand_schar(-9, -7);
+	unsigned short hit_particle_y = hit_mid_y + hit_off_y + rand_schar(-9, -7);
+	hit_mid_x += mid_off_x * d;
+	hit_mid_y += 32;
+
+	unsigned short hit_x_min = hit_mid_x - hit_rad_x;
+	unsigned short hit_y_min = hit_mid_y - hit_rad_y;
+	unsigned short hit_x_max = hit_mid_x + hit_rad_x;
+	unsigned short hit_y_max = hit_mid_y + hit_rad_y;
+
+	// write_stringf_ushort("hit_particle_x: %4d", 0xFF, 0, 0, hit_particle_x);
+	// write_stringf_ushort("hit_particle_y: %4d", 0xFF, 0, 1, hit_particle_y);
+	// write_stringf_ushort("hit_mid_x: %4d", 0xFF, 0, 2, hit_mid_x);
+	// write_stringf_ushort("hit_mid_y: %4d", 0xFF, 0, 3, hit_mid_y);
+
+	bool add_combo = false;
+	bool spawn_hit = false;
+	for (unsigned char tc = 0; tc < const_character_max; tc++)
+	{
+		if (tc == c || character_team[c] == character_team[tc] || character_health[tc] == 0)
+		{
+			continue;
+		}
+
+		unsigned short mid_x = (character_x[tc] / const_character_position_divider) + 16;
+		unsigned short mid_y = (character_y[tc] / const_character_position_divider) + 32;
+
+		unsigned short l = mid_x - 5;
+		unsigned short r = mid_x + 5;
+		unsigned short t = mid_y - 5;
+		unsigned short b = mid_y + 5;
+		if (r < hit_x_min || l > hit_x_max)
+		{
+			continue;
+		}
+		if (b < hit_y_min || t > hit_y_max)
+		{
+			continue;
+		}
+
+		spawn_hit = true;`
+		signed hit_direction = character_x[c] < character_x[tc] ? 1 : -1;
+		unsigned char hit_power_x = 0;
+		unsigned char hit_power_z = 0;
+
+		switch (character_scheduled_attack[c])
+		{
+		case const_character_attack_punch:
+			character_start_hit_high(tc);
+			hit_power_x = const_character_attack_punch_knockback;
+			add_combo = true;
+			break;
+		case const_character_attack_kick:
+			character_start_hit_mid(tc);
+			hit_power_x = const_character_attack_kick_knockback;
+			add_combo = true;
+			break;
+		case const_character_attack_uppercut:
+			character_start_hit_high(tc);
+			hit_power_x = const_character_attack_uppercut_knockback;
+			hit_power_z = const_character_attack_uppercut_liftup;
+			break;
+		case const_character_attack_powerkick:
+			character_start_hit_high(tc);
+			hit_power_x = const_character_attack_powerkick_knockback;
+			hit_power_z = const_character_attack_powerkick_liftup;
+			break;
+		}
+
+		// // Create explosion
+		// spawn_particle(hit_mid_x - 8, hit_mid_y - 8);
+
+		character_move_x[tc] = hit_direction * hit_power_x;
+		character_move_z[tc] += hit_power_z;
+
+		// Reduce health
+		if (character_health[tc] > hit_power_x)
+		{
+			character_health[tc] -= hit_power_x;
+		}
+		else
+		{
+			character_start_fall(tc);
+			character_health[tc] = 0;
+		}
+
+		// Cancel any pending attack on character
+		character_scheduled_attack[tc] = 0;
+		character_scheduled_attack_in[tc] = 0;
+	}
+	if (spawn_hit)
+	{
+		// Create explosion
+		spawn_particle(hit_particle_x * const_character_position_divider, hit_particle_y * const_character_position_divider, hit_particle_type);
+	}
+
+	if (add_combo)
+	{
+		character_hit_combo[c]++;
+		character_hit_combo_timer[c] = 45;
+	}
+}
+
 void update_characters()
 {
 	for (unsigned char c = 0; c < const_character_max; c++)
@@ -384,116 +539,7 @@ void update_characters()
 			character_scheduled_attack_in[c]--;
 			if (character_scheduled_attack_in[c] == 0)
 			{
-				// find characters to hit
-				unsigned char d = character_dir[c];
-
-				unsigned short hit_mid_x = (character_x[c] / const_character_position_divider) + 16;
-				unsigned short hit_mid_y = (character_y[c] / const_character_position_divider) + 32;
-
-				unsigned char hit_rad_x = 4;
-				unsigned char hit_rad_y = 2;
-				switch (character_scheduled_attack[c])
-				{
-				case const_character_attack_punch:
-					hit_mid_x += d == 1 ? 11 : -11;
-					break;
-				case const_character_attack_kick:
-					hit_mid_x += d == 1 ? 12 : -12;
-					hit_rad_y = 3;
-					break;
-				case const_character_attack_uppercut:
-					hit_mid_x += d == 1 ? 11 : -11;
-					hit_rad_x = 5;
-					hit_rad_y = 3;
-					break;
-				case const_character_attack_powerkick:
-					hit_mid_x += d == 1 ? 12 : -12;
-					hit_rad_x = 5;
-					hit_rad_y = 3;
-					break;
-				}
-
-				unsigned short hit_x_min = hit_mid_x - hit_rad_x;
-				unsigned short hit_y_min = hit_mid_y - hit_rad_y;
-				unsigned short hit_x_max = hit_mid_x + hit_rad_x;
-				unsigned short hit_y_max = hit_mid_y + hit_rad_y;
-
-				bool add_combo = false;
-				for (unsigned char tc = 0; tc < const_character_max; tc++)
-				{
-					if (tc == c || character_team[c] == character_team[tc] || character_health[tc] == 0)
-					{
-						continue;
-					}
-
-					unsigned short mid_x = (character_x[tc] / const_character_position_divider) + 16;
-					unsigned short mid_y = (character_y[tc] / const_character_position_divider) + 32;
-
-					unsigned short l = mid_x - 5;
-					unsigned short r = mid_x + 5;
-					unsigned short t = mid_y - 5;
-					unsigned short b = mid_y + 5;
-					if (r < hit_x_min || l > hit_x_max)
-					{
-						continue;
-					}
-					if (b < hit_y_min || t > hit_y_max)
-					{
-						continue;
-					}
-
-					signed hit_direction = character_x[c] < character_x[tc] ? 1 : -1;
-					unsigned char hit_power_x = 0;
-					unsigned char hit_power_z = 0;
-
-					switch (character_scheduled_attack[c])
-					{
-					case const_character_attack_punch:
-						character_start_hit_high(tc);
-						hit_power_x = const_character_attack_punch_knockback;
-						add_combo = true;
-						break;
-					case const_character_attack_kick:
-						character_start_hit_mid(tc);
-						hit_power_x = const_character_attack_kick_knockback;
-						add_combo = true;
-						break;
-					case const_character_attack_uppercut:
-						character_start_hit_high(tc);
-						hit_power_x = const_character_attack_uppercut_knockback;
-						hit_power_z = const_character_attack_uppercut_liftup;
-						break;
-					case const_character_attack_powerkick:
-						character_start_hit_high(tc);
-						hit_power_x = const_character_attack_powerkick_knockback;
-						hit_power_z = const_character_attack_powerkick_liftup;
-						break;
-					}
-
-					character_move_x[tc] = hit_direction * hit_power_x;
-					character_move_z[tc] += hit_power_z;
-
-					// Reduce health
-					if (character_health[tc] > hit_power_x)
-					{
-						character_health[tc] -= hit_power_x;
-					}
-					else
-					{
-						character_start_fall(tc);
-						character_health[tc] = 0;
-					}
-
-					// Cancel any pending attack on character
-					character_scheduled_attack[tc] = 0;
-					character_scheduled_attack_in[tc] = 0;
-				}
-
-				if (add_combo)
-				{
-					character_hit_combo[c]++;
-					character_hit_combo_timer[c] = 45;
-				}
+				perform_attack(c);
 			}
 		}
 		// write_stringf_ushort("x: %4d", 0xFF, 0, c, character_x[c]);

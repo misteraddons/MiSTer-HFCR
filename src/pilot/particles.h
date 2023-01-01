@@ -33,6 +33,6 @@ extern signed short particle_v_y[];
 
 extern void init_particles();
 extern void spawn_particle(unsigned short x, unsigned short y);
-extern void handle_particles();
+extern void update_particles();
 
 #endif

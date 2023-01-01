@@ -402,7 +402,9 @@ pause #(8,8,8,24) pause (
 
 ///////////////////   MAIN CORE   ////////////////////
 wire rom_download = ioctl_download && (ioctl_index < 8'd2);
-wire reset = (RESET | status[0] | rom_download);
+reg [23:0] initial_reset = {24{1'b1}};
+always @(posedge clk_sys) if(initial_reset > 0) initial_reset <= initial_reset + 24'd1;
+wire reset = (RESET | status[0] | rom_download | initial_reset > 0);
 assign LED_USER = rom_download;
 
 system system(

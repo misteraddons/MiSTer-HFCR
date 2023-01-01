@@ -20,9 +20,9 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-`ifndef SPRITE_ROM_WIDTH
-	`define SPRITE_ROM_WIDTH 17
-`endif
+// `ifndef SPRITE_ROM_WIDTH
+// 	`define SPRITE_ROM_WIDTH 15
+// `endif
 
 module sprite_engine #(
 	parameter SPRITE_RAM_WIDTH = 7,			
@@ -73,10 +73,11 @@ module sprite_engine #(
 );
 
 // State machine constants
-localparam SE_INIT = 0;
-localparam SE_IDLE = 1;
-localparam SE_WAIT = 2;
-localparam SE_RESET = 3;
+localparam SE_PENDING_INIT = 0;
+localparam SE_INIT = 1;
+localparam SE_IDLE = 2;
+localparam SE_WAIT = 3;
+localparam SE_RESET = 4;
 localparam SE_SETUP_READ_Y = 5;
 localparam SE_READ_Y_UPPER = 6;
 localparam SE_READ_Y_LOWER = 7;
@@ -108,8 +109,8 @@ reg					spritelb_slot_wr = 1'b1;
 reg					hsync_last;
 
 // Sprite state machine control
-reg			 [4:0]	spr_state;
-reg			 [4:0]	spr_state_next;
+reg			 [4:0]	spr_state /*synthesis keep*/;
+reg			 [4:0]	spr_state_next /*synthesis keep*/;
 // Sprite index counter and maximum sprite limit
 reg			 [5:0]	spr_index;
 localparam			spr_index_max = 6'd31;
@@ -140,9 +141,9 @@ wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_32x32 = { {`SPRITE_ROM_WIDTH-1
 wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_16x16 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, spr_rom_y_offset[3:0], 4'b0};
 wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_rom_y_offset_8x8 = { {`SPRITE_ROM_WIDTH-6{1'b0}}, spr_rom_y_offset[2:0], 3'b0};
 
-wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_32x32 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd31};
-wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_16x16 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd15};
-wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_8x8 = { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd7};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_32x32 = spr_mirror ? { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd31} : {`SPRITE_ROM_WIDTH{1'b0}};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_16x16 = spr_mirror ? { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd15} : {`SPRITE_ROM_WIDTH{1'b0}};
+wire		 [`SPRITE_ROM_WIDTH-1:0] 		spr_mirror_8x8 = spr_mirror ? { {`SPRITE_ROM_WIDTH-8{1'b0}}, 8'd7} : {`SPRITE_ROM_WIDTH{1'b0}};
 
 
 //`define CASVAL_DEBUG
@@ -239,10 +240,7 @@ reg 		[15:0]	col_secondary_timer;
 always @(posedge clk)
 begin
 
-	if(reset)
-	begin
-		spr_state <= SE_IDLE;
-	end
+	if(reset) spr_state <= SE_PENDING_INIT;
 
 	hsync_last <= hsync;
 
@@ -304,6 +302,11 @@ begin
 	spr_timer_line <= spr_timer_line + 1'b1;
 `endif
 	case (spr_state)
+		SE_PENDING_INIT:
+		begin
+			if(!reset) spr_state <= SE_INIT;
+		end
+
 		SE_INIT:
 		begin
 `ifdef CASVAL_DEBUG_TIMES
@@ -635,28 +638,23 @@ begin
 			// Setup line buffer write address
 		 	spritelbram_wr_addr <= {spritelb_slot_wr, spr_x};
 			// Set sprite rom read address
+					/* verilator lint_off WIDTH */
 			case(spr_size)
 				spr_size_32x32:
 				begin
-`ifdef SPRITE_ROM_WIDTH_16PLUS
-					if(`SPRITE_ROM_WIDTH > 17)
-						sprom_addr <= spr_rom_offset_32x32 + { {`SPRITE_ROM_WIDTH-17{1'b0}}, spr_image_index[6:0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // 17+
-					else if(`SPRITE_ROM_WIDTH == 17)
-						sprom_addr <= spr_rom_offset_32x32 + { spr_image_index[6:0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // 17
-`else
-					sprom_addr <= spr_rom_offset_32x32 + { spr_image_index[5-(16-`SPRITE_ROM_WIDTH):0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32; // < 17
-`endif
+					sprom_addr <= spr_rom_offset_32x32 + { spr_image_index[6:0], 10'b0} + spr_rom_y_offset_32x32 + spr_mirror_32x32;
 				end
 				spr_size_16x16: 
 				begin
-					sprom_addr <= spr_rom_offset_16x16 + { {`SPRITE_ROM_WIDTH-15{1'b0}}, spr_image_index[6:0], 8'b0} + spr_rom_y_offset_16x16 + spr_mirror_16x16;
+					sprom_addr <= spr_rom_offset_16x16 + { spr_image_index[6:0], 8'b0} + spr_rom_y_offset_16x16 + spr_mirror_16x16;
 				end
 				default:
 				begin
 					// Default to 8x8s
-					sprom_addr <= spr_rom_offset_8x8 + { {`SPRITE_ROM_WIDTH-13{1'b0}}, spr_image_index[6:0], 6'b0} + spr_rom_y_offset_8x8 + spr_mirror_8x8;
+					sprom_addr <= spr_rom_offset_8x8 + { spr_image_index[6:0], 6'b0} + spr_rom_y_offset_8x8 + spr_mirror_8x8;
 				end
 			endcase
+					/* verilator lint_on WIDTH */
 
 			// Reset sprite pixel index and count
 		 	spr_pixel_index <= {SPRITE_SIZE_WIDTH+1{1'b0}};

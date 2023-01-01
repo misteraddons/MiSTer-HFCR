@@ -1,7 +1,9 @@
 /*============================================================================
-	Aznable OS - Raiders demo - Scene controller
+	Aznable OS - Particle routines
 
-	Copyright 2022 - Jim Gregory - https://github.com/JimmyStones/
+	Author: Jim Gregory - https://github.com/JimmyStones/
+	Version: 1.0
+	Date: 2021-11-27
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -17,21 +19,22 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-#ifndef RAIDERS_SCENE_H
-#define RAIDERS_SCENE_H
+#ifndef PILOT_PARTICLES_H
+#define PILOT_PARTICLES_H
 
-extern signed char scene_scale;
-extern signed char scene_offset_x;
-extern signed char scene_offset_y;
-extern unsigned short scroll_x;
-extern unsigned short scroll_x_max;
-extern signed char scroll_v_x;
-extern unsigned char scroll_move_max;
+#define const_particle_max 8
+#define particle_timer_max 4
+#define const_particle_sprite_first 16
 
-#define screen_width 320
+extern bool particle_on[];
+extern unsigned char particle_timer[];
+extern unsigned short particle_x[];
+extern unsigned short particle_y[];
+extern signed short particle_v_x[];
+extern signed short particle_v_y[];
 
-extern void init_scene();
-
-extern void update_tilemap();
+extern void init_particles();
+extern void spawn_particle(unsigned short x, unsigned short y, unsigned char t);
+extern void update_particles();
 
 #endif

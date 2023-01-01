@@ -28,6 +28,7 @@
 #include "tilemap_indexes.h"
 #include "collision_boxes.h"
 #include "raiders_scene.h"
+#include "particles.h"
 #include "raiders_characters.h"
 #include "raiders_ai.h"
 
@@ -83,7 +84,7 @@ void sprite_test()
 {
 	clear_bgcolor(0b00011001);
 	SET_BIT(video_ctl, 0); // Enable sprite priority over charmap
-	unsigned char first_sprite = 0;
+	unsigned char first_sprite = sprite_index_aaaa_first;
 
 	unsigned redraw = true;
 	while (1)
@@ -115,16 +116,14 @@ void sprite_test()
 			if (redraw)
 			{
 				unsigned char s = 0;
-				unsigned char f = first_sprite;
+				unsigned char f = sprite_index_aaaa_first;
 				unsigned char y = 0;
-				// for (unsigned char y = 0; y < 1; y++)
-				// {
 
 				bool m = false;
 				for (unsigned char x = 0; x < 8; x++)
 				{
 					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
-					enable_sprite(s, sprite_palette_aaaa, sprite_palette_aaaa, 0);
+					enable_sprite(s, sprite_palette_test16, sprite_size_aaaa, 0);
 					set_sprite_position(s, 32 + (x * 34), 52 + (y * 48));
 					if (m)
 					{
@@ -143,7 +142,6 @@ void sprite_test()
 				{
 					break;
 				}
-				// }
 
 				y = 2;
 				f = sprite_index_test16_first;
@@ -172,7 +170,7 @@ void sprite_test()
 				for (unsigned char x = 0; x < 8; x++)
 				{
 					write_stringf("%2d", 0xFF, (x * 4), 1 + (y * 6), f);
-					enable_sprite(s, sprite_palette_test8, sprite_size_test8, 0);
+					enable_sprite(s, sprite_palette_test16, sprite_size_test8, 0);
 					set_sprite_position(s, 32 + (x * 34), 52 + (y * 48));
 					spr_index[s] = f;
 					if (m)
@@ -201,13 +199,13 @@ void app_main()
 	clear_chars(0);
 	init_sprites();
 	clear_sprites();
+	//sprite_test();
 
-	sprite_test();
+	init_particles();
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);
-	// activate_character(0, sprite_index_santa_first, const_team_player, 30);
-	//activate_character(0, sprite_index_alex_first, const_team_player, 30);
+	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
 	scene_offset_x = 0;
 	scene_offset_y = 0;
@@ -343,19 +341,18 @@ void app_main()
 			unsigned short time_before_scroll = GET_TIMER;
 #endif
 			// Handle scrolling
+			unsigned short last_scroll_x = scroll_x;
 			scroll_x = ((scene_offset_x * 16) + tilemap_offset_x);
+			scroll_v_x = scroll_x - last_scroll_x;
+
 			unsigned short focus_x = (character_x[const_player_character] / const_character_position_divider);
 			if (focus_x > scroll_x_max)
 			{
 				focus_x = scroll_x_max;
 			}
 			signed short scroll_offset = focus_x - scroll_x;
-			// write_stringf_ushort("scroll_x: %4d", 0xFF, 0, 0, scroll_x);
-			// write_stringf_ushort("focus_x: %4d", 0xFF, 0, 1, focus_x);
-
 			if (scroll_offset > 200 && scroll_x < scroll_x_max)
 			{
-				// write_stringf_short("scroll_offset: %4d", 0xFF, 0, 2, scroll_offset);
 				signed short scroll_amount = scroll_offset - 200;
 				if (scroll_amount > scroll_move_max)
 				{
@@ -366,7 +363,6 @@ void app_main()
 
 			if (scroll_x > 0 && scroll_offset < 140)
 			{
-				// write_stringf_short("scroll_offset: %4d", 0xFF, 0, 2, scroll_offset);
 				signed short scroll_amount = scroll_offset - 140;
 				if (scroll_amount < -scroll_move_max)
 				{
@@ -393,6 +389,14 @@ void app_main()
 			update_characters();
 #ifdef DEBUG_TIMING
 			unsigned short time_after_characters = GET_TIMER;
+#endif
+
+#ifdef DEBUG_TIMING
+			unsigned short time_before_particles = GET_TIMER;
+#endif
+			update_particles();
+#ifdef DEBUG_TIMING
+			unsigned short time_after_particles = GET_TIMER;
 #endif
 
 #ifdef DEBUG_TIMING

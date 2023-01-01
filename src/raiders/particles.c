@@ -1,5 +1,5 @@
 /*============================================================================
-	Aznable OS - Pilot demo application - Particle routines
+	Aznable OS - Particle routines
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
 	Version: 1.0
@@ -20,9 +20,9 @@
 ===========================================================================*/
 #include "../shared/sys.h"
 #include "../shared/sprite.h"
-#include "pilot.h"
 #include "particles.h"
 #include "sprite_images.h"
+#include "raiders_scene.h"
 
 bool particle_on[const_particle_max];
 unsigned char particle_timer[const_particle_max];
@@ -30,18 +30,19 @@ unsigned short particle_x[const_particle_max];
 unsigned short particle_y[const_particle_max];
 signed short particle_v_x[const_particle_max];
 signed short particle_v_y[const_particle_max];
+unsigned char particle_index[const_particle_max];
 
 void init_particles()
 {
 	for (unsigned char p = 0; p < const_particle_max; p++)
 	{
 		unsigned char s = p + const_particle_sprite_first;
-		enable_sprite(s, sprite_palette_trails, sprite_size_trails, 0);
+		enable_sprite(s, sprite_palette_explosions, sprite_size_explosions, 0);
 		spr_on[s] = 0;
 	}
 }
 
-void spawn_particle(unsigned short x, unsigned short y)
+void spawn_particle(unsigned short x, unsigned short y, unsigned char t)
 {
 	for (unsigned char pt = 0; pt < const_particle_max; pt++)
 	{
@@ -50,12 +51,11 @@ void spawn_particle(unsigned short x, unsigned short y)
 			particle_on[pt] = true;
 			particle_x[pt] = x;
 			particle_y[pt] = y;
-			// particle_v_x[pt] = (vector_x[player_a] * -player_thrust) >> 8;
-			// particle_v_y[pt] = (vector_y[player_a] * -player_thrust) >> 8;
 			particle_timer[pt] = particle_timer_max;
+			particle_index[pt] = sprite_index_explosions_first + (t * 4);
 			unsigned char ps = const_particle_sprite_first + pt;
 			spr_on[ps] = 1;
-			spr_index[ps] = sprite_index_trails_first;
+			spr_index[ps] = particle_index[pt];
 			break;
 		}
 	}
@@ -72,7 +72,7 @@ void update_particles()
 			particle_timer[p]--;
 			if (particle_timer[p] == 0)
 			{
-				if (spr_index[s] == sprite_index_trails_last)
+				if (spr_index[s] == particle_index[p] + 3)
 				{
 					spr_on[s] = 0;
 					particle_on[p] = 0;
@@ -84,9 +84,7 @@ void update_particles()
 					spr_index[s]++;
 				}
 			}
-			set_sprite_position(s, particle_x[p] / scale, particle_y[p] / scale);
-			particle_x[p] -= scroll_v_x;
-			particle_y[p] -= scroll_v_y;
+			set_sprite_position(s, (particle_x[p] / scene_scale) - scroll_x, particle_y[p] / scene_scale);
 			particle_x[p] += particle_v_x[p];
 			particle_y[p] += particle_v_y[p];
 		}

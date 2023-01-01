@@ -22,9 +22,11 @@
 #include "tilemap_indexes.h"
 #include "collision_boxes.h"
 
+unsigned char scene_scale = 4;
 signed char scene_offset_x = 0;
 signed char scene_offset_y = 0;
 unsigned short scroll_x;
+signed char scroll_v_x;
 unsigned short scroll_x_max;
 unsigned char screen_width = 21;
 unsigned char scroll_move_max = 5;
