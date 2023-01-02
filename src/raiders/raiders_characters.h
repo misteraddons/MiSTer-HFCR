@@ -42,6 +42,7 @@ extern unsigned char character_anim_dir[];
 extern unsigned char character_anim_locked[];
 
 extern unsigned char character_health[];
+extern unsigned char character_stun[];
 extern unsigned char character_hit_combo[];
 extern unsigned char character_hit_combo_timer[];
 
@@ -71,6 +72,8 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_frame_land_first 18
 #define const_character_frame_land_count 1
 #define const_character_anim_land_rate 5
+
+#define const_character_anim_prone 6
 
 #define const_character_anim_punch_rate 8
 #define const_character_anim_kick_rate 10
@@ -117,8 +120,10 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_hitoffset_powerkick_x 16
 #define const_character_hitoffset_powerkick_y 12
 
-
+#define const_character_sprite_palette sprite_palette_rota
+#define const_character_sprite_size sprite_size_rota
 #define const_character_first_sprite_index 0
+
 
 extern void activate_character(unsigned char c, unsigned char offset, unsigned char team, unsigned char health);
 extern void deactivate_character(unsigned char c);

@@ -28,6 +28,13 @@
 #define sprite_size_ninjared 0
 #define sprite_pixelsize_ninjared 32
 #define sprite_halfpixelsize_ninjared 16
+#define sprite_index_rota_first 72
+#define sprite_index_rota_count 24
+#define sprite_index_rota_last 95
+#define sprite_palette_rota 0
+#define sprite_size_rota 0
+#define sprite_pixelsize_rota 32
+#define sprite_halfpixelsize_rota 16
 #define sprite_index_explosions_first 0
 #define sprite_index_explosions_count 8
 #define sprite_index_explosions_last 7

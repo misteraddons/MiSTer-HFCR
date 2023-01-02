@@ -44,17 +44,14 @@ unsigned char character_sprite_offset[const_character_max];
 unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
 unsigned char character_anim_locked[const_character_max];
+unsigned char character_collider[const_character_max];
 
 unsigned char character_health[const_character_max];
+unsigned char character_stun[const_character_max];
 unsigned char character_scheduled_attack[const_character_max];
 unsigned char character_scheduled_attack_in[const_character_max];
 unsigned char character_hit_combo[const_character_max];
 unsigned char character_hit_combo_timer[const_character_max];
-
-// #define const_character_sprite_palette sprite_palette_alex
-// #define const_character_sprite_size sprite_size_alex
-#define const_character_sprite_palette 0
-#define const_character_sprite_size 0
 
 void activate_character(unsigned char c, unsigned char offset, unsigned char team, unsigned char health)
 {
@@ -64,6 +61,7 @@ void activate_character(unsigned char c, unsigned char offset, unsigned char tea
 	character_sprite_offset[c] = offset;
 	character_team[c] = team;
 	character_health[c] = health;
+	character_stun[c] = 0;
 }
 
 void deactivate_character(unsigned char c)
@@ -82,9 +80,17 @@ void character_anim_oneshot(unsigned char c)
 		}
 		if (character_frame[c] == character_frame_target[c])
 		{
+			character_collider[c] = 0;
 			if (character_health[c] > 0)
 			{
-				character_anim[c] = const_character_anim_idle;
+				if (character_stun[c] > 0)
+				{
+					character_anim[c] = const_character_anim_prone;
+				}
+				else
+				{
+					character_anim[c] = const_character_anim_idle;
+				}
 				character_anim_timer[c] = character_anim_rate[c];
 			}
 			else
@@ -200,6 +206,7 @@ void character_start_fall(unsigned char c)
 	character_frame[c] = const_character_frame_fall_first;
 	character_frame_target[c] = character_frame[c] + const_character_frame_fall_count - 1;
 	character_anim_locked[c] = 1;
+	character_collider[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
 }
 
@@ -314,7 +321,7 @@ void perform_attack(unsigned char c)
 			continue;
 		}
 
-		spawn_hit = true;`
+		spawn_hit = true;
 		signed hit_direction = character_x[c] < character_x[tc] ? 1 : -1;
 		unsigned char hit_power_x = 0;
 		unsigned char hit_power_z = 0;
@@ -518,6 +525,17 @@ void update_characters()
 					spr_on[player_sprite] = !spr_on[player_sprite];
 				}
 				break;
+			case const_character_anim_prone:
+				if (character_stun[c] > 0)
+				{
+					character_stun[c]--;
+				}
+				if (character_stun[c] == 0)
+				{
+					character_anim[c] = const_character_anim_idle;
+					character_anim_timer[c] = character_anim_rate[c];
+				}
+				break;
 			}
 		}
 
@@ -546,9 +564,69 @@ void update_characters()
 		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
 		// write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
 		// write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
-		// write_stringf("a=%3d", 0xFF, 16, c, character_anim[c]);
+		//write_stringf("s=%3d", 0xFF, 9, c, character_stun[c]);
+		//write_stringf("a=%3d", 0xFF, 16, c, character_anim[c]);
 		// write_stringf("l=%3d", 0xFF, 21, c, character_anim_locked[c]);
 		// write_stringf("t=%3d", 0xFF, 27, c, character_anim_timer[c]);
 		// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
+	}
+
+	// Handle inter-character collision
+	for (unsigned char c = 0; c < const_character_max; c++)
+	{
+		if (!character_active[c] || character_collider[c] == 0 || character_move_x[c] == 0)
+		{
+			//write_string("", 0xFF, 0, c);
+			continue;
+		}
+		else
+		{
+			//write_string("C", 0xFF, 0, c);
+		}
+
+		for (unsigned char t = 0; t < const_character_max; t++)
+		{
+			// Don't collide if target is the same character, inactive, already a collider, or fallen down
+			if (t == c || !character_active[t] || character_collider[t] != 0 || character_anim[t] == const_character_anim_prone)
+			{
+				continue;
+			}
+			//write_string(".", 0xFF, t + 1, c);
+
+			signed char y_off = (character_y[c] / const_character_position_divider) - (character_y[t] / const_character_position_divider);
+			if (y_off < -8 || y_off > 8)
+			{
+				continue;
+			}
+			//write_string("-", 0xFF, t + 1, c);
+			signed short x_off = character_x[c] - character_x[t];
+			if (x_off < -16 || x_off > 16)
+			{
+				continue;
+			}
+			//write_string("x", 0xFF, t + 1, c);
+
+			character_move_x[t] = character_move_x[c];
+			character_move_z[t] = -5;
+
+			unsigned char hit_power_x = abs(character_move_x[c]);
+
+			// Reduce health
+			character_start_fall(t);
+			character_stun[t] += hit_power_x;
+			if (character_health[t] > hit_power_x)
+			{
+				character_health[t] -= hit_power_x;
+			}
+			else
+			{
+				//	character_start_fall(t);
+				character_health[t] = 0;
+			}
+
+			// Cancel any pending attack on character
+			character_scheduled_attack[t] = 0;
+			character_scheduled_attack_in[t] = 0;
+		}
 	}
 }

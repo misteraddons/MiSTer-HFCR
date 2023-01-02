@@ -205,6 +205,7 @@ void app_main()
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);
+	//activate_character(0, sprite_index_rota_first, const_team_player, 30);
 	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
 	scene_offset_x = 0;

@@ -58,10 +58,9 @@ unsigned char ai_spawn_timer = 15;
 
 void update_ai()
 {
-
-	// write_stringf("ai_active_count %d", 0xFF, 0, 0, ai_active_count);
-	// write_stringf("ai_first_free %d", 0xFF, 0, 1, ai_first_free);
-	// write_stringf("ai_spawn_timer %d", 0xFF, 0, 2, ai_spawn_timer);
+	// write_stringf("ai_active_count %d", 0xFF, 0, 10, ai_active_count);
+	// write_stringf("ai_first_free %d", 0xFF, 0, 11, ai_first_free);
+	// write_stringf("ai_spawn_timer %d", 0xFF, 0, 12, ai_spawn_timer);
 	if (ai_first_free != 255)
 	{
 		if (ai_spawn_timer > 0)
