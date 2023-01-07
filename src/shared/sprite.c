@@ -64,6 +64,12 @@ void set_sprite_position_y(unsigned char sprite, unsigned short y)
 	spr_y_h[sprite] = y >> 8;
 	spr_y_l[sprite] = (unsigned char)y;
 }
+void set_sprite_position_fakey(unsigned char sprite, unsigned short y, unsigned short fakey)
+{
+	spr_y[sprite] = fakey;
+	spr_y_h[sprite] = y >> 8;
+	spr_y_l[sprite] = (unsigned char)y;
+}
 
 void init_sprites()
 {

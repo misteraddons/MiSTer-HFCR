@@ -35,6 +35,8 @@ extern void set_sprite_position_x(unsigned char sprite, unsigned short x);
 
 extern void set_sprite_position_y(unsigned char sprite, unsigned short y);
 
+extern void set_sprite_position_fakey(unsigned char sprite, unsigned short y, unsigned short fakey);
+
 extern void init_sprites();
 
 extern void sort_sprites();

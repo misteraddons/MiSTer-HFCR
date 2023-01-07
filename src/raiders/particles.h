@@ -34,7 +34,8 @@ extern signed short particle_v_x[];
 extern signed short particle_v_y[];
 
 extern void init_particles();
-extern void spawn_particle(unsigned short x, unsigned short y, unsigned char t);
+extern void kill_particle(unsigned char p);
+extern unsigned char spawn_particle(unsigned short x, unsigned short y, unsigned char type, unsigned char firstFrame, unsigned char frameCount);
 extern void update_particles();
 
 #endif

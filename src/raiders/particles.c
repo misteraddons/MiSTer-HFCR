@@ -20,29 +20,32 @@
 ===========================================================================*/
 #include "../shared/sys.h"
 #include "../shared/sprite.h"
+#include "../shared/ui.h"
 #include "particles.h"
 #include "sprite_images.h"
 #include "raiders_scene.h"
 
 bool particle_on[const_particle_max];
 unsigned char particle_timer[const_particle_max];
+unsigned char particle_type[const_particle_max];
+unsigned char particle_first_frame[const_particle_max];
+unsigned char particle_frame_count[const_particle_max];
 unsigned short particle_x[const_particle_max];
 unsigned short particle_y[const_particle_max];
 signed short particle_v_x[const_particle_max];
 signed short particle_v_y[const_particle_max];
-unsigned char particle_index[const_particle_max];
 
 void init_particles()
 {
 	for (unsigned char p = 0; p < const_particle_max; p++)
 	{
 		unsigned char s = p + const_particle_sprite_first;
-		enable_sprite(s, sprite_palette_explosions, sprite_size_explosions, 0);
+		enable_sprite(s, sprite_palette_particles, sprite_size_particles, 0);
 		spr_on[s] = 0;
 	}
 }
 
-void spawn_particle(unsigned short x, unsigned short y, unsigned char t)
+unsigned char spawn_particle(unsigned short x, unsigned short y, unsigned char type, unsigned char firstFrame, unsigned char frameCount)
 {
 	for (unsigned char pt = 0; pt < const_particle_max; pt++)
 	{
@@ -51,14 +54,24 @@ void spawn_particle(unsigned short x, unsigned short y, unsigned char t)
 			particle_on[pt] = true;
 			particle_x[pt] = x;
 			particle_y[pt] = y;
+			particle_type[pt] = type;
 			particle_timer[pt] = particle_timer_max;
-			particle_index[pt] = sprite_index_explosions_first + (t * 4);
+			particle_first_frame[pt] = sprite_index_particles_first + firstFrame;
+			particle_frame_count[pt] = frameCount;
 			unsigned char ps = const_particle_sprite_first + pt;
 			spr_on[ps] = 1;
-			spr_index[ps] = particle_index[pt];
-			break;
+			spr_index[ps] = particle_first_frame[pt];
+			return pt;
 		}
 	}
+	return 255;
+}
+
+void kill_particle(unsigned char p)
+{
+	unsigned char s = const_particle_sprite_first + p;
+	spr_on[s] = false;
+	particle_on[p] = false;
 }
 
 void update_particles()
@@ -72,17 +85,24 @@ void update_particles()
 			particle_timer[p]--;
 			if (particle_timer[p] == 0)
 			{
-				if (spr_index[s] == particle_index[p] + 3)
+				if (spr_index[s] == particle_first_frame[p] + (particle_frame_count[p] - 1))
 				{
-					spr_on[s] = 0;
-					particle_on[p] = 0;
-					continue;
+					switch (particle_type[p])
+					{
+					case 1: // loop!
+						spr_index[s] = particle_first_frame[p];
+						break;
+					default:
+						spr_on[s] = 0;
+						particle_on[p] = 0;
+						continue;
+					}
 				}
 				else
 				{
-					particle_timer[p] = particle_timer_max;
 					spr_index[s]++;
 				}
+				particle_timer[p] = particle_timer_max;
 			}
 			set_sprite_position(s, (particle_x[p] / scene_scale) - scroll_x, particle_y[p] / scene_scale);
 			particle_x[p] += particle_v_x[p];

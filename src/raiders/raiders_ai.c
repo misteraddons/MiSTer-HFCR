@@ -33,7 +33,7 @@ unsigned char ai_first_free = 0;
 unsigned char ai_active_count = 0;
 unsigned char ai_spawn_timer = 15;
 
-#define ai_active_max 3
+#define ai_active_max const_ai_max
 
 #define const_ai_walk_speed 4
 #define const_ai_run_speed 8
@@ -81,7 +81,7 @@ void update_ai()
 				character_anim_timer[c] = rand_uchar(0, 5);
 				ai_mode[ai_first_free] = 0;
 				ai_active[ai_first_free] = 1;
-				ai_spawn_timer = 30 + (ai_active_count * 30);
+				// ai_spawn_timer = 5 + (ai_active_count * 1);
 			}
 		}
 	}
@@ -103,10 +103,14 @@ void update_ai()
 
 		ai_active_count++;
 
-		
 		if (character_health[ai_char] == 0)
 		{
 			ai_active[a] = 0;
+			continue;
+		}
+
+		if (character_anim[ai_char] == const_character_anim_prone)
+		{
 			continue;
 		}
 

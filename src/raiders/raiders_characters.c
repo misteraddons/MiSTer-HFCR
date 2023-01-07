@@ -45,6 +45,7 @@ unsigned char character_anim_timer[const_character_max];
 unsigned char character_anim_dir[const_character_max];
 unsigned char character_anim_locked[const_character_max];
 unsigned char character_collider[const_character_max];
+unsigned char character_effect_particle[const_character_max];
 
 unsigned char character_health[const_character_max];
 unsigned char character_stun[const_character_max];
@@ -62,43 +63,52 @@ void activate_character(unsigned char c, unsigned char offset, unsigned char tea
 	character_team[c] = team;
 	character_health[c] = health;
 	character_stun[c] = 0;
+	character_effect_particle[c] = 255;
+	character_frame[c] = const_character_frame_idle;
 }
 
 void deactivate_character(unsigned char c)
 {
 	character_active[c] = false;
 	spr_on[const_character_first_sprite_index + c] = false;
+	if (character_effect_particle[c] != 255)
+	{
+		kill_particle(character_effect_particle[c]);
+	}
+}
+
+void make_prone(unsigned char c)
+{
+	character_anim[c] = const_character_anim_prone;
+	character_frame[c] = const_character_frame_dead;
+	character_frame_target[c] = character_frame[c];
+	character_anim_locked[c] = 0;
+	character_anim_timer[c] = character_anim_rate[c];
+
+	unsigned short stun_x = character_x[c];
+	if (character_dir[c] == -1)
+	{
+		stun_x = character_x[c] + 16;
+	}
+	unsigned char p = spawn_particle(stun_x, character_y[c], 1, 8, 3);
+	if (p != 255)
+	{
+		character_effect_particle[c] = p;
+	}
 }
 
 void character_anim_oneshot(unsigned char c)
 {
 	if (character_anim_timer[c] == 0)
 	{
-		if (character_frame[c] < character_frame_target[c])
-		{
-			character_frame[c]++;
-		}
-		if (character_frame[c] == character_frame_target[c])
+		character_frame[c]++;
+		if (character_frame[c] > character_frame_target[c])
 		{
 			character_collider[c] = 0;
-			if (character_health[c] > 0)
-			{
-				if (character_stun[c] > 0)
-				{
-					character_anim[c] = const_character_anim_prone;
-				}
-				else
-				{
-					character_anim[c] = const_character_anim_idle;
-				}
-				character_anim_timer[c] = character_anim_rate[c];
-			}
-			else
-			{
-				character_anim[c] = const_character_anim_dead;
-				character_anim_timer[c] = const_character_anim_dead_rate;
-				character_anim_dir[c] = const_character_anim_dead_flashcount; // Re-use anim direction for number of flashes before character is culled
-			}
+			character_anim[c] = const_character_anim_idle;
+			character_frame[c] = const_character_frame_idle;
+			character_anim_locked[c] = 0;
+			character_anim_timer[c] = character_anim_rate[c];
 		}
 		else
 		{
@@ -201,7 +211,7 @@ void character_start_hit_mid(unsigned char c)
 
 void character_start_fall(unsigned char c)
 {
-	character_anim[c] = const_character_anim_oneshot;
+	character_anim[c] = const_character_anim_fall;
 	character_anim_rate[c] = const_character_anim_fall_rate;
 	character_frame[c] = const_character_frame_fall_first;
 	character_frame_target[c] = character_frame[c] + const_character_frame_fall_count - 1;
@@ -229,6 +239,16 @@ void character_start_land(unsigned char c)
 	character_frame_target[c] = character_frame[c] + const_character_frame_land_count - 1;
 	character_anim_locked[c] = 1;
 	character_anim_timer[c] = character_anim_rate[c];
+}
+
+void character_start_dead(unsigned char c)
+{
+	character_anim[c] = const_character_anim_dead;
+	character_anim_timer[c] = const_character_anim_dead_rate;
+	character_anim_dir[c] = const_character_anim_dead_flashcount; // Re-use anim direction for number of flashes before character is culled
+	character_frame[c] = const_character_frame_dead;
+	character_frame_target[c] = const_character_frame_dead;
+	character_anim_locked[c] = 1;
 }
 
 void perform_attack(unsigned char c)
@@ -291,16 +311,17 @@ void perform_attack(unsigned char c)
 	unsigned short hit_x_max = hit_mid_x + hit_rad_x;
 	unsigned short hit_y_max = hit_mid_y + hit_rad_y;
 
-	// write_stringf_ushort("hit_particle_x: %4d", 0xFF, 0, 0, hit_particle_x);
-	// write_stringf_ushort("hit_particle_y: %4d", 0xFF, 0, 1, hit_particle_y);
-	// write_stringf_ushort("hit_mid_x: %4d", 0xFF, 0, 2, hit_mid_x);
-	// write_stringf_ushort("hit_mid_y: %4d", 0xFF, 0, 3, hit_mid_y);
-
 	bool add_combo = false;
 	bool spawn_hit = false;
 	for (unsigned char tc = 0; tc < const_character_max; tc++)
 	{
 		if (tc == c || character_team[c] == character_team[tc] || character_health[tc] == 0)
+		{
+			continue;
+		}
+
+		// Temp - can't hit a prone character
+		if (character_anim[tc] == const_character_anim_prone)
 		{
 			continue;
 		}
@@ -339,22 +360,21 @@ void perform_attack(unsigned char c)
 			add_combo = true;
 			break;
 		case const_character_attack_uppercut:
-			character_start_hit_high(tc);
+			character_start_fall(tc);
 			hit_power_x = const_character_attack_uppercut_knockback;
 			hit_power_z = const_character_attack_uppercut_liftup;
 			break;
 		case const_character_attack_powerkick:
-			character_start_hit_high(tc);
+			character_start_fall(tc);
 			hit_power_x = const_character_attack_powerkick_knockback;
 			hit_power_z = const_character_attack_powerkick_liftup;
 			break;
 		}
 
 		// // Create explosion
-		// spawn_particle(hit_mid_x - 8, hit_mid_y - 8);
-
 		character_move_x[tc] = hit_direction * hit_power_x;
 		character_move_z[tc] += hit_power_z;
+		character_stun[tc] += hit_power_x * 2;
 
 		// Reduce health
 		if (character_health[tc] > hit_power_x)
@@ -374,7 +394,7 @@ void perform_attack(unsigned char c)
 	if (spawn_hit)
 	{
 		// Create explosion
-		spawn_particle(hit_particle_x * const_character_position_divider, hit_particle_y * const_character_position_divider, hit_particle_type);
+		spawn_particle(hit_particle_x * const_character_position_divider, hit_particle_y * const_character_position_divider, 0, hit_particle_type * 4, 4);
 	}
 
 	if (add_combo)
@@ -407,15 +427,32 @@ void update_characters()
 			character_y[c] += character_move_y[c];
 		}
 		character_z[c] += character_move_z[c];
-		if (character_z[c] < 0)
+		if (character_z[c] <= 0 && character_move_z[c] < 0)
 		{
+			character_collider[c] = 0;
+			character_anim_locked[c] = 0;
+			if (character_anim[c] == const_character_anim_fall && character_stun[c] > 0 && character_health[c] != 0)
+			{
+				make_prone(c);
+			}
+			else
+			{
+				character_anim[c] = const_character_anim_idle;
+				character_anim_rate[c] = 10;
+			}
 			character_z[c] = 0;
 			character_move_z[c] = 0;
 		}
 		character_onground[c] = (character_z[c] == 0);
 
+		if (character_anim_locked[c] == 0 && character_health[c] == 0)
+		{
+			character_start_dead(c);
+		}
+
 		if (character_onground[c])
 		{
+
 			// Trigger landing anim if jumping and hit the ground
 			if (character_anim[c] == const_character_anim_jump)
 			{
@@ -469,6 +506,20 @@ void update_characters()
 			}
 		}
 
+		if (character_anim[c] == const_character_anim_prone)
+		{
+			unsigned char p = character_effect_particle[c];
+			if (character_dir[c] == 1)
+			{
+				particle_x[p] = character_x[c];
+			}
+			else
+			{
+				particle_x[p] = character_x[c] + 16;
+			}
+			particle_y[p] = character_y[c];
+		}
+
 		if (character_anim_timer[c] == 0)
 		{
 			switch (character_anim[c])
@@ -513,6 +564,12 @@ void update_characters()
 			case const_character_anim_jump:
 				character_anim_locked[c] = 0;
 				break;
+			case const_character_anim_fall:
+				if (character_onground[c] && character_health[c] == 0)
+				{
+					character_start_dead(c);
+				}
+				break;
 			case const_character_anim_dead:
 				character_anim_timer[c] = const_character_anim_dead_rate;
 				character_anim_dir[c]--;
@@ -532,8 +589,10 @@ void update_characters()
 				}
 				if (character_stun[c] == 0)
 				{
+					kill_particle(character_effect_particle[c]);
 					character_anim[c] = const_character_anim_idle;
-					character_anim_timer[c] = character_anim_rate[c];
+					character_anim_rate[c] = const_character_anim_walk_rate;
+					character_anim_timer[c] = 0;
 				}
 				break;
 			}
@@ -543,15 +602,14 @@ void update_characters()
 		spr_index[player_sprite] = character_sprite_offset[c] + character_frame[c];
 		unsigned short x = (character_x[c] / const_character_position_divider) - scroll_x;
 		unsigned short y = (character_y[c] / const_character_position_divider);
-		y -= character_z[c] / const_character_position_divider;
 		if (character_frame[c] == 0 || character_frame[c] == 2 || character_frame[c] == 3)
 		{
 			y--;
 		}
-		set_sprite_position(player_sprite, x, y);
+		set_sprite_position_x(player_sprite, x);
+		set_sprite_position_fakey(player_sprite, y - (character_z[c] / const_character_position_divider), y);
 
 		// Handle attacks
-
 		if (character_scheduled_attack_in[c] > 0)
 		{
 			character_scheduled_attack_in[c]--;
@@ -560,15 +618,21 @@ void update_characters()
 				perform_attack(c);
 			}
 		}
-		// write_stringf_ushort("x: %4d", 0xFF, 0, c, character_x[c]);
-		// write_stringf_ushort("y: %4d", 0xFF, 10, c, character_y[c]);
-		// write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
-		// write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
-		//write_stringf("s=%3d", 0xFF, 9, c, character_stun[c]);
-		//write_stringf("a=%3d", 0xFF, 16, c, character_anim[c]);
-		// write_stringf("l=%3d", 0xFF, 21, c, character_anim_locked[c]);
-		// write_stringf("t=%3d", 0xFF, 27, c, character_anim_timer[c]);
-		// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
+
+		// if (c > 0)
+		// {
+			// write_stringf_ushort("x=%4d", 0xFF, 0, c, character_x[c]);
+			// write_stringf_ushort("y=%4d", 0xFF, 7, c, character_y[c]);
+			// write_stringf("s=%2d", 0xFF, 7, c, character_stun[c]);
+			// write_stringf_ushort("z=%4d", 0xFF, 14, c, character_z[c]);
+			//  write_stringf("hc: %3d", 0xFF, 0, c, character_hit_combo[c]);
+			//  write_stringf("hct: %3d", 0xFF, 10, c, character_hit_combo_timer[c]);
+			// write_stringf("a=%3d", 0xFF, 21, c, character_anim[c]);
+			// write_stringf("l=%1d", 0xFF, 28, c, character_anim_locked[c]);
+			// write_stringf("c=%1d", 0xFF, 28, c, character_collider[c]);
+			// write_stringf("t=%3d", 0xFF, 35, c, character_anim_timer[c]);
+			// write_stringf("a: %3d", 0xFF, 21, c, character_scheduled_attack_in[c]);
+		// }
 	}
 
 	// Handle inter-character collision
@@ -576,35 +640,35 @@ void update_characters()
 	{
 		if (!character_active[c] || character_collider[c] == 0 || character_move_x[c] == 0)
 		{
-			//write_string("", 0xFF, 0, c);
+			// write_string("", 0xFF, 0, c);
 			continue;
 		}
 		else
 		{
-			//write_string("C", 0xFF, 0, c);
+			// write_string("C", 0xFF, 0, c);
 		}
 
 		for (unsigned char t = 0; t < const_character_max; t++)
 		{
 			// Don't collide if target is the same character, inactive, already a collider, or fallen down
-			if (t == c || !character_active[t] || character_collider[t] != 0 || character_anim[t] == const_character_anim_prone)
+			if (t == c || !character_active[t] || character_collider[t] != 0 || character_anim[t] == const_character_anim_prone || character_anim[t] == const_character_anim_dead)
 			{
 				continue;
 			}
-			//write_string(".", 0xFF, t + 1, c);
+			// write_string(".", 0xFF, t + 1, c);
 
 			signed char y_off = (character_y[c] / const_character_position_divider) - (character_y[t] / const_character_position_divider);
 			if (y_off < -8 || y_off > 8)
 			{
 				continue;
 			}
-			//write_string("-", 0xFF, t + 1, c);
+			// write_string("-", 0xFF, t + 1, c);
 			signed short x_off = character_x[c] - character_x[t];
 			if (x_off < -16 || x_off > 16)
 			{
 				continue;
 			}
-			//write_string("x", 0xFF, t + 1, c);
+			// write_string("x", 0xFF, t + 1, c);
 
 			character_move_x[t] = character_move_x[c];
 			character_move_z[t] = -5;
@@ -613,14 +677,13 @@ void update_characters()
 
 			// Reduce health
 			character_start_fall(t);
-			character_stun[t] += hit_power_x;
+			character_stun[t] += hit_power_x * 2;
 			if (character_health[t] > hit_power_x)
 			{
 				character_health[t] -= hit_power_x;
 			}
 			else
 			{
-				//	character_start_fall(t);
 				character_health[t] = 0;
 			}
 

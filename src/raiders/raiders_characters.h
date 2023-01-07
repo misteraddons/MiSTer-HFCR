@@ -73,7 +73,10 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_frame_land_count 1
 #define const_character_anim_land_rate 5
 
-#define const_character_anim_prone 6
+#define const_character_anim_fall 6
+#define const_character_anim_fall_rate 10
+
+#define const_character_anim_prone 7
 
 #define const_character_anim_punch_rate 8
 #define const_character_anim_kick_rate 10
@@ -85,7 +88,6 @@ extern unsigned char character_hit_combo_timer[];
 #define const_character_anim_hit_mid_rate 7
 #define const_character_frame_hit_mid_first 12
 #define const_character_frame_hit_mid_count 2
-#define const_character_anim_fall_rate 14
 #define const_character_frame_fall_first 15
 #define const_character_frame_fall_count 2
 
