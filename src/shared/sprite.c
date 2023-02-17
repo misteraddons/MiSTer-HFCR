@@ -154,6 +154,7 @@ void clear_sprites()
 	for (unsigned char sprite = 0; sprite < sprite_max; sprite++)
 	{
 		spr_on[sprite] = 0;
+		spr_order[sprite] = sprite;
 	}
 }
 void clear_sprites_range(unsigned char first, unsigned char last)
