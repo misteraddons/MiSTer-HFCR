@@ -81,9 +81,9 @@ _sndram	=	0x8580
 _musicram	=	0x8590
 _tilemapctl	=	0x8600
 _tilemapram	=	0x8610
-_chram	=	0x9800
-_fgcolram	=	0xa000
-_bgcolram	=	0xa800
+_chram	=	0x9200
+_fgcolram	=	0x9a00
+_bgcolram	=	0xa200
 _spriteram	=	0xb000
 _spritecollisionram	=	0xb400
 ;--------------------------------------------------------

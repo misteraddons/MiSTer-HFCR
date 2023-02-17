@@ -26,6 +26,8 @@ void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 
+	clear_chars(0x9);
+
 	write_string("Hello wurld", 0xFF, 5, 10);
 
 	write_string("0", 0xFF, 0, 0);

@@ -1,4 +1,7 @@
 
+set_global_assignment -name VERILOG_MACRO "DISABLE_SPRITES=1"
+set_global_assignment -name VERILOG_MACRO "DISABLE_STARS_1=1"
+set_global_assignment -name VERILOG_MACRO "DISABLE_STARS_2=1"
+set_global_assignment -name VERILOG_MACRO "DISABLE_STARS_3=1"
 set_global_assignment -name VERILOG_MACRO "DISABLE_MUSIC=1"
 set_global_assignment -name VERILOG_MACRO "DISABLE_SOUND=1"
-set_global_assignment -name VERILOG_MACRO "SPRITE_ROM_WIDTH=14"

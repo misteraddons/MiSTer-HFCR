@@ -52,9 +52,9 @@ unsigned char __at(0x8590) musicram[4];
 unsigned char __at(0x8600) tilemapctl[4];
 unsigned char __at(0x8610) tilemapram[1024];
 // - Casval (character map)
-unsigned char __at(0x9800) chram[2048];
-unsigned char __at(0xA000) fgcolram[2048];
-unsigned char __at(0xA800) bgcolram[2048];
+unsigned char __at(0x9200) chram[2048];
+unsigned char __at(0x9A00) fgcolram[2048];
+unsigned char __at(0xA200) bgcolram[2048];
 // - Comet (sprite engine)
 unsigned char __at(0xB000) spriteram[512];
 unsigned char __at(0xB400) spritecollisionram[32];

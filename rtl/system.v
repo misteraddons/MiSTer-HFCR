@@ -154,9 +154,9 @@ wire music_cs = cpu_addr >= 16'h8590 && cpu_addr < 16'h8594;
 wire tilemapcontrol_cs = cpu_addr >= 16'h8600 && cpu_addr < 16'h8610;
 wire tilemapram_cs = cpu_addr >= 16'h8610 && cpu_addr < 16'h8910;
 // - Casval (character map)
-wire chram_cs = cpu_addr[15:11] == 5'b10011;
-wire fgcolram_cs = cpu_addr[15:11] == 5'b10100;
-wire bgcolram_cs = cpu_addr[15:11] == 5'b10101;
+wire chram_cs = cpu_addr >= 16'h9200 && cpu_addr < 16'h9A00;
+wire fgcolram_cs = cpu_addr >= 16'h9A00 && cpu_addr < 16'hA200;
+wire bgcolram_cs = cpu_addr >= 16'hA200 && cpu_addr < 16'hAA00;
 // - Comet (sprite engine)
 wire spriteram_cs = cpu_addr >= 16'hB000 && cpu_addr < 16'hB080;
 wire spritecollisionram_cs = cpu_addr >= 16'hB400 && cpu_addr < 16'hB404;
@@ -720,16 +720,19 @@ dpram #(11,8, "font.hex") chrom
 );
 
 // Char index RAM - 0x9800 - 0x9FFF (0x0800 / 2048 bytes)
+wire [15:0] chram_cpu_addr_wr = cpu_addr[15:0] - 16'h9200;
+reg [15:0] chram_addr_last;
+wire [15:0] chram_addr_rd = {5'b0, chram_addr[10:0]};
 dpram #(11,8) chram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[10:0]),
+	.address_a(chram_cpu_addr_wr[10:0]),
 	.wren_a(chram_wr),
 	.data_a(cpu_dout),
 	.q_a(chram_data_out),
 
 	.clock_b(clk_24),
-	.address_b(chram_addr[10:0]),
+	.address_b(chram_addr_rd[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
 	.q_b(chmap_data_out)
@@ -739,13 +742,13 @@ dpram #(11,8) chram
 dpram #(11,8) fgcolram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[10:0]),
+	.address_a(chram_cpu_addr_wr[10:0]),
 	.wren_a(fgcolram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
 	.clock_b(clk_24),
-	.address_b(chram_addr[10:0]),
+	.address_b(chram_addr_rd[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
 	.q_b(fgcolram_data_out)
@@ -755,13 +758,13 @@ dpram #(11,8) fgcolram
 dpram #(11,8) bgcolram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[10:0]),
+	.address_a(chram_cpu_addr_wr[10:0]),
 	.wren_a(bgcolram_wr),
 	.data_a(cpu_dout),
 	.q_a(),
 
 	.clock_b(clk_24),
-	.address_b(chram_addr[10:0]),
+	.address_b(chram_addr_rd[10:0]),
 	.wren_b(1'b0),
 	.data_b(),
 	.q_b(bgcolram_data_out)
@@ -805,10 +808,11 @@ dpram_w1r2 #(TILEMAP_ROM_WIDTH,8, "tilemap.hex") tilemaprom
 
 `ifndef DISABLE_SPRITES
 // Sprite RAM - 0xB000 - 0xB07F (0x0080 / 128 bytes)
+wire [15:0] spriteram_addr_wr = cpu_addr - 16'h9200;
 dpram #(SPRITE_RAM_WIDTH,8) spriteram
 (
 	.clock_a(clk_24),
-	.address_a(cpu_addr[SPRITE_RAM_WIDTH-1:0]),
+	.address_a(spriteram_addr_wr[SPRITE_RAM_WIDTH-1:0]),
 	.wren_a(spriteram_wr),
 	.data_a(cpu_dout),
 	.q_a(),

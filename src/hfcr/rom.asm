@@ -11,22 +11,21 @@
 	.globl _main
 	.globl _app_main
 	.globl _write_string
-	.globl _musicram
-	.globl _sndram
-	.globl _tilemapram
-	.globl _tilemapctl
+	.globl _clear_chars
 	.globl _spritecollisionram
 	.globl _spriteram
 	.globl _bgcolram
 	.globl _fgcolram
 	.globl _chram
+	.globl _tilemapram
+	.globl _tilemapctl
+	.globl _musicram
+	.globl _sndram
 	.globl _system_menu
 	.globl _system_pause
 	.globl _starfield3
 	.globl _starfield2
 	.globl _starfield1
-	.globl _timer
-	.globl _timestamp
 	.globl _ps2_mouse
 	.globl _ps2_key
 	.globl _spinner
@@ -34,6 +33,8 @@
 	.globl _analog_r
 	.globl _analog_l
 	.globl _joystick
+	.globl _timer
+	.globl _timestamp
 	.globl _video_ctl
 	.globl _input0
 ;--------------------------------------------------------
@@ -45,29 +46,29 @@
 	.area _DATA
 _input0	=	0x8000
 _video_ctl	=	0x8001
+_timestamp	=	0x8080
+_timer	=	0x80c0
 _joystick	=	0x8100
 _analog_l	=	0x8200
-_analog_r	=	0x8300
-_paddle	=	0x8400
-_spinner	=	0x8500
-_ps2_key	=	0x8600
-_ps2_mouse	=	0x8700
-_timestamp	=	0x8800
-_timer	=	0x8900
-_starfield1	=	0x8a00
-_starfield2	=	0x8a10
-_starfield3	=	0x8a20
-_system_pause	=	0x8a30
-_system_menu	=	0x8a31
-_chram	=	0x9800
-_fgcolram	=	0xa000
-_bgcolram	=	0xa800
+_analog_r	=	0x8280
+_paddle	=	0x8300
+_spinner	=	0x8380
+_ps2_key	=	0x8400
+_ps2_mouse	=	0x8480
+_starfield1	=	0x8500
+_starfield2	=	0x8510
+_starfield3	=	0x8520
+_system_pause	=	0x8530
+_system_menu	=	0x8531
+_sndram	=	0x8580
+_musicram	=	0x8590
+_tilemapctl	=	0x8600
+_tilemapram	=	0x8610
+_chram	=	0x9200
+_fgcolram	=	0x9a00
+_bgcolram	=	0xa200
 _spriteram	=	0xb000
 _spritecollisionram	=	0xb400
-_tilemapctl	=	0x8c00
-_tilemapram	=	0x8c10
-_sndram	=	0x8b00
-_musicram	=	0x8b10
 ;--------------------------------------------------------
 ; ram data
 ;--------------------------------------------------------
@@ -112,7 +113,13 @@ _app_main::
 00112$:
 	djnz	00111$
 	ld	(_chram_size), hl
-;os.c:29: write_string("Hello wurld", 0xFF, 5, 10);
+;os.c:29: clear_chars(0x9);
+	ld	a, #0x09
+	push	af
+	inc	sp
+	call	_clear_chars
+	inc	sp
+;os.c:31: write_string("Hello wurld", 0xFF, 5, 10);
 	ld	de, #0x0a05
 	push	de
 	ld	a, #0xff
@@ -124,7 +131,7 @@ _app_main::
 	pop	af
 	pop	af
 	inc	sp
-;os.c:31: write_string("0", 0xFF, 0, 0);
+;os.c:33: write_string("0", 0xFF, 0, 0);
 	xor	a, a
 	push	af
 	inc	sp
@@ -138,7 +145,7 @@ _app_main::
 	pop	af
 	pop	af
 	inc	sp
-;os.c:32: write_string("1", 0xFF, 39, 0);
+;os.c:34: write_string("1", 0xFF, 39, 0);
 	xor	a, a
 	ld	d,a
 	ld	e,#0x27
@@ -152,7 +159,7 @@ _app_main::
 	pop	af
 	pop	af
 	inc	sp
-;os.c:33: write_string("2", 0xFF, 39, 29);
+;os.c:35: write_string("2", 0xFF, 39, 29);
 	ld	de, #0x1d27
 	push	de
 	ld	a, #0xff
@@ -164,7 +171,7 @@ _app_main::
 	pop	af
 	pop	af
 	inc	sp
-;os.c:34: write_string("3", 0xFF, 0, 29);
+;os.c:36: write_string("3", 0xFF, 0, 29);
 	ld	a, #0x1d
 	push	af
 	inc	sp
@@ -178,15 +185,15 @@ _app_main::
 	pop	af
 	pop	af
 	inc	sp
-;os.c:36: while (1)
+;os.c:38: while (1)
 00102$:
-;os.c:38: hsync = input0 & 0x80;
+;os.c:40: hsync = input0 & 0x80;
 	ld	iy, #_input0
 	ld	a, 0 (iy)
 	rlc	a
 	and	a, #0x01
 	ld	(_hsync+0), a
-;os.c:39: vsync = input0 & 0x40;
+;os.c:41: vsync = input0 & 0x40;
 	ld	a, 0 (iy)
 	and	a, #0x40
 	ld	c,a
@@ -195,7 +202,7 @@ _app_main::
 	ld	a, #0x00
 	rla
 	ld	(_vsync+0), a
-;os.c:40: hblank = input0 & 0x20;
+;os.c:42: hblank = input0 & 0x20;
 	ld	a, 0 (iy)
 	and	a, #0x20
 	ld	c, a
@@ -206,7 +213,7 @@ _app_main::
 	ld	a, #0x00
 	rla
 	ld	(_hblank+0), a
-;os.c:41: vblank = CHECK_BIT(input0, INPUT_VBLANK);
+;os.c:43: vblank = CHECK_BIT(input0, INPUT_VBLANK);
 	ld	a, 0 (iy)
 	and	a, #0x10
 	ld	c, a
@@ -214,23 +221,23 @@ _app_main::
 	cp	a, c
 	rla
 	ld	(_vblank+0), a
-;os.c:43: hsync_last = hsync;
+;os.c:45: hsync_last = hsync;
 	ld	a,(#_hsync + 0)
 	ld	iy, #_hsync_last
 	ld	0 (iy), a
-;os.c:44: vsync_last = vsync;
+;os.c:46: vsync_last = vsync;
 	ld	a,(#_vsync + 0)
 	ld	iy, #_vsync_last
 	ld	0 (iy), a
-;os.c:45: hblank_last = hblank;
+;os.c:47: hblank_last = hblank;
 	ld	a,(#_hblank + 0)
 	ld	iy, #_hblank_last
 	ld	0 (iy), a
-;os.c:46: vblank_last = vblank;
+;os.c:48: vblank_last = vblank;
 	ld	a,(#_vblank + 0)
 	ld	iy, #_vblank_last
 	ld	0 (iy), a
-;os.c:48: }
+;os.c:50: }
 	jr	00102$
 ___str_0:
 	.ascii "Hello wurld"
@@ -247,13 +254,13 @@ ___str_3:
 ___str_4:
 	.ascii "3"
 	.db 0x00
-;os.c:51: void main()
+;os.c:53: void main()
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;os.c:53: app_main();
-;os.c:54: }
+;os.c:55: app_main();
+;os.c:56: }
 	jp	_app_main
 	.area _CODE
 	.area _INITIALIZER
