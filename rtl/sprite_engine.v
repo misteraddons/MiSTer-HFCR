@@ -526,8 +526,8 @@ begin
 			spr_palette_index <= spriteram_data_out[5:4];
 			// Read size bits from sprite RAM
 			spr_size <= (spriteram_data_out[3:2] == 2'd2 ? spr_size_8x8 :
-								spriteram_data_out[3:2] == 2'd1 ? spr_size_16x16 :
-								spriteram_data_out[3:2] == 2'd0 ? spr_size_32x32 : {SPRITE_POSITION_WIDTH{1'b0}});
+						spriteram_data_out[3:2] == 2'd1 ? spr_size_16x16 :
+						spriteram_data_out[3:2] == 2'd0 ? spr_size_32x32 : {SPRITE_POSITION_WIDTH{1'b0}});
 			// Read mirror bit from sprite RAM
 			spr_mirror <= spriteram_data_out[1];
 			// Read Y upper 1 bit from sprite RAM

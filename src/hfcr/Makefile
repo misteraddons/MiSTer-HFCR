@@ -1,0 +1,2 @@
+DEFINES=-DPROJECT_NAME=hfcr -DDISABLE_MUSIC=1 -DDISABLE_SOUND=1
+include ../shared/Makefile

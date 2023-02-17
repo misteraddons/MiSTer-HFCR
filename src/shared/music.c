@@ -19,6 +19,7 @@
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
+#ifndef DISABLE_MUSIC
 #include "../shared/sys.h"
 #include "../shared/music.h"
 
@@ -55,3 +56,5 @@ void stop_music()
 	// Reset last played track
 	music_last_played = 255;
 }
+
+#endif

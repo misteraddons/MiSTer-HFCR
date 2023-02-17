@@ -29,22 +29,20 @@
 	.globl _start_inputtester_analog
 	.globl _start_inputtester_digital
 	.globl _loader
-	.globl _musicram
-	.globl _sndram
-	.globl _tilemapram
-	.globl _tilemapctl
 	.globl _spritecollisionram
 	.globl _spriteram
 	.globl _bgcolram
 	.globl _fgcolram
 	.globl _chram
+	.globl _tilemapram
+	.globl _tilemapctl
+	.globl _musicram
+	.globl _sndram
 	.globl _system_menu
 	.globl _system_pause
 	.globl _starfield3
 	.globl _starfield2
 	.globl _starfield1
-	.globl _timer
-	.globl _timestamp
 	.globl _ps2_mouse
 	.globl _ps2_key
 	.globl _spinner
@@ -52,6 +50,8 @@
 	.globl _analog_r
 	.globl _analog_l
 	.globl _joystick
+	.globl _timer
+	.globl _timestamp
 	.globl _video_ctl
 	.globl _input0
 ;--------------------------------------------------------
@@ -63,29 +63,29 @@
 	.area _DATA
 _input0	=	0x8000
 _video_ctl	=	0x8001
+_timestamp	=	0x8080
+_timer	=	0x80c0
 _joystick	=	0x8100
 _analog_l	=	0x8200
-_analog_r	=	0x8300
-_paddle	=	0x8400
-_spinner	=	0x8500
-_ps2_key	=	0x8600
-_ps2_mouse	=	0x8700
-_timestamp	=	0x8800
-_timer	=	0x8900
-_starfield1	=	0x8a00
-_starfield2	=	0x8a10
-_starfield3	=	0x8a20
-_system_pause	=	0x8a30
-_system_menu	=	0x8a31
+_analog_r	=	0x8280
+_paddle	=	0x8300
+_spinner	=	0x8380
+_ps2_key	=	0x8400
+_ps2_mouse	=	0x8480
+_starfield1	=	0x8500
+_starfield2	=	0x8510
+_starfield3	=	0x8520
+_system_pause	=	0x8530
+_system_menu	=	0x8531
+_sndram	=	0x8580
+_musicram	=	0x8590
+_tilemapctl	=	0x8600
+_tilemapram	=	0x8610
 _chram	=	0x9800
 _fgcolram	=	0xa000
 _bgcolram	=	0xa800
 _spriteram	=	0xb000
 _spritecollisionram	=	0xb400
-_tilemapctl	=	0x8c00
-_tilemapram	=	0x8c10
-_sndram	=	0x8b00
-_musicram	=	0x8b10
 ;--------------------------------------------------------
 ; ram data
 ;--------------------------------------------------------

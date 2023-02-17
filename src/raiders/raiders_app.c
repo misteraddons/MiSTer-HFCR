@@ -199,13 +199,13 @@ void app_main()
 	clear_chars(0);
 	init_sprites();
 	clear_sprites();
-	//sprite_test();
+	// sprite_test();
 
 	init_particles();
 
 	// Set player position
 	set_character_screen_position(0, 60, 160);
-	//activate_character(0, sprite_index_rota_first, const_team_player, 30);
+	// activate_character(0, sprite_index_rota_first, const_team_player, 30);
 	activate_character(0, sprite_index_alex_first, const_team_player, 30);
 
 	scene_offset_x = 0;
@@ -409,6 +409,7 @@ void app_main()
 			// Reset timer
 			timer[0] = 0;
 #endif
+			timer[0] = 0;
 
 #ifdef DEBUG_TIMING
 			write_stringf_ushort("update sprites      %6d", 0xFF, 0, 23, time_after_update_sprites - time_before_update_sprites);

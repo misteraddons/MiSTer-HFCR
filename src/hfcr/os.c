@@ -1,9 +1,9 @@
 /*============================================================================
-	Aznable OS - Sound engine (M5205 sample player)
+	Aznable OS - Input Tester main application
 
 	Author: Jim Gregory - https://github.com/JimmyStones/
-	Version: 1.0
-	Date: 2021-12-20
+	Version: 1.1
+	Date: 2022-01-07
 
 	This program is free software; you can redistribute it and/or modify it
 	under the terms of the GNU General Public License as published by the Free
@@ -18,32 +18,37 @@
 	You should have received a copy of the GNU General Public License along
 	with this program. If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
+#include "../shared/sys.h"
+#include "../shared/ui.h"
 
-#ifndef DISABLE_SOUND
-#include "sys.h"
-#include "sound.h"
-
-#define const_sound_sample_max 32
-unsigned char sound_sample_max = const_sound_sample_max;	
-#include myPATH(../PROJECT_NAME/,sound_samples.h) // Include auto generated track array
-
-void play_sound(unsigned char sample)
+// Main entry and state machine
+void app_main()
 {
-	// Write sample start address (2 bytes)
-	sndram[1] = sound_sample_address[sample] >> 8;
-	sndram[0] = sound_sample_address[sample];
-	// Write sample length (2 bytes)
-	unsigned short end = sound_sample_address[sample] + sound_sample_length[sample];
-	sndram[5] = end >> 8;
-	sndram[4] = end;
-	// Write play instruction
-	sndram[8] = 1;
+	chram_size = chram_cols * chram_rows;
+
+	write_string("Hello wurld", 0xFF, 5, 10);
+
+	write_string("0", 0xFF, 0, 0);
+	write_string("1", 0xFF, 39, 0);
+	write_string("2", 0xFF, 39, 29);
+	write_string("3", 0xFF, 0, 29);
+
+	while (1)
+	{
+		hsync = input0 & 0x80;
+		vsync = input0 & 0x40;
+		hblank = input0 & 0x20;
+		vblank = CHECK_BIT(input0, INPUT_VBLANK);
+
+		hsync_last = hsync;
+		vsync_last = vsync;
+		hblank_last = hblank;
+		vblank_last = vblank;
+	}
 }
 
-void set_sound_volume(unsigned char volume)
+// Main entry
+void main()
 {
-	// Write sample volume
-	sndram[12] = volume;
+	app_main();
 }
-
-#endif

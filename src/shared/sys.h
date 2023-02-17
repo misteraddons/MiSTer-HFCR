@@ -30,21 +30,27 @@
 // - Inputs
 unsigned char __at(0x8000) input0;
 unsigned char __at(0x8001) video_ctl;		// 0=sprite layer priority over charmap
+unsigned char __at(0x8080) timestamp[5];
+unsigned char __at(0x80C0) timer[2];
 unsigned char __at(0x8100) joystick[24];
 unsigned char __at(0x8200) analog_l[12];
-unsigned char __at(0x8300) analog_r[12];
-unsigned char __at(0x8400) paddle[6];
-unsigned char __at(0x8500) spinner[12];
-unsigned char __at(0x8600) ps2_key[2];
-unsigned char __at(0x8700) ps2_mouse[6];
-unsigned char __at(0x8800) timestamp[5];
-unsigned char __at(0x8900) timer[2];
-unsigned char __at(0x8A00) starfield1[5];
-unsigned char __at(0x8A10) starfield2[5];
-unsigned char __at(0x8A20) starfield3[5];
-unsigned char __at(0x8A30) system_pause;
-unsigned char __at(0x8A31) system_menu;
-
+unsigned char __at(0x8280) analog_r[12];
+unsigned char __at(0x8300) paddle[6];
+unsigned char __at(0x8380) spinner[12];
+unsigned char __at(0x8400) ps2_key[2];
+unsigned char __at(0x8480) ps2_mouse[6];
+unsigned char __at(0x8500) starfield1[5];
+unsigned char __at(0x8510) starfield2[5];
+unsigned char __at(0x8520) starfield3[5];
+unsigned char __at(0x8530) system_pause;
+unsigned char __at(0x8531) system_menu;
+// - Charles (sound)
+unsigned char __at(0x8580) sndram[16];
+// - Deikun (music)
+unsigned char __at(0x8590) musicram[4];
+// - Zechs (tilemap)
+unsigned char __at(0x8600) tilemapctl[4];
+unsigned char __at(0x8610) tilemapram[1024];
 // - Casval (character map)
 unsigned char __at(0x9800) chram[2048];
 unsigned char __at(0xA000) fgcolram[2048];
@@ -52,13 +58,6 @@ unsigned char __at(0xA800) bgcolram[2048];
 // - Comet (sprite engine)
 unsigned char __at(0xB000) spriteram[512];
 unsigned char __at(0xB400) spritecollisionram[32];
-// - Zechs (tilemap)
-unsigned char __at(0x8C00) tilemapctl[4];
-unsigned char __at(0x8C10) tilemapram[1024];
-// - Charles (sound)
-unsigned char __at(0x8B00) sndram[16];
-// - Deikun (music)
-unsigned char __at(0x8B10) musicram[4];
 
 // Character map
 extern const unsigned char chram_cols;
