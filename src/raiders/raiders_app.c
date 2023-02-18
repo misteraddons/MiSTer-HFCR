@@ -82,6 +82,7 @@ unsigned char player_hit_combo_timer;
 
 void sprite_test()
 {
+
 	clear_bgcolor(0b00011001);
 	SET_BIT(video_ctl, 0); // Enable sprite priority over charmap
 	unsigned char first_sprite = sprite_index_aaaa_first;
@@ -197,6 +198,7 @@ void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 	clear_chars(0);
+	set_default_char_palette();
 	init_sprites();
 	clear_sprites();
 	// sprite_test();

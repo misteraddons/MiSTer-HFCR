@@ -47,8 +47,6 @@ unsigned char max_spark_type = (sprite_index_sparks_count / 4) - 1;
 
 void app_main()
 {
-	chram_size = chram_cols * chram_rows;
-	clear_chars(0);
 	clear_tilemap();
 	clear_sprites();
 

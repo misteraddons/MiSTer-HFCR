@@ -111,9 +111,11 @@ void main()
 {
 	// Initialise char map
 	chram_size = chram_cols * chram_rows;
+	set_default_char_palette();
 	clear_bgcolor(transparent_char);
+	clear_sprites();
 
-	write_string("CALCULATING VECTORS", 0xFF, 0, 0);
+	write_string("CALCULATING VECTORS", 15, 0, 0);
 
 	// Generate float vectors for various angles
 	for (unsigned char v = 0; v < direction_count; v++)
@@ -159,7 +161,7 @@ void main()
 
 	// Draw score area
 	write_bgcol_row(0b00000000, 1, 29, 40);
-	write_string("Score might be here, or some other stuff", 0xFF, 0, 29);
+	write_string("Score might be here, or some other stuff", 15, 0, 29);
 
 	while (1)
 	{
@@ -300,7 +302,7 @@ void main()
 			}
 
 			// Particles
-			handle_particles();
+			update_particles();
 
 #endif
 
@@ -319,7 +321,7 @@ void main()
 					{
 						// Random entry location...
 						unsigned char side = rand_uchar(0, 3);
-						write_stringf("%d", 0xFF, 5, 3 + e, side);
+						write_stringf("%d", 15, 5, 3 + e, side);
 						switch (side)
 						{
 						case 0:
@@ -384,7 +386,7 @@ void main()
 			}
 
 			unsigned short l = (GET_TIMER);
-			write_stringf_ushort("%6d", 0xFF, 0, 0, l);
+			write_stringf_ushort("%6d", 15, 0, 0, l);
 		}
 		vblank_last = vblank;
 	}
