@@ -29,8 +29,6 @@ extern char modeswitchtimer_start;
 #define PAD_COUNT 2
 #define BUTTON_COUNT 12
 
-#define color_button_active 0xFF
-#define color_button_inactive 0b01010010
 #define analog_size 18
 #define analog_ratio 15 // 256 / 17;
 #define timestamp_clock_index 32

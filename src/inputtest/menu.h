@@ -29,23 +29,6 @@
 #define menu_openholdtime 60
 #define menu_count 5
 
-#define menu_panel_outline_high 0xFF
-#define menu_panel_outline_mid 0b00110110
-#define menu_panel_outline_low 0b00100100
-#define menu_panel_back 0x00
-
-#define menu_outline_high 0b10111111
-#define menu_outline_mid 0b10110110
-#define menu_outline_low 0b01100100
-#define menu_text 0b10110110
-#define menu_back 0x00
-
-#define menu_sel_outline_high 0b01011111
-#define menu_sel_outline_mid 0b00010110
-#define menu_sel_outline_low 0b00010100
-#define menu_sel_text 0xFF
-#define menu_sel_back 0b00001001
-
 // Menu variables
 extern unsigned char menu_timer;
 extern unsigned char menu_index;

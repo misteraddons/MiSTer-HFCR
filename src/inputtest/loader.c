@@ -54,7 +54,7 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 			text_timer++;
 			if (text_timer == speed)
 			{
-				write_char(text[text_length - 1], 0xFF, xpos, start_y);
+				write_char(text[text_length - 1], colour_cga_white, xpos, start_y);
 				text_length++;
 				if (text_length > text_char_count)
 				{
@@ -79,7 +79,7 @@ void intro_text(const char *text, unsigned char start_x, unsigned char start_y, 
 					}
 					else
 					{
-						write_char(text[text_length - 1], 0xFF, xpos, start_y);
+						write_char(text[text_length - 1], colour_cga_white, xpos, start_y);
 					}
 					text_flash_timer = 0;
 				}
@@ -103,16 +103,16 @@ void loader(const char *title)
 	disable_starfield();
 
 	// OS Intro
-	write_char('>', 0xFF, 0, 1);
+	write_char('>', colour_cga_white, 0, 1);
 	intro_text(system_title, 2, 1, 2, 8, 1);
-	write_char(' ', 0xFF, 0, 1);
+	write_char(' ', colour_cga_white, 0, 1);
 
-	write_char('>', 0xFF, 0, 3);
+	write_char('>', colour_cga_white, 0, 3);
 	intro_text("LOAD ", 2, 3, 1, 2, 1);
 	intro_text(title, 7, 3, 1, 2, 1);
-	write_char(' ', 0xFF, 0, 3);
+	write_char(' ', colour_cga_white, 0, 3);
 
-	write_char('>', 0xFF, 0, 5);
+	write_char('>', colour_cga_white, 0, 5);
 	intro_text("...", 2, 5, 1, 8, 1);
 
 	// Clear characters

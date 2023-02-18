@@ -59,6 +59,7 @@ unsigned char socd_lr_last[6];
 
 #define MOUSE_POINTER_SPRITE 9
 
+
 // Mode switcher variables
 char modeswitchtimer_select = 0;
 char modeswitchtimer_start = 0;
@@ -99,8 +100,6 @@ char button_name[BUTTON_COUNT][12] = {
     "Start"};
 char button_x[BUTTON_COUNT] = {6, 2, 4, 4, 24, 22, 22, 20, 3, 23, 9, 13};
 char button_y[BUTTON_COUNT] = {5, 5, 6, 4, 5, 6, 4, 5, 1, 1, 5, 5};
-#define color_button_active 0xFF
-#define color_button_inactive 0b01010010
 
 char analog_offset_x[PAD_COUNT] = {1, 20};
 char analog_offset_y[PAD_COUNT] = {5, 5};
@@ -146,6 +145,7 @@ char btntest_results_offset = 0;
 char btntest_highlight = 0;
 char btntest_aftertimer = 0;
 
+
 // Draw static elements for digital input test page
 void page_inputtester_digital()
 {
@@ -153,7 +153,7 @@ void page_inputtester_digital()
     // Draw pads
     for (char j = 0; j < PAD_COUNT; j++)
     {
-        write_stringf("JOY %d", 0xFF, pad_offset_x[j] - 5, pad_offset_y[j] + 5, j + 1);
+        write_stringf("JOY %d", colour_text_primary, pad_offset_x[j] - 5, pad_offset_y[j] + 5, j + 1);
         draw_pad(pad_offset_x[j], pad_offset_y[j]);
     }
 }
@@ -164,20 +164,20 @@ void page_inputtester_analog()
     page_frame(true, false);
     // Draw analog grids
     char j = 0;
-    write_string("ANALOG LEFT", 0xFF, analog_offset_x[j], analog_offset_y[j] - 1);
+    write_string("ANALOG LEFT", colour_text_primary, analog_offset_x[j], analog_offset_y[j] - 1);
     draw_analog(analog_offset_x[j], analog_offset_y[j], analog_size, analog_size);
-    write_string("X:", 0xFF, analog_offset_x[j] + 1, analog_offset_y[j] + analog_size + 1);
-    write_string("Y:", 0xFF, analog_offset_x[j] + 10, analog_offset_y[j] + analog_size + 1);
+    write_string("X:", colour_text_primary, analog_offset_x[j] + 1, analog_offset_y[j] + analog_size + 1);
+    write_string("Y:", colour_text_primary, analog_offset_x[j] + 10, analog_offset_y[j] + analog_size + 1);
 
-    write_stringf("PAD %d", 0xFF, 18, analog_offset_y[j] - 1, analog_pad + 1);
+    write_stringf("PAD %d", colour_text_primary, 18, analog_offset_y[j] - 1, analog_pad + 1);
 
     j = 1;
-    write_string("ANALOG RIGHT", 0xFF, analog_offset_x[j] + analog_size - 11, analog_offset_y[j] - 1);
+    write_string("ANALOG RIGHT", colour_text_primary, analog_offset_x[j] + analog_size - 11, analog_offset_y[j] - 1);
     draw_analog(analog_offset_x[j], analog_offset_y[j], analog_size, analog_size);
-    write_string("X:", 0xFF, analog_offset_x[j] + 1, analog_offset_y[j] + analog_size + 1);
-    write_string("Y:", 0xFF, analog_offset_x[j] + 10, analog_offset_y[j] + analog_size + 1);
+    write_string("X:", colour_text_primary, analog_offset_x[j] + 1, analog_offset_y[j] + analog_size + 1);
+    write_string("Y:", colour_text_primary, analog_offset_x[j] + 10, analog_offset_y[j] + analog_size + 1);
 
-    write_string("Cycle selected pad with A / B", 0x3F, 5, analog_offset_y[j] + analog_size + 2);
+    write_string("Cycle selected pad with A / B", colour_analog_text_cycle, 5, analog_offset_y[j] + analog_size + 2);
 }
 
 // Draw static elements for advanced input test page
@@ -185,33 +185,33 @@ void page_inputtester_advanced()
 {
     page_frame(true, false);
 
-    write_string("RLDUABXYLRsS", 0xFF, 7, 5);
-    write_string("ALX", 0xFF, 21, 5);
-    write_string("ALY", 0xFF, 25, 5);
-    write_string("ARX", 0xFF, 30, 5);
-    write_string("ARY", 0xFF, 34, 5);
+    write_string("RLDUABXYLRsS", colour_text_primary, 7, 5);
+    write_string("ALX", colour_text_primary, 21, 5);
+    write_string("ALY", colour_text_primary, 25, 5);
+    write_string("ARX", colour_text_primary, 30, 5);
+    write_string("ARY", colour_text_primary, 34, 5);
 
-    write_string("POS", 0xFF, 7, 13);
-    write_string("SPD  POS", 0xFF, 20, 13);
+    write_string("POS", colour_text_primary, 7, 13);
+    write_string("SPD  POS", colour_text_primary, 20, 13);
 
     char label[5];
     for (unsigned char j = 0; j < 6; j++)
     {
         sprintf(label, "JOY%d", j + 1);
-        write_string(label, 0xFF - (j * 2), 2, 6 + j);
+        write_string(label, colour_text_primary, 2, 6 + j);
 
         sprintf(label, "PAD%d", j + 1);
-        write_string(label, 0xFF - (j * 2), 2, 14 + j);
+        write_string(label, colour_text_primary, 2, 14 + j);
 
         sprintf(label, "SPN%d", j + 1);
-        write_string(label, 0xFF - (j * 2), 14, 14 + j);
+        write_string(label, colour_text_primary, 14, 14 + j);
     }
 
-    write_string("KEYBOARD", 0xFF, 2, 21);
+    write_string("KEYBOARD", colour_text_primary, 2, 21);
 
-    write_string("MOUSE", 0xFF, 2, 23);
-    write_string("WHL", 0xFF, 16, 23);
-    write_string("BTNS", 0xFF, 24, 23);
+    write_string("MOUSE", colour_text_primary, 2, 23);
+    write_string("WHL", colour_text_primary, 16, 23);
+    write_string("BTNS", colour_text_primary, 24, 23);
 
     SET_BIT(video_ctl, 0); // Enable sprite priority over charmap
 }
@@ -220,7 +220,7 @@ void page_inputtester_advanced()
 void page_btntest(bool showMenuButton, bool showContinueButton)
 {
     page_frame(showMenuButton, showContinueButton);
-    write_string("BUTTON TEST", 0xAA, 15, 4);
+    write_string("BUTTON TEST", colour_buttontest_text_primary, 15, 4);
 }
 
 void reset_inputstates()
@@ -303,8 +303,8 @@ void start_btntest()
 
     // Draw page
     page_btntest(true, false);
-    write_string("Press the button you want to test", 0xFF, 3, 14);
-    write_string("Remember to enable fast USB polling!", 0xEE, 2, 25);
+    write_string("Press the button you want to test", colour_text_primary, 3, 14);
+    write_string("Remember to enable fast USB polling!", colour_buttontest_text_secondary, 2, 25);
 }
 
 // Rotate DPAD direction history and push new entry
@@ -420,20 +420,20 @@ void inputtester_digital()
             char index = joy * 4;
             for (char button = 0; button < BUTTON_COUNT; button++)
             {
-                char color = (button < 8 ? CHECK_BIT(joystick[index], button) : CHECK_BIT(joystick[index + 1], button - 8)) ? color_button_active : color_button_inactive;
+                char color = (button < 8 ? CHECK_BIT(joystick[index], button) : CHECK_BIT(joystick[index + 1], button - 8)) ? colour_button_active : colour_button_inactive;
                 write_string(button_symbol[button], color, pad_offset_x[joy] + button_x[button], pad_offset_y[joy] + button_y[button]);
             }
             // SOCD detection
             socd_lr[joy] = CHECK_BIT(joystick[index], 0) && CHECK_BIT(joystick[index], 1);
             if (socd_lr[joy])
             {
-                write_string("SOCD L+R", 0b00000111, pad_offset_x[joy] + 9, pad_offset_y[joy] + 8);
+                write_string("SOCD L+R", colour_cga_lightred, pad_offset_x[joy] + 9, pad_offset_y[joy] + 8);
             }
             else
             {
                 if (socd_lr_last[joy])
                 {
-                    write_string("SOCD L+R", 0b00000010, pad_offset_x[joy] + 9, pad_offset_y[joy] + 8);
+                    write_string("SOCD L+R", colour_cga_darkred, pad_offset_x[joy] + 9, pad_offset_y[joy] + 8);
                 }
             }
             socd_lr_last[joy] = socd_lr[joy];
@@ -441,13 +441,13 @@ void inputtester_digital()
             socd_ud[joy] = CHECK_BIT(joystick[index], 2) && CHECK_BIT(joystick[index], 3);
             if (socd_ud[joy])
             {
-                write_string("SOCD U+D", 0b00000111, pad_offset_x[joy] + 9, pad_offset_y[joy] + 9);
+                write_string("SOCD U+D", colour_cga_lightred, pad_offset_x[joy] + 9, pad_offset_y[joy] + 9);
             }
             else
             {
                 if (socd_ud_last[joy])
                 {
-                    write_string("SOCD U+D", 0b00000010, pad_offset_x[joy] + 9, pad_offset_y[joy] + 9);
+                    write_string("SOCD U+D", colour_cga_darkred, pad_offset_x[joy] + 9, pad_offset_y[joy] + 9);
                 }
             }
             socd_ud_last[joy] = socd_ud[joy];
@@ -509,7 +509,7 @@ void inputtester_analog()
         char my = analog_offset_y[side] + (analog_size / 2);
 
         // Reset previous color
-        set_fgcolour(color_analog_grid, analog_x[side] + mx, analog_y[side] + my);
+        set_fgcolour(colour_analog_grid, analog_x[side] + mx, analog_y[side] + my);
 
         signed char ax = analog_l[(analog_pad * 2)];
         signed char ay = analog_l[(analog_pad * 2) + 1];
@@ -518,10 +518,10 @@ void inputtester_analog()
         analog_y[side] = ay / analog_ratio;
 
         // Set new color
-        set_fgcolour(0xFF, analog_x[side] + mx, analog_y[side] + my);
+        set_fgcolour(colour_text_primary, analog_x[side] + mx, analog_y[side] + my);
 
-        write_stringfs("%4d", 0xFF, analog_offset_x[side] + 3, analog_offset_y[side] + analog_size + 1, ax);
-        write_stringfs("%4d", 0xFF, analog_offset_x[side] + 12, analog_offset_y[side] + analog_size + 1, ay);
+        write_stringfs("%4d", colour_text_primary, analog_offset_x[side] + 3, analog_offset_y[side] + analog_size + 1, ax);
+        write_stringfs("%4d", colour_text_primary, analog_offset_x[side] + 12, analog_offset_y[side] + analog_size + 1, ay);
 
         // Draw analog right point
         side = 1;
@@ -529,7 +529,7 @@ void inputtester_analog()
         my = analog_offset_y[side] + (analog_size / 2);
 
         // Reset previous color
-        set_fgcolour(color_analog_grid, analog_x[side] + mx, analog_y[side] + my);
+        set_fgcolour(colour_analog_grid, analog_x[side] + mx, analog_y[side] + my);
 
         ax = analog_r[(analog_pad * 2)];
         ay = analog_r[(analog_pad * 2) + 1];
@@ -538,10 +538,10 @@ void inputtester_analog()
         analog_y[side] = ay / analog_ratio;
 
         // Set new color
-        set_fgcolour(0xFF, analog_x[side] + mx, analog_y[side] + my);
+        set_fgcolour(colour_text_primary, analog_x[side] + mx, analog_y[side] + my);
 
-        write_stringfs("%4d", 0xFF, analog_offset_x[side] + 3, analog_offset_y[side] + analog_size + 1, ax);
-        write_stringfs("%4d", 0xFF, analog_offset_x[side] + 12, analog_offset_y[side] + analog_size + 1, ay);
+        write_stringfs("%4d", colour_text_primary, analog_offset_x[side] + 3, analog_offset_y[side] + analog_size + 1, ax);
+        write_stringfs("%4d", colour_text_primary, analog_offset_x[side] + 12, analog_offset_y[side] + analog_size + 1, ay);
     }
 }
 
@@ -590,7 +590,7 @@ void inputtester_advanced()
                     for (char i = 0; i < bytes; i++)
                     {
                         cx++;
-                        write_char((joy & mask) ? asc_1 : asc_0, 0xFF, cx, y);
+                        write_char((joy & mask) ? asc_1 : asc_0, colour_text_primary, cx, y);
                         mask <<= 1;
                     }
                 }
@@ -608,7 +608,7 @@ void inputtester_advanced()
             if (ax_l != ax_l_last[inputindex] || ay_l != ay_l_last[inputindex])
             {
                 sprintf(stra, "%4d%4d", ax_l, ay_l);
-                write_string(stra, 0xFF, 20, 6 + inputindex);
+                write_string(stra, colour_text_primary, 20, 6 + inputindex);
             }
             ax_l_last[inputindex] = ax_l;
             ay_l_last[inputindex] = ay_l;
@@ -619,7 +619,7 @@ void inputtester_advanced()
             if (ax_r != ax_r_last[inputindex] || ay_r != ay_r_last[inputindex])
             {
                 sprintf(stra, "%4d%4d", ax_r, ay_r);
-                write_string(stra, 0xFF, 29, 6 + inputindex);
+                write_string(stra, colour_text_primary, 29, 6 + inputindex);
             }
             ax_r_last[inputindex] = ax_r;
             ay_r_last[inputindex] = ay_r;
@@ -630,7 +630,7 @@ void inputtester_advanced()
             {
                 char strp[5];
                 sprintf(strp, "%4d", px);
-                write_string(strp, 0xFF, 6, 14 + inputindex);
+                write_string(strp, colour_text_primary, 6, 14 + inputindex);
             }
             px_last[inputindex] = px;
 
@@ -640,7 +640,7 @@ void inputtester_advanced()
             if (sx_toggle != sx_toggle_last[inputindex])
             {
                 sx_pos[inputindex] += sx;
-                write_stringf("%4d", 0xFF, 24, 14 + inputindex, sx_pos[inputindex]);
+                write_stringf("%4d", colour_text_primary, 24, 14 + inputindex, sx_pos[inputindex]);
             }
             else
             {
@@ -651,7 +651,7 @@ void inputtester_advanced()
             }
             if (sx_last[inputindex] != sx)
             {
-                write_stringfs("%4d", 0xFF, 19, 14 + inputindex, sx);
+                write_stringfs("%4d", colour_text_primary, 19, 14 + inputindex, sx);
             }
             sx_last[inputindex] = sx;
             sx_toggle_last[inputindex] = sx_toggle;
@@ -660,8 +660,8 @@ void inputtester_advanced()
         // Scancode output
         if (kbd_scan != kbd_scan_last || kbd_ascii != kbd_ascii_last)
         {
-            write_stringf("%02x", 0xFF, 11, 21, kbd_scan);
-            write_char(kbd_ascii, 0xFF, 14, 21);
+            write_stringf("%02x", colour_text_primary, 11, 21, kbd_scan);
+            write_char(kbd_ascii, colour_text_primary, 14, 21);
 
             kbd_scan_last = kbd_scan;
             kbd_ascii_last = kbd_ascii;
@@ -698,9 +698,9 @@ void inputtester_advanced()
                 spr_on[MOUSE_POINTER_SPRITE] = 1;
                 set_sprite_position(MOUSE_POINTER_SPRITE, mx, my);
             }
-            write_stringf_ushort("%3d", 0xFF, 8, 23, mx - 16);
-            write_stringf_ushort("%3d", 0xFF, 12, 23, my - 16);
-            write_stringf("%3d", 0xFF, 20, 23, mse_w_acc);
+            write_stringf_ushort("%3d", colour_text_primary, 8, 23, mx - 16);
+            write_stringf_ushort("%3d", colour_text_primary, 12, 23, my - 16);
+            write_stringf("%3d", colour_text_primary, 20, 23, mse_w_acc);
 
             if (mse_button1_last != mse_button1)
             {
@@ -709,7 +709,7 @@ void inputtester_advanced()
                 for (char i = 0; i < 3; i++)
                 {
                     x++;
-                    write_char((mse_button1 & m) ? asc_1 : asc_0, 0xFF, x, 23);
+                    write_char((mse_button1 & m) ? asc_1 : asc_0, colour_text_primary, x, 23);
                     m <<= 1;
                 }
                 input_mouse_left = CHECK_BIT(mse_button1, 0);
@@ -723,7 +723,7 @@ void inputtester_advanced()
                 for (char i = 0; i < 5; i++)
                 {
                     x++;
-                    write_char((mse_button2 & m) ? asc_1 : asc_0, 0xFF, x, 23);
+                    write_char((mse_button2 & m) ? asc_1 : asc_0, colour_text_primary, x, 23);
                     m <<= 1;
                 }
             }
@@ -757,9 +757,9 @@ void btntest_starttest()
     // Reset hardware timer
     timer[0] = 0;
 
-    write_string("Press here", 0xDD, 14, 14);
-    write_char(19, 0xDD, 19, 15);
-    write_string("---\x3\x3\x3\x2\x2\x2\x1\x1\x1\xA6\xA6\xA6\x7f\x7f\x7f\xA6\xA6\xA6\x1\x1\x1\x2\x2\x2\x3\x3\x3---", 0xDD, 3, 16);
+    write_string("Press here", colour_buttontest_purple, 14, 14);
+    write_char(19, colour_buttontest_purple, 19, 15);
+    write_string("---\x3\x3\x3\x2\x2\x2\x1\x1\x1\xA6\xA6\xA6\x7f\x7f\x7f\xA6\xA6\xA6\x1\x1\x1\x2\x2\x2\x3\x3\x3---", colour_buttontest_purple, 3, 16);
 }
 
 // Button test - button select state
@@ -783,11 +783,11 @@ void btntest_select()
             }
             btntest_mode = btntest_mode_ready;
             page_btntest(false, false); // reset screen
-            write_string("Hit the button at each prompt", 0b11111000, 5, 14);
-            write_string("Selected button is: ", 0xFF, 6, 16);
+            write_string("Hit the button at each prompt", colour_cga_lightcyan, 5, 14);
+            write_string("Selected button is: ", colour_text_primary, 6, 16);
             char i = btntest_buttonindex + (btntest_buttonbank * 8);
-            write_string(button_name[i], 0b00000111, 26, 16);
-            write_string("Press again to start test", 0b00111000, 7, 18);
+            write_string(button_name[i], colour_cga_lightred, 26, 16);
+            write_string("Press again to start test", colour_cga_yellow, 7, 18);
             btntest_timer = 10;
             return;
         }
@@ -805,11 +805,11 @@ void btntest_select()
             }
             btntest_mode = btntest_mode_ready;
             page_btntest(false, false); // reset screen
-            write_string("Hit the button at each prompt", 0b11111000, 5, 14);
-            write_string("Selected button is: ", 0xFF, 6, 16);
+            write_string("Hit the button at each prompt", colour_cga_lightcyan, 5, 14);
+            write_string("Selected button is: ", colour_text_primary, 6, 16);
             char i = btntest_buttonindex + (btntest_buttonbank * 8);
-            write_string(button_name[i], 0b00000111, 26, 16);
-            write_string("Press again to start test", 0b00111000, 7, 18);
+            write_string(button_name[i], colour_cga_lightred, 26, 16);
+            write_string("Press again to start test", colour_cga_yellow, 7, 18);
             btntest_timer = 10;
             return;
         }
@@ -896,7 +896,7 @@ void btntest_test()
         }
         if (btntest_highlight > 0)
         {
-            set_bgcolour(0xFF, btntest_highlight, 16);
+            set_bgcolour(colour_text_primary, btntest_highlight, 16);
         }
 
         if (btntest_aftertimer > 0)
@@ -921,7 +921,7 @@ void btntest_test()
             btntest_prompts[btntest_counter] = GET_TIMER;
 
             // Display test counter
-            write_stringf("%2d", 0xFF, 18, 6, btntest_counter + 1);
+            write_stringf("%2d", colour_text_primary, 18, 6, btntest_counter + 1);
 
             btntest_timer = btntest_timer_interval;
             btntest_aftertimer = 33;
@@ -936,10 +936,10 @@ void btntest_results()
 
     if (btntest_results_refresh)
     {
-        write_string("Prompts", 0xFF, 2, 6);
-        //        write_string("-------", 0xFF, 2, 7);
-        write_string("Presses", 0xFF, 11, 6);
-        //        write_string("-------", 0xFF, 11, 7);
+        write_string("Prompts", colour_text_primary, 2, 6);
+        //        write_string("-------", colour_text_primary, 2, 7);
+        write_string("Presses", colour_text_primary, 11, 6);
+        //        write_string("-------", colour_text_primary, 11, 7);
 
         char y = 7;
         char press = 0;
@@ -957,14 +957,14 @@ void btntest_results()
 
             if (prompt_time < press_time)
             {
-                write_stringf_ushort("%6dms", 0xFF, 2, y, btntest_prompts[prompt]);
+                write_stringf_ushort("%6dms", colour_text_primary, 2, y, btntest_prompts[prompt]);
                 y++;
                 prompt++;
                 prompt_last = prompt_time;
             }
             else if (press_time < prompt_time)
             {
-                write_stringf_ushort("%6dms", 0xFF, 11, y, btntest_presses[press]);
+                write_stringf_ushort("%6dms", colour_text_primary, 11, y, btntest_presses[press]);
 
                 // Is this early or late or just nowhere near?!
                 unsigned short prompt_next = prompt + 1 <= btntest_counter_max ? btntest_prompts[prompt] : 65535;
@@ -974,15 +974,15 @@ void btntest_results()
 
                 if (diff_next < 500)
                 {
-                    write_stringf_short("%3dms before", 0b11111000, 20, y, diff_next);
+                    write_stringf_short("%3dms before", colour_cga_yellow, 20, y, diff_next);
                 }
                 else if (diff_last <= 500)
                 {
-                    write_stringf_short("%3dms after", 0b00111111, 20, y, diff_last);
+                    write_stringf_short("%3dms after", colour_cga_lightcyan, 20, y, diff_last);
                 }
                 else
                 {
-                    write_stringf_short("????", 0b00000111, 20, y, diff_next);
+                    write_stringf_short("????", colour_cga_lightred, 20, y, diff_next);
                 }
                 y++;
                 press++;

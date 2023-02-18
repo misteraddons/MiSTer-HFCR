@@ -75,7 +75,7 @@ wire [1:0] b_temp = char_a ? fgcolram_data_out[7:6] : bgcolram_data_out[7:6];
 assign r = charpaletteram_data_out[7:0];
 assign g = charpaletteram_data_out[15:8];
 assign b = charpaletteram_data_out[23:16];
-assign a = char_a ? char_a : (bgcolram_data_out != 8'b11000111);
+assign a = char_a ? char_a : (bgcolram_data_out != 8'hFF);
 
 
 

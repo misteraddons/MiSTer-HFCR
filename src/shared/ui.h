@@ -24,7 +24,7 @@
 extern char asc_0;
 extern char asc_1;
 
-#define transparent_char 0b11000111
+#define transparent_char 0xFF
 
 #define char_corner_round_tl 149
 #define char_corner_round_tr 137
@@ -35,6 +35,14 @@ extern char asc_1;
 #define char_t_up 177
 #define char_dot 27
 #define char_cross 155
+
+#define colour_cga_darkcyan 3
+#define colour_cga_darkred 4
+#define colour_cga_lightcyan 11
+#define colour_cga_lightred 12
+#define colour_cga_yellow 14
+#define colour_cga_white 15
+
 
 // Set all character RAM to specified character
 extern void clear_chars(char c);
