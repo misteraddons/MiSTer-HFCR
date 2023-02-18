@@ -6,3 +6,6 @@ CURRENTDIR=$(pwd)
 cd src/$PROJECT
 make clean
 cd $CURRENTDIR
+
+# Clear verilator
+rm -rf targets/verilator/obj_dir/*

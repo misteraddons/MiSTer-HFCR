@@ -240,7 +240,7 @@ wire [7:0] wkram_data_out;
 wire [7:0] chram_data_out;
 wire [7:0] fgcolram_data_out;
 wire [7:0] bgcolram_data_out;
-wire [23:0] charpaletteram_data_out = { charpaletteram_data_out_b, charpaletteram_data_out_g, charpaletteram_data_out_r };
+wire [23:0] charpaletteram_data_out;
 
 // RAM data not available to CPU
 wire [7:0] chmap_data_out;
@@ -782,6 +782,7 @@ wire [15:0] charpaletteram_cpu_addr = cpu_addr[15:0] - 16'hAA00;
 wire [7:0] charpaletteram_data_out_r;
 wire [7:0] charpaletteram_data_out_g;
 wire [7:0] charpaletteram_data_out_b;
+assign charpaletteram_data_out = { charpaletteram_data_out_b, charpaletteram_data_out_g, charpaletteram_data_out_r };
 dpram #(8,8) charpaletteram_r
 (
 	.clock_a(clk_24),
