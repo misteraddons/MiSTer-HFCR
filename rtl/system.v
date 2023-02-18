@@ -157,6 +157,7 @@ wire tilemapram_cs = cpu_addr >= 16'h8610 && cpu_addr < 16'h8910;
 wire chram_cs = cpu_addr >= 16'h9200 && cpu_addr < 16'h9A00;
 wire fgcolram_cs = cpu_addr >= 16'h9A00 && cpu_addr < 16'hA200;
 wire bgcolram_cs = cpu_addr >= 16'hA200 && cpu_addr < 16'hAA00;
+wire charpaletteram_cs = cpu_addr >= 16'hAA00 && cpu_addr < 16'hAE00;
 // - Comet (sprite engine)
 wire spriteram_cs = cpu_addr >= 16'hB000 && cpu_addr < 16'hB080;
 wire spritecollisionram_cs = cpu_addr >= 16'hB400 && cpu_addr < 16'hB404;
@@ -239,6 +240,7 @@ wire [7:0] wkram_data_out;
 wire [7:0] chram_data_out;
 wire [7:0] fgcolram_data_out;
 wire [7:0] bgcolram_data_out;
+wire [23:0] charpaletteram_data_out = { charpaletteram_data_out_b, charpaletteram_data_out_g, charpaletteram_data_out_r };
 
 // RAM data not available to CPU
 wire [7:0] chmap_data_out;
@@ -257,6 +259,7 @@ wire wkram_wr = !cpu_wr_n && wkram_cs;
 wire chram_wr = !cpu_wr_n && chram_cs;
 wire fgcolram_wr = !cpu_wr_n && fgcolram_cs;
 wire bgcolram_wr = !cpu_wr_n && bgcolram_cs;
+wire charpaletteram_wr = !cpu_wr_n && charpaletteram_cs;
 wire spriteram_wr = !cpu_wr_n && spriteram_cs;
 wire spritecollisionram_wr;
 wire tilemapcontrol_wr = !cpu_wr_n && tilemapcontrol_cs;
@@ -268,6 +271,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 chram_cs ? chram_data_out :
 				 fgcolram_cs ? fgcolram_data_out :
 				 bgcolram_cs ? bgcolram_data_out :
+				//  charpaletteram_cs ? charpaletteram_data_out :
 				 spritecollisionram_cs ? {8{spritecollisionram_data_out_cpu}} :
 				 in0_cs ? in0_data_out :
 				 joystick_cs ? joystick_data_out :
@@ -330,6 +334,7 @@ wire		charmap_a;
 `ifndef DISABLE_CHARMAP
 // Casval - character map
 wire [11:0] chram_addr;
+wire [7:0] charpaletteram_addr_rd;
 wire [11:0] chrom_addr;
 charmap casval
 (
@@ -340,8 +345,10 @@ charmap casval
 	.chrom_data_out(chrom_data_out),
 	.fgcolram_data_out(fgcolram_data_out),
 	.bgcolram_data_out(bgcolram_data_out),
+	.charpaletteram_data_out(charpaletteram_data_out),
 	.chmap_data_out(chmap_data_out),
 	.chram_addr(chram_addr),
+	.charpaletteram_addr_rd(charpaletteram_addr_rd),
 	.chrom_addr(chrom_addr),
 	.r(charmap_r),
 	.g(charmap_g),
@@ -719,7 +726,7 @@ dpram #(11,8, "font.hex") chrom
 	.q_b()
 );
 
-// Char index RAM - 0x9800 - 0x9FFF (0x0800 / 2048 bytes)
+// Char index RAM - 0x9200 - 0x9A00 (0x0800 / 2048 bytes)
 wire [15:0] chram_cpu_addr_wr = cpu_addr[15:0] - 16'h9200;
 reg [15:0] chram_addr_last;
 wire [15:0] chram_addr_rd = {5'b0, chram_addr[10:0]};
@@ -738,7 +745,7 @@ dpram #(11,8) chram
 	.q_b(chmap_data_out)
 );
 
-// Char foreground color RAM - 0xA000 - 0xA7FF (0x0800 / 2048 bytes)
+// Char foreground color RAM - 0x9A00 - 0xA200 (0x0800 / 2048 bytes)
 dpram #(11,8) fgcolram
 (
 	.clock_a(clk_24),
@@ -754,7 +761,7 @@ dpram #(11,8) fgcolram
 	.q_b(fgcolram_data_out)
 );
 
-// Char background color RAM - 0xA800 - 0xAFFF (0x0800 / 2048 bytes)
+// Char background color RAM - 0xA200 - 0xAA00 (0x0800 / 2048 bytes)
 dpram #(11,8) bgcolram
 (
 	.clock_a(clk_24),
@@ -769,6 +776,56 @@ dpram #(11,8) bgcolram
 	.data_b(),
 	.q_b(bgcolram_data_out)
 );
+
+// Char palette RAM - 0xAA00 - 0xAE00 (0x0400 / 1024 bytes)
+wire [15:0] charpaletteram_cpu_addr = cpu_addr[15:0] - 16'hAA00;
+wire [7:0] charpaletteram_data_out_r;
+wire [7:0] charpaletteram_data_out_g;
+wire [7:0] charpaletteram_data_out_b;
+dpram #(8,8) charpaletteram_r
+(
+	.clock_a(clk_24),
+	.address_a(charpaletteram_cpu_addr[9:2]),
+	.wren_a(charpaletteram_wr && charpaletteram_cpu_addr[1:0] == 2'b00),
+	.data_a(cpu_dout),
+	.q_a(),
+
+	.clock_b(clk_24),
+	.address_b(charpaletteram_addr_rd),
+	.wren_b(1'b0),
+	.data_b(),
+	.q_b(charpaletteram_data_out_r)
+);
+dpram #(8,8) charpaletteram_g
+(
+	.clock_a(clk_24),
+	.address_a(charpaletteram_cpu_addr[9:2]),
+	.wren_a(charpaletteram_wr && charpaletteram_cpu_addr[1:0] == 2'b01),
+	.data_a(cpu_dout),
+	.q_a(),
+
+	.clock_b(clk_24),
+	.address_b(charpaletteram_addr_rd),
+	.wren_b(1'b0),
+	.data_b(),
+	.q_b(charpaletteram_data_out_g)
+);
+dpram #(8,8) charpaletteram_b
+(
+	.clock_a(clk_24),
+	.address_a(charpaletteram_cpu_addr[9:2]),
+	.wren_a(charpaletteram_wr && charpaletteram_cpu_addr[1:0] == 2'b10),
+	.data_a(cpu_dout),
+	.q_a(),
+
+	.clock_b(clk_24),
+	.address_b(charpaletteram_addr_rd),
+	.wren_b(1'b0),
+	.data_b(),
+	.q_b(charpaletteram_data_out_b)
+);
+
+
 `endif
 
 `ifndef DISABLE_TILEMAP

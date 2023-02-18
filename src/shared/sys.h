@@ -55,6 +55,7 @@ unsigned char __at(0x8610) tilemapram[1024];
 unsigned char __at(0x9200) chram[2048];
 unsigned char __at(0x9A00) fgcolram[2048];
 unsigned char __at(0xA200) bgcolram[2048];
+unsigned char __at(0xAA00) charpaletteram[2048];
 // - Comet (sprite engine)
 unsigned char __at(0xB000) spriteram[512];
 unsigned char __at(0xB400) spritecollisionram[32];

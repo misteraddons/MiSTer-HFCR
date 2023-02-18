@@ -53,6 +53,15 @@ void clear_bgcolor(char color)
 	}
 }
 
+// Set character palette entry
+void set_char_palette(unsigned char index, unsigned char r, unsigned char g, unsigned char b)
+{
+	unsigned short p = index * 4;
+	charpaletteram[p] = r;
+	charpaletteram[p+1] = g;
+	charpaletteram[p+2] = b;
+}
+
 // char log[20][30];
 unsigned char log_index = 0;
 void write_log_uchar(const char *format, unsigned char data)

@@ -26,14 +26,37 @@ void app_main()
 {
 	chram_size = chram_cols * chram_rows;
 
-	clear_chars(0x9);
+	clear_chars(0);
+	clear_bgcolor(6);
+	bool yes = true;
+	for (unsigned char y = 0; y < 30; y++)
+	{
+		for (unsigned char x = 0; x < 40; x++)
+		{
+			if (yes)
+			{
+				set_bgcolour(7, x, y);
+			}
+			yes = !yes;
+		}
+		yes = !yes;
+	}
 
-	write_string("Hello wurld", 0xFF, 5, 10);
+	set_char_palette(1, 255, 255, 255);
+	set_char_palette(2, 255, 0, 0);
+	set_char_palette(3, 0, 255, 0);
+	set_char_palette(4, 0, 0, 255);
+	set_char_palette(5, 255, 0, 255);
 
-	write_string("0", 0xFF, 0, 0);
-	write_string("1", 0xFF, 39, 0);
-	write_string("2", 0xFF, 39, 29);
-	write_string("3", 0xFF, 0, 29);
+	set_char_palette(6, 140, 128, 128);
+	set_char_palette(7, 50, 50, 70);
+
+	write_string("Hello wurld", 1, 5, 10);
+
+	write_string("0", 2, 0, 0);
+	write_string("1", 3, 39, 0);
+	write_string("2", 4, 39, 29);
+	write_string("3", 5, 0, 29);
 
 	while (1)
 	{
