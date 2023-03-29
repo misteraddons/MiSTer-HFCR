@@ -226,6 +226,8 @@ void app_main()
 	chram_size = chram_cols * chram_rows;
 
 	clear_chars(0);
+	clear_bgcolor(transparent_char);
+
 	set_default_char_palette();
 
 	set_char_palette(16, 50, 50, 50);

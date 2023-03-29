@@ -621,26 +621,23 @@ wire [23:0] rgb_final = spritedebugram_data_out_a ? rgb_sprite_debug : video_spr
 `endif
 `ifndef DEBUG_SPRITE_COLLISION
 
-reg [7:0] timer_reset;
-always @(posedge clk_24)
-begin
-	if(timer_cs && !cpu_wr_n)
-	begin
-		timer_reset <= 8'b1111;
-	end
-	if(timer_reset > 0) timer_reset <= timer_reset - 1'b1;
-end
+wire debug_ramp_active = joystick[6];
+wire [9:0] ramp_x = (hcnt - 32);
+wire [7:0] debug_ramp_gray = (ramp_x<256) ? ramp_x[7:0] : 8'b0;
+wire [23:0] debug_ramp = vcnt<60 ?	{3{debug_ramp_gray}} :
+						vcnt<120 ?	{debug_ramp_gray, 8'b0, 8'b0} :
+						vcnt<180 ?	{8'b0, debug_ramp_gray, 8'b0} :
+									{8'b0, 8'b0, debug_ramp_gray};
 
-wire [23:0] rgb_final = timer_reset > 0 ? 24'hFF00FF : video_sprite_layer_high ? 
-							(spr_a ? rgb_sprite : charmap_a ? rgb_charmap : tilemap_a ? rgb_tilemap : rgb_starfield) :
-							(charmap_a ? rgb_charmap : spr_a ? rgb_sprite : tilemap_a ? rgb_tilemap : rgb_starfield);
+wire [23:0] rgb_final = debug_ramp_active ? debug_ramp :
+						(video_sprite_layer_high ? 
+						(spr_a ? rgb_sprite : charmap_a ? rgb_charmap : tilemap_a ? rgb_tilemap : rgb_starfield) :
+						(charmap_a ? rgb_charmap : spr_a ? rgb_sprite : tilemap_a ? rgb_tilemap : rgb_starfield));
 `endif
-
 
 assign VGA_R = rgb_final[7:0];
 assign VGA_G = rgb_final[15:8];
 assign VGA_B = rgb_final[23:16];
-
 
 // Music player
 wire [9:0] music_audio_out;
